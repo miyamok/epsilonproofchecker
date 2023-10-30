@@ -8,7 +8,16 @@ main :: IO ()
 main = do
     args <- getArgs
     if length args == 1
-        then do ls <- fmap lines (readFile (args !! 0))
-                print (checkProof (map (\l -> fst((parse (line defaultPredicates defaultVariables defaultConstants) l)!!0)) ls))
+        then do ls <- fmap lines (readFile (head args))
+                let p = map (\l -> fst (head (parse (line defaultPredicates defaultVariables defaultConstants) l))) ls
+                    b = checkProof p
+                    stmt = let (f, _, _) = (last p) in formulaToString f
+                  in if b then
+                     do putStrLn stmt
+                        putStrLn "is proved"
+                        return ()
+                     else do putStrLn "Not a proof of"
+                             putStrLn stmt
+                             return ()
         else print "exactly one argument for the path to your proof script."
     return ()
