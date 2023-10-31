@@ -5,13 +5,13 @@ Proof checker for Hilbert's epsilon calculus.
 % ghc Main
 % ./Main ex04_identity.proof
 Correct proof of
- ⊢ (A -> A)
+ ⊢ A -> A
 % ./Main ex05_drinkers_paradox.proof
 Correct proof of
- ⊢ (P(eps x((P(x) -> P(eps x(~P(x)))))) -> P(eps x(~P(x))))
+ ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 % ./Main ex06_wrong.proof
 Not a proof of
-(A -> B)
+A -> B
 % ./Main ex08_assumption.proof 
 Correct proof of
 A ⊢ A
