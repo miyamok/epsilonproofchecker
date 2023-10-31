@@ -1,5 +1,6 @@
 # epsilonproofchecker
 ```
+## ghc-9.2.8 used
 % ghc Main
 % ./Main ex04_identity.proof
 (A -> A)
