@@ -1,5 +1,0 @@
-A -> (A -> A) -> A by K
-A -> A -> A by K
-(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
-(A -> A -> A) -> A -> A by MP
-A -> A by MP

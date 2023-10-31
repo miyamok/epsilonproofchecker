@@ -1,5 +1,5 @@
-A -> (A -> A) -> A by K #1
-A -> A -> A by K #2
-(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S #3
-(A -> A -> A) -> A -> A by MP(#3, #1) #4
-A -> A by MP(#4, #2)
+A -> (A -> A) -> A by K
+A -> A -> A by K
+(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
+(A -> A -> A) -> A -> A by MP
+A -> A by MP
