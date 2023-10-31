@@ -3,6 +3,7 @@ import Proof
 import Axiom
 import Parser
 import System.Directory.Internal.Prelude (getArgs)
+import Debug.Trace
 
 main :: IO ()
 main = do
@@ -11,7 +12,7 @@ main = do
         then do ls <- fmap lines (readFile (head args))
                 let p = map (\l -> fst (head (parse (line defaultPredicates defaultVariables defaultConstants) l))) ls
                     b = checkProof p
-                    stmt = let (f, _, _) = (last p) in formulaToString f
+                    stmt = let (f, _, _) = last p in formulaToString f
                   in if b then
                      do putStrLn stmt
                         putStrLn "is proved"

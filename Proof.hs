@@ -4,6 +4,8 @@ import Data.List
 import Data.Maybe
 import Axiom
 import Distribution.Simple.CCompiler (filenameCDialect)
+import Debug.Trace
+import Data.Time (timeZoneOffsetString)
 
 -- data Claim = K Formula | S Formula | ConjI Formula | ConjE1 Formula | ConjE2 Formula
 --              | DisjI1 Formula | DisjI2 Formula | DisjE Formula | Crit Formula
@@ -12,17 +14,16 @@ import Distribution.Simple.CCompiler (filenameCDialect)
 --              | GenIndexed Formula | Gen Formula | EFQ Formula | DNE Formula | LEM Formula
 --              | Asm Formula deriving (Eq)
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
-             | AllE | ExI | QShiftAll | QShiftEx | Auto | MPTagged Tag Tag | MP
+             | AllE | ExI | QShiftAll | QShiftEx | Auto | MP Tag Tag
              | GenTagged Tag | Gen | EFQ | DNE | LEM | Asm deriving (Show, Eq)
 type Line = (Formula, Rule, Tag)
 type Proof = [(Formula, Rule, Tag)]
 type Tag = Maybe String
-data ErrorMsg = MPIndexOutOfBound | MPWrongFormula | NotYetSupported
+data ErrorMsg = MPIllReference | MPWrongFormula | NotYetSupported
              | KMismatch | KMalformed | SMismatch | SMalformed | CMalformed
              | MPMismatch | MPMalformed deriving (Eq, Show)
 
 --instance Show Claim where show = claimToString
-
 -- claimToFormula :: Claim -> Formula
 -- claimToFormula (K f) = f
 -- claimToFormula (S f) = f
@@ -59,9 +60,14 @@ checkC :: Formula -> Maybe ErrorMsg
 checkC f = if isCriticalFormula f then Nothing else Just CMalformed
 
 checkModusPonens :: Formula -> Formula -> Formula -> Maybe ErrorMsg
-checkModusPonens f (ImpForm g1 g2) g3 = if alphaEqFormula g1 g3 && alphaEqFormula f g2
-      then Nothing else Just MPMismatch
-checkModusPonens _ _ _ = Just MPMalformed
+checkModusPonens f g1 g2
+ | checkModusPonensAux f g1 g2 = Nothing
+ | checkModusPonensAux f g2 g1 = Nothing
+ | otherwise = Just MPMalformed
+
+checkModusPonensAux :: Formula -> Formula -> Formula -> Bool
+checkModusPonensAux f (ImpForm g1 g2) g3 = alphaEqFormula g1 g3 && alphaEqFormula f g2
+checkModusPonensAux _ _ _ = False
 
 checkDNE :: Formula -> Bool
 checkDNE (ImpForm (NegForm (NegForm f)) g) = alphaEqFormula f g
@@ -76,10 +82,35 @@ checkLEM (DisjForm f (NegForm g)) = alphaEqFormula f g
 checkLEM (DisjForm (NegForm f) g) = alphaEqFormula f g
 checkLEM _ = False
 
+proofAndTagToLine :: Proof -> String -> Int -> Maybe Line
+proofAndTagToLine p t bound = proofAndTagToLineAux p t bound 0
+
+proofAndTagToLineAux :: Proof -> String -> Int -> Int -> Maybe Line
+proofAndTagToLineAux p t bound i
+ | i < bound = let l = p!!i
+                   (f, r, t') = l
+                   next = proofAndTagToLineAux p t bound (i+1)
+               in case t' of Nothing -> next
+                             Just s' -> if s' == t then Just l else next
+ | otherwise = Nothing
+
 checkClaims :: Proof -> [Maybe ErrorMsg]
 checkClaims p = checkClaimsAux p 0
 
-checkClaimsAux :: Proof -> Int -> [Maybe ErrorMsg]
+-- checkClaimsAux :: Proof -> Int -> [Maybe ErrorMsg]
+-- checkClaimsAux p offset
+--       | length p > offset = c:checkClaimsAux p (offset+1) where
+--             c = case p!!offset of
+--                   (f, r, t) -> case r of
+--                         K -> checkK f
+--                         S -> checkS f
+--                         MP Nothing Nothing -> checkModusPonens f (ImpForm f f) f
+--                         -- MPIndexed f i j -> if i<offset && j<offset
+--                         --       then checkModusPonens f (lineToFormula (p!!i)) (lineToFormula (p!!j))
+--                         --       else Just MPIndexOutOfBound
+--                         C -> checkC f
+--                         _ -> Just NotYetSupported
+
 checkClaimsAux p offset = if length p <= offset
       then []
       else c:checkClaimsAux p (offset+1) where
@@ -87,20 +118,29 @@ checkClaimsAux p offset = if length p <= offset
                   (f, r, t) -> case r of
                         K -> checkK f
                         S -> checkS f
-                        -- MPIndexed f i j -> if i<offset && j<offset
-                        --       then checkModusPonens f (lineToFormula (p!!i)) (lineToFormula (p!!j))
-                        --       else Just MPIndexOutOfBound
+                        MP (Just s1) (Just s2) ->
+                              -- Should be improved.  Brief coding possible.
+                              -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
+                              let ml1 = proofAndTagToLine p s1 offset
+                                  ml2 = proofAndTagToLine p s2 offset
+                              in if isNothing ml1 || isNothing ml2
+                                    then Just MPIllReference
+                                    else do (f1, r1, t1) <- ml1
+                                            (f2, r2, t2) <- ml2
+                                            checkModusPonens f f1 f2
                         C -> checkC f
                         _ -> Just NotYetSupported
 
 proofToDependency :: Proof -> [Int]
-proofToDependency p = proofToDependencyAux p (length p-1)
+--proofToDependency p = proofToDependencyAux p (length p-1)
+proofToDependency p = [0..length p-1]
 
 proofToDependencyAux :: Proof -> Int -> [Int]
 proofToDependencyAux p i = case p!!i of
       (f, r, t) -> case r of
                   K -> []
                   S -> []
+                  C -> []
 --                  MPTagged t1 t2 -> sort $ nub ([j, k] ++ proofToDependencyAux p j ++ proofToDependencyAux p k)
                   _ -> []
 
@@ -133,6 +173,6 @@ checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) dep
 
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)
-                        
+
 
                         return ls

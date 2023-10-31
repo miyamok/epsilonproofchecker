@@ -4,6 +4,7 @@ import Data.Char
 import Syntax
 import Proof
 import Axiom
+import GHC.Generics (S, C)
 
 newtype Parser a = P(String -> [(a, String)])
 type IdentDeclarations = ([VariableDeclaration], [ConstantDeclaration], [PredicateDeclaration])
@@ -215,15 +216,15 @@ primitiveformula pds vds cds = do symbol "("
                                   symbol ")"
                                   return f
                            <|> do symbol "~"
-                                  f <- impformula pds vds cds
+                                  f <- primitiveformula pds vds cds
                                   return (NegForm f)
                            <|> do symbol "all"
                                   x <- variable vds
-                                  f <- impformula pds vds cds
+                                  f <- primitiveformula pds vds cds
                                   return (ForallForm x f)
                            <|> do symbol "ex"
                                   x <- variable vds
-                                  f <- impformula pds vds cds
+                                  f <- primitiveformula pds vds cds
                                   return (ExistsForm x f)
                            <|> do predformula pds vds cds
 
@@ -239,18 +240,33 @@ primitiveformula pds vds cds = do symbol "("
 
 tag :: Parser (Maybe String)
 tag = do symbol "#"
-         t <- some letter
+         t <- some alphanum
          return (Just t)
         <|> return Nothing
 
 rule :: Parser Rule
 rule = do symbol "by"
-          r <- some letter
-          return (case r of
-            "K" -> K
-            "S" -> S
-            "C" -> C
-            "MP" -> MP)
+          r <- ruleAux
+          return r
+
+ruleAux :: Parser Rule
+ruleAux = do symbol "K"
+             return K
+       <|> do symbol "S"
+              return S
+       <|> do symbol "C"
+              return C
+       <|> do symbol "MP"
+              do symbol "("
+                 arg1 <- tag
+                 symbol ","
+                 arg2 <- tag
+                 symbol ")"
+                 return (MP arg1 arg2)
+               <|> do symbol "MP"
+                      return (MP Nothing Nothing)
+       <|> do symbol "Gen"
+              return Gen
 
 line :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Line
 line pds vds cds = do f <- formula pds vds cds

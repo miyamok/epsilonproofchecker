@@ -3,23 +3,25 @@ module Axiom where
 import Syntax
 import Data.List (nubBy, nub)
 import Data.Maybe (catMaybes)
+import Debug.Trace
 
 isCriticalFormula :: Formula -> Bool
-isCriticalFormula (ImpForm premise conclusion) = any (\f -> alphaEqFormula f conclusion) reconcl
+isCriticalFormula (ImpForm premise conclusion) = any (alphaEqFormula conclusion) reconcl
     where
-        epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
+        epsKernels = traceShowId $ catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
         substs = map (\kernel -> simpleFormulaUnificationAux premise kernel) epsKernels
         infos = filter (uncurry (\subst -> \epsKernel -> length subst == 1)) (zip substs epsKernels)
-        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTransform $ ExistsForm v f) infos
+        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
 isCriticalFormula _ = False
 
 --isCriticalFormulaAux :: Formula -> Bool
+isCriticalFormulaAux :: Formula -> [[(Term, Term)]]
 isCriticalFormulaAux (ImpForm premise conclusion) = substs
     where
         epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
         substs = map (\kernel -> simpleFormulaUnification premise kernel) epsKernels
         infos = filter (uncurry (\subst -> \epsKernel -> length subst == 1)) (zip substs epsKernels)
-        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTransform $ ExistsForm v f) infos
+        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
         result = any (\f -> alphaEqFormula f conclusion) reconcl
 
 simpleFormulaUnification :: Formula -> Formula -> [(Term, Term)]
@@ -50,14 +52,16 @@ simpleTermUnification :: Term -> Term -> [(Term, Term)]
 simpleTermUnification t s = nubBy alphaEqTermPair (simpleTermUnificationAux t s)
 
 simpleTermUnificationAux :: Term -> Term -> [(Term, Term)]
-simpleTermUnificationAux (VarTerm v) (VarTerm v') =
-    if v <= v' then [(VarTerm v, VarTerm v')] else [(VarTerm v', VarTerm v)]
+simpleTermUnificationAux (VarTerm v) (VarTerm v')
+  | v == v' = []
+  | v <= v' = [(VarTerm v, VarTerm v')]
+  | otherwise = [(VarTerm v', VarTerm v)]
 simpleTermUnificationAux (VarTerm v) t = [(VarTerm v, t)]
 simpleTermUnificationAux t (VarTerm v) = [(VarTerm v, t)]
 simpleTermUnificationAux (AppTerm c ts) (AppTerm c' ts') = concat $ map (uncurry simpleTermUnificationAux) (zip ts ts')
 simpleTermUnificationAux (EpsTerm v f) (EpsTerm v' f') = simpleFormulaUnificationAux g g'
     where
-        vars = nub(formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
+        vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
         freshvarterm = VarTerm (variablesToFreshVariable vars)
         g = substFormula v freshvarterm f
         g' = substFormula v' freshvarterm f'

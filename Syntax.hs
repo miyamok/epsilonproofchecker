@@ -165,14 +165,18 @@ termToImmediateSubformula (VarTerm v) = Nothing
 termToImmediateSubformula (AppTerm c ts) = Nothing
 termToImmediateSubformula (EpsTerm v f) = Just f
 
-epsTransform :: Formula -> Formula
-epsTransform (ExistsForm v f) = substFormula v (EpsTerm v f') f' where f' = epsTransform f
-epsTransform (ForallForm v f) = substFormula v (EpsTerm v f') f' where f' = NegForm (epsTransform f)
-epsTransform (PredForm p ts) = PredForm p ts
-epsTransform (NegForm f) = NegForm (epsTransform f)
-epsTransform (ImpForm f g) = ImpForm (epsTransform f) (epsTransform g)
-epsTransform (ConjForm f g) = ConjForm (epsTransform f) (epsTransform g)
-epsTransform (DisjForm f g) = DisjForm (epsTransform f) (epsTransform g)
+epsTranslation :: Formula -> Formula
+epsTranslation (ExistsForm v f) = substFormula v e f'
+      where e = EpsTerm v f'
+            f' = epsTranslation f
+epsTranslation (ForallForm v f) = substFormula v e f'
+      where e = EpsTerm v (NegForm f')
+            f' = epsTranslation f
+epsTranslation (PredForm p ts) = PredForm p ts
+epsTranslation (NegForm f) = NegForm (epsTranslation f)
+epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)
+epsTranslation (ConjForm f g) = ConjForm (epsTranslation f) (epsTranslation g)
+epsTranslation (DisjForm f g) = DisjForm (epsTranslation f) (epsTranslation g)
 
 variableToString :: Variable -> String
 variableToString (Var n i) = if i == -1 then n else n ++ show i
