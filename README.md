@@ -1,4 +1,5 @@
 # epsilonproofchecker
+Proof checker for Hilbert's epsilon calculus.
 ```
 ## ghc-9.2.8 used
 % ghc Main
