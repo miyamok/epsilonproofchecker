@@ -67,7 +67,7 @@ prettyPrintTerm (VarTerm v) = prettyPrintVariable v
 prettyPrintTerm (AppTerm c ts)
  | null ts = prettyPrintConstant c
  | otherwise = prettyPrintConstant c ++ prettyPrintArgTerms ts
-prettyPrintTerm (EpsTerm v f) = intercalate " " ["eps", prettyPrintVariable v, ppKer]
+prettyPrintTerm (EpsTerm v f) = concat ["eps ", prettyPrintVariable v, ppKer]
     where
         ppFla = prettyPrintFormula f
-        ppKer = if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
+        ppKer = if isBiconForm f then "(" ++ ppFla ++ ")" else " " ++ ppFla
