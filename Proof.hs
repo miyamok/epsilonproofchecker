@@ -3,9 +3,7 @@ import Syntax
 import Data.List
 import Data.Maybe
 import Axiom
-import Distribution.Simple.CCompiler (filenameCDialect)
 import Debug.Trace
-import Data.Time (timeZoneOffsetString)
 
 -- data Claim = K Formula | S Formula | ConjI Formula | ConjE1 Formula | ConjE2 Formula
 --              | DisjI1 Formula | DisjI2 Formula | DisjE Formula | Crit Formula

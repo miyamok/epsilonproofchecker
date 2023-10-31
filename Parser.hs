@@ -4,7 +4,6 @@ import Data.Char
 import Syntax
 import Proof
 import Axiom
-import GHC.Generics (S, C)
 
 newtype Parser a = P(String -> [(a, String)])
 type IdentDeclarations = ([VariableDeclaration], [ConstantDeclaration], [PredicateDeclaration])

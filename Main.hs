@@ -12,7 +12,8 @@ main = do
         then do ls <- fmap lines (readFile (head args))
                 let p = map (\l -> fst (head (parse (line defaultPredicates defaultVariables defaultConstants) l))) ls
                     b = checkProof p
-                    stmt = let (f, _, _) = last p in formulaToString f
+                    (f, r, t) = last p
+                    stmt = formulaToString f
                   in if b then
                      do putStrLn stmt
                         putStrLn "is proved"
