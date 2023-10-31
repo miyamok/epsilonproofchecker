@@ -211,3 +211,22 @@ termToString (AppTerm c ts) = if null ts then cstr else cstr ++ "(" ++ intercala
       where cstr = constantToString c
 --termToString (EpsTerm v f) = "ε" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
 termToString (EpsTerm v f) = "eps " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+
+isImpForm :: Formula -> Bool
+isImpForm (ImpForm _ _) = True
+isImpForm _ = False
+
+isDisjForm :: Formula -> Bool
+isDisjForm (DisjForm _ _) = True
+isDisjForm _ = False
+
+isConjForm :: Formula -> Bool
+isConjForm (ConjForm _ _) = True
+isConjForm _ = False
+
+isBiconForm :: Formula -> Bool
+isBiconForm (PredForm p ts) = False
+isBiconForm (ForallForm v f) = False
+isBiconForm (ExistsForm v f) = False
+isBiconForm (NegForm f) = False
+isBiconForm _ = True

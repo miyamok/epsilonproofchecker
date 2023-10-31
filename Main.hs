@@ -5,6 +5,7 @@ import Parser
 import System.Directory.Internal.Prelude (getArgs)
 import Debug.Trace
 import Data.List
+import PrettyPrint
 
 main :: IO ()
 main = do
@@ -15,8 +16,8 @@ main = do
                     b = checkProof p
                     asms = proofToAssumptionFormulas p
                     (f, r, t) = last p
-                    stmt = formulaToString f
-                    fs = intercalate ", " (map formulaToString asms)
+                    stmt = prettyPrintFormula f
+                    fs = intercalate ", " (map prettyPrintFormula asms)
                   in if b then
                     do  putStrLn "Correct proof of"
                         putStrLn (intercalate " " [fs, "⊢", stmt])
