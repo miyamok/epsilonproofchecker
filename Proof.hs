@@ -94,6 +94,28 @@ proofAndTagToLineAux p t bound i
                              Just s' -> if s' == t then Just l else next
  | otherwise = Nothing
 
+proofAndFormulaToLineIndex :: Proof -> Formula -> Int -> Maybe Int
+proofAndFormulaToLineIndex p f bound = proofAndFormulaToLineIndexAux p f bound 0
+
+proofAndFormulaToLineIndexAux :: Proof -> Formula -> Int -> Int -> Maybe Int
+proofAndFormulaToLineIndexAux p f bound i
+ | i < bound = let l = p!!i
+                   (f', r', t') = l
+                  in if alphaEqFormula f' f then Just i else proofAndFormulaToLineIndexAux p f bound (i+1)
+ | otherwise = Nothing
+
+proofAndConclusionToLineIndices :: Proof -> Formula -> Int -> [Int]
+proofAndConclusionToLineIndices p f b = proofAndConclusionToLineIndicesAux p f b 0
+
+proofAndConclusionToLineIndicesAux :: Proof -> Formula -> Int -> Int -> [Int]
+proofAndConclusionToLineIndicesAux p concl bound i
+ | i < bound = let l = p!!i
+                   (f, r, t) = l
+                   nx = proofAndConclusionToLineIndicesAux p concl bound (i+1)
+                  in case f of (ImpForm g g') -> if alphaEqFormula concl g' then i:nx else nx
+                               _ -> nx
+ | otherwise = []
+
 checkClaims :: Proof -> [Maybe ErrorMsg]
 checkClaims p = checkClaimsAux p 0
 
@@ -128,6 +150,12 @@ checkClaimsAux p offset = if length p <= offset
                                     else do (f1, r1, t1) <- ml1
                                             (f2, r2, t2) <- ml2
                                             checkModusPonens f f1 f2
+                        MP Nothing Nothing ->
+                              let is = proofAndConclusionToLineIndices p f offset -- line indices with matching conclusion
+                                  prems = map (\i -> let (f, r, t) = (p!!i) in case f of (ImpForm g _) -> g) is
+                              in if any isJust (map (\f -> proofAndFormulaToLineIndex p f offset) prems)
+                                     then Nothing
+                                     else Just MPMalformed
                         C -> checkC f
                         _ -> Just NotYetSupported
 

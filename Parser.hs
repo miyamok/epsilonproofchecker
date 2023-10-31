@@ -257,14 +257,14 @@ ruleAux = do symbol "K"
        <|> do symbol "C"
               return C
        <|> do symbol "MP"
-              do symbol "("
-                 arg1 <- tag
-                 symbol ","
-                 arg2 <- tag
-                 symbol ")"
-                 return (MP arg1 arg2)
-               <|> do symbol "MP"
-                      return (MP Nothing Nothing)
+              symbol "("
+              arg1 <- tag
+              symbol ","
+              arg2 <- tag
+              symbol ")"
+              return (MP arg1 arg2)
+       <|> do symbol "MP"
+              return (MP Nothing Nothing)
        <|> do symbol "Gen"
               return Gen
 
