@@ -264,8 +264,8 @@ ruleAux = do symbol "K"
               return (MP arg1 arg2)
        <|> do symbol "MP"
               return (MP Nothing Nothing)
-       <|> do symbol "Gen"
-              return Gen
+       <|> do symbol "Asm"
+              return Asm
 
 line :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Line
 line pds vds cds = do f <- formula pds vds cds

@@ -80,6 +80,13 @@ checkLEM (DisjForm f (NegForm g)) = alphaEqFormula f g
 checkLEM (DisjForm (NegForm f) g) = alphaEqFormula f g
 checkLEM _ = False
 
+proofToAssumptionFormulas :: Proof -> [Formula]
+proofToAssumptionFormulas [] = []
+proofToAssumptionFormulas (l:ls) = let (f, r, t) = l
+                                       nx = proofToAssumptionFormulas ls
+                                    in case r of Asm -> f:nx
+                                                 _ -> nx
+
 proofAndTagToLine :: Proof -> String -> Int -> Maybe Line
 proofAndTagToLine p t bound = proofAndTagToLineAux p t bound 0
 
@@ -155,6 +162,7 @@ checkClaimsAux p offset = if length p <= offset
                                      then Nothing
                                      else Just MPMalformed
                         C -> checkC f
+                        Asm -> Nothing
                         _ -> Just NotYetSupported
 
 proofToDependency :: Proof -> [Int]
@@ -167,6 +175,7 @@ proofToDependencyAux p i = case p!!i of
                   K -> []
                   S -> []
                   C -> []
+                  Asm -> []
 --                  MPTagged t1 t2 -> sort $ nub ([j, k] ++ proofToDependencyAux p j ++ proofToDependencyAux p k)
                   _ -> []
 
