@@ -121,7 +121,7 @@ A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let <code>V</code> be a set of variables.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
+Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let V be a set of variables.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in V.
 ```
 t ::= x | c | f(t)
