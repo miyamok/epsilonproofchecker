@@ -76,9 +76,7 @@ If there is a proof of <code>A</code>, we write
 ⊢A
 ```
 If a proof of <code>A</code> comes with assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
-```
 <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>
-```
 and it means that <code>A</code> is proved under the condions that <code>A<sub>1</sub>, ..., A<sub>k</sub></code> are all true.
 A reason is either an axiom or an inference rule.  We have the following axioms
 ```
