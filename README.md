@@ -118,7 +118,7 @@ Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in <code>V</code>.
 ```
 t ::= x | c | f(t)
-F ::= A | ... | Q(t)
+F ::= ... | Q(t)
 ```
 Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
 Its axioms and inference rule are same as propositional calculus.
@@ -126,8 +126,8 @@ Its axioms and inference rule are same as propositional calculus.
 Predicate caluclus is an extension of elementary calculus by quantifications.
 The language is enriched by the existential quantifier and the universal quantifier.  The syntax is given as follows.
 ```
-t ::= x | c | f(t)
-F ::= A | ... | ex x F | all x F
+t ::= ...
+F ::= ... | ex x F | all x F
 ```
 Assume <code>E(x)</code> is a formula containing a free variable x.  One interpretation of this formula is that it states some property of <code>x</code>.
 By means of the quantifiers, it is possible to form the following quantified formulas.
@@ -174,8 +174,8 @@ Epsilon calculus extends elementary calculus by epsilon operator and so-called c
 Epsilon operator is denoted by eps and forming a term taking a variable and a formula.
 The language definition of epsilon calculus is as follows.
 ```
-t ::= c | ... | eps x F
-F ::= A | ... 
+t ::= ... | eps x F
+F ::= ... 
 ```
 A term of the form <code>eps x E(x)</code> is called epsilon term.  Intuitive meaning of an epsilon term <code>eps x E(x)</code> is the term which satisfies the property of <code>x</code> denoted by <code>E(x)</code>.  Therefore, epsilon operator is often explained as a choice operator.
 This intuition is formulated by the folliong critical axiom.
