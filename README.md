@@ -89,8 +89,8 @@ and one inference rule.
 ```
 If ⊢A -> B and ⊢A then ⊢B
 ```
-Each of the above has the names K, S, EFQ, DNE, and MP, respectively.
-K and S are traditional names, and the rest stands for ex falso quodlibet, double negation elimitaion, and modus ponens.
+Each of the above has the names <code>K</code>, <code>S</code>, <code>EFQ</code>, <code>DNE</code>, and <code>MP</code>, respectively.
+<code>K</code> and <code>S</code> are traditional names, and the rest stands for ex falso quodlibet, double negation elimitaion, and modus ponens.
 Note that the axioms are actually axiom schemas, namely, those propositional variables in the axiom formulas may be replaced by arbitrary formulas.  In order words, those occurrences of <code>A</code>, <code>B</code>, <code>C</code> are metavariables and diffrent from propositional variables, and those metavariables will be instantiated by concrete formulas in actual use.
 Here we give a proof of the claim <code>A</code> implies <code>A</code>.
 ```
@@ -100,10 +100,10 @@ A -> (A -> A) -> A by K
 A -> A -> A by K
 A -> A by MP
 ```
-For example in the second line, the axiom scheme K got its metavariable <code>A</code> replaced by a formula <code>A</code>, and another metavariable <code>B</code> replaced by a formula <code>A -> A</code>.
+For example in the second line, the axiom scheme <code>K</code> got its metavariable <code>A</code> replaced by a formula <code>A</code>, and another metavariable <code>B</code> replaced by a formula <code>A -> A</code>.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub></code> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let V be a set of variables.  Also, let <code>Q</code> be an element of <code>P<sub>1</sub></code>, a set of unary atomic predicates.
+Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub></code> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let <code>V</code> be a set of variables.  Also, let <code>Q</code> be an element of <code>P<sub>1</sub></code>, a set of unary atomic predicates.
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in <code>V</code>.
 ```
 t ::= x | c | f(t)
