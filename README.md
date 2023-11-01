@@ -125,3 +125,39 @@ This intuition is formulated by the folliong critical axiom.
 E(t) -> E(eps x E(x))
 ```
 where t is an arbitrary term in epsilon calculus.
+Epsilon operator is expressive enough to define the existential and universal quantifiers of predicate logic.
+Let E(x) be a formula, then the corresponding quantified formulas are defined as follows. 
+```
+ex x E(x) := E(eps x E(x))
+all x E(x) := E(eps x ~E(x))
+```
+We are going to look at examples.
+The following formula is known as independence of premise, where the formula A does not contain a free variable x.
+```
+(A -> ex x P(x)) -> ex x (A -> P(x))
+```
+Applying the definition of the existential quantifier by epsilon operator, the above formula goes to the following one.
+```
+(A -> P(eps x P(x))) -> A -> B(eps x(A -> P(x)))
+```
+A proof to this formula is given in examples/ex01_ex01_independence_of_premise.proof .
+```
+(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
+```
+Notice that this formula is an instance of the critical axiom.
+Another examples is a so-called Drinker's paradox.
+```
+ex x(P(x) -> all x P(x))
+```
+The meaning of this provable formula is often explained through a story of a pub, that is, there is a guy in a pub such that if the guy is drinking then everybody in the pub is drinking.
+This claim may sound a bit confusing, and this is the reason why this formula is called a paradox.  If there is a guy in the pub who is not drinking, you pick this guy, then the premise of the implication goes false, hence the whole formula is true.  Otherwise everybody is drinking, hence you can pick an arbitrary guy.  In case of a real pub, it is decidable whether there is a guy who is not drinking.  This formula is true even in case the matter is undecidable.
+The epsilon version of the above formula is
+```
+P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
+```
+A proof is given in examples/ex05_drinkers_paradox.proof
+After proving the identity formula P(eps x ~P(x)) -> P(eps x ~P(x)), the rest of the proof goes as follows.
+```
+(P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
+P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
+```
