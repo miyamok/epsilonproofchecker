@@ -3,7 +3,7 @@ Proof checker for Hilbert's epsilon calculus.
 ```
 ## ghc-9.2.8 used
 % ghc Main
-% ./Main ex04_identity.proof
+% ./Main examples/ex04_identity.proof
 Correct proof of
  ⊢ A -> A
 % cat ex04_identity.proof 
@@ -12,13 +12,13 @@ A -> A -> A by K
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 (A -> A -> A) -> A -> A by MP
 A -> A by MP
-% ./Main ex05_drinkers_paradox.proof
+% ./Main examples/ex05_drinkers_paradox.proof
 Correct proof of
  ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 % ./Main ex06_wrong.proof
 Not a proof of
 A -> B
-% ./Main ex08_assumption.proof 
+% ./Main examples/ex08_assumption.proof 
 Correct proof of
 A ⊢ A
 % 
