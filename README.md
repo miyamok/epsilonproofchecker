@@ -241,8 +241,8 @@ Axiom name | Scheme | Note
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
 <code>AllE</code> | <code>all x E(x) -> E(t)</code>
 <code>ExI</code> | <code>E(t) -> ex x E(x)</code>
-<code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | x ∉ FV(B) and (x=y or y ∉ FV(A(x)))
-<code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | x ∉ FV(B) and (x=y or y ∉ FV(A(x)))
+<code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
+<code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>, <code>\|</code> and <code>&</code>
 
