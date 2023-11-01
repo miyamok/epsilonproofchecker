@@ -188,11 +188,11 @@ Axiom name | Scheme | Note
 <code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> has higher priority than <code>-></code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
-<code>DisjI1</code> | <code>A -> A \| B</code> | <code>|</code> has a priority between <code>-></code> and <code>&</code>
+<code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> has a priority between <code>-></code> and <code>&</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
 <code>EFQ</code> | <code>bot -> A</code>
-<code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has higher priority than any of <code>-></code>, <code>|</code> and <code>&</code>
+<code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has higher priority than any of <code>-></code>, <code>\|</code> and <code>&</code>
 
 The inference rule <code>MP</code> is deriving <code>B</code> from previous proof steps of <code>A -> B</code> and <code>A</code>.
 The search for suitable proof steps is done automatically.
