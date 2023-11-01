@@ -269,6 +269,21 @@ ruleAux = do symbol "K"
               return EFQ
        <|> do symbol "DNE"
               return DNE
+       <|> do symbol "AllE"
+              return AllE
+       <|> do symbol "ExI"
+              return ExI
+       <|> do symbol "AllShift"
+              return AllShift
+       <|> do symbol "ExShift"
+              return ExShift
+       <|> do symbol "Gen"
+              symbol "("
+              arg <- tag
+              symbol ")"
+              return (Gen arg)
+       <|> do symbol "Gen"
+              return (Gen Nothing)
        <|> do symbol "C"
               return C
        <|> do symbol "MP"
@@ -298,3 +313,10 @@ defaultConstants = [("f",1), ("g", 1), ("c", 0), ("a", 0), ("b", 0), ("h", 2)]
 defaultPredicates :: [(String, Int)]
 defaultPredicates = [("P", 1), ("A", 0), ("Q", 1), ("R", 2), ("B", 0), ("C", 0)]
 
+pt :: String -> Term
+pt s = let res = parse (term defaultPredicates defaultVariables defaultConstants) s
+       in case res of [(t, r)] -> t
+
+pf :: String -> Formula
+pf s = let res = parse (formula defaultPredicates defaultVariables defaultConstants) s
+       in case res of [(f, r)] -> f

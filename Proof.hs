@@ -5,12 +5,6 @@ import Data.Maybe
 import Axiom
 import Debug.Trace
 
--- data Claim = K Formula | S Formula | ConjI Formula | ConjE1 Formula | ConjE2 Formula
---              | DisjI1 Formula | DisjI2 Formula | DisjE Formula | Crit Formula
---              | AllE Formula | ExI Formula | QShiftAll Formula | QShiftEx Formula
---              | Auto Formula | MPIndexed Formula Index Index | MP Formula
---              | GenIndexed Formula | Gen Formula | EFQ Formula | DNE Formula | LEM Formula
---              | Asm Formula deriving (Eq)
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
              | Gen Tag | EFQ | DNE | LEM | Asm deriving (Show, Eq)
@@ -21,25 +15,8 @@ data ErrorMsg = MPIllReference | MPWrongFormula | NotYetSupported
              | KMismatch | KMalformed | SMismatch | SMalformed | CMalformed
              | MPMismatch | MPMalformed | Malformed deriving (Eq, Show)
 
---instance Show Claim where show = claimToString
--- claimToFormula :: Claim -> Formula
--- claimToFormula (K f) = f
--- claimToFormula (S f) = f
--- claimToFormula (MPIndexed f i j) = f
-
 lineToFormula :: Line -> Formula
 lineToFormula (f, _, _) = f
-
--- claimToString :: Claim -> String
--- claimToString (K f) = show f ++ " by " ++ "K"
--- claimToString (S f) = show f ++ " by " ++ "S"
--- claimToString (MPIndexed f i j) = show f ++ " by MP " ++ show i ++ "," ++ show j
--- claimToString (Crit f) = show f ++ " by C"
--- claimToString _ = ""
-
--- proofToString :: Proof -> String
--- -- proofToString p = concat (map claimToString p)
--- proofToString p = unlines (zipWith (\ n c -> show n ++ " " ++ claimToString c) [0..] p)
 
 checkAuto :: Formula -> Bool
 checkAuto f = True
@@ -115,19 +92,25 @@ checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g
             then Nothing
             else Just Malformed
 
-checkGen :: Formula -> Formula -> Proof -> Maybe ErrorMsg
-checkGen (ForallForm v f) g p = 
-      let
-            asms = proofToAssumptionFormulas p
-            asmFvars = nub $ concat $ (map formulaToFreeVariables asms)
-            substs = simpleFormulaUnification f g
-      in if (alphaEqFormula f g && not (v `elem` asmFvars))
-            then Nothing
-            else if length substs == 1
-                  then let [(VarTerm v1, VarTerm v2)] = substs
-                        in if v==v1 then if not (v1 `elem` formulaToFreeVariables f) && not (v2 `elem` asmFvars) then Nothing else Just Malformed
-                                    else if not (v2 `elem` formulaToFreeVariables f) && not (v1 `elem` asmFvars) then Nothing else Just Malformed
-                  else Just Malformed
+genProofToPremiseIndices :: Proof -> [Int]
+genProofToPremiseIndices p
+ | length p < 2 = []
+ | otherwise = let (genFla, _, _) = last p
+                   genFlaKernel = case genFla of (ForallForm v f) -> f
+                   prems = map (\s -> let (f, _, _) = s in f) (init p)
+                   info = map (\prem -> alphaEqFormula prem genFlaKernel || (not $ null $ simpleFormulaUnification prem genFlaKernel)) prems
+                  in map snd (filter (\(x, i) -> x) (zip info [0..]))
+
+checkGen :: Proof -> Int -> Tag -> Maybe ErrorMsg
+checkGen p i t =
+      let pproof = take (i+1) p
+          is = genProofToPremiseIndices pproof
+          asms = proofToAssumptionFormulas p
+          freeVars = concat $ map formulaToFreeVariables asms
+          genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
+      in if genVar `elem` freeVars then Just Malformed
+         else case t of Nothing -> if null is then Just Malformed else Nothing
+                        Just s -> if any (`elem` is) (proofAndTagStringToIndices pproof s) then Nothing else Just Malformed
 
 checkModusPonens :: Formula -> Formula -> Formula -> Maybe ErrorMsg
 checkModusPonens f g1 g2
@@ -159,27 +142,39 @@ proofToAssumptionFormulas (l:ls) = let (f, r, t) = l
                                     in case r of Asm -> f:nx
                                                  _ -> nx
 
-proofAndTagToLine :: Proof -> String -> Int -> Maybe Line
-proofAndTagToLine p t bound = proofAndTagToLineAux p t bound 0
+proofAndTagStringToIndices :: Proof -> String -> [Int]
+proofAndTagStringToIndices p s = proofAndTagStringToIndicesAux p s 0
 
-proofAndTagToLineAux :: Proof -> String -> Int -> Int -> Maybe Line
-proofAndTagToLineAux p t bound i
- | i < bound = let l = p!!i
+proofAndTagStringToIndicesAux :: Proof -> String -> Int -> [Int]
+proofAndTagStringToIndicesAux p s i
+ | i >= length p = []
+ | otherwise = let (f, _, t) = p!!i
+                   nx = proofAndTagStringToIndicesAux p s (i+1)
+                in case t of Nothing -> nx
+                             Just s' -> if s'==s then i:nx else nx
+
+proofAndTagStringToLine :: Proof -> String -> Maybe Line
+proofAndTagStringToLine p t = proofAndTagStringToLineAux p t 0
+
+proofAndTagStringToLineAux :: Proof -> String -> Int -> Maybe Line
+proofAndTagStringToLineAux p t i
+ | i >= length p = Nothing
+ | otherwise = let l = p!!i
                    (f, r, t') = l
-                   next = proofAndTagToLineAux p t bound (i+1)
+                   next = proofAndTagStringToLineAux p t (i+1)
                in case t' of Nothing -> next
                              Just s' -> if s' == t then Just l else next
- | otherwise = Nothing
 
-proofAndFormulaToLineIndex :: Proof -> Formula -> Int -> Maybe Int
-proofAndFormulaToLineIndex p f bound = proofAndFormulaToLineIndexAux p f bound 0
+proofAndFormulaToLineIndices :: Proof -> Formula -> Int -> [Int]
+proofAndFormulaToLineIndices p f bound = proofAndFormulaToLineIndicesAux p f bound 0
 
-proofAndFormulaToLineIndexAux :: Proof -> Formula -> Int -> Int -> Maybe Int
-proofAndFormulaToLineIndexAux p f bound i
+proofAndFormulaToLineIndicesAux :: Proof -> Formula -> Int -> Int -> [Int]
+proofAndFormulaToLineIndicesAux p f bound i
  | i < bound = let l = p!!i
                    (f', r', t') = l
-                  in if alphaEqFormula f' f then Just i else proofAndFormulaToLineIndexAux p f bound (i+1)
- | otherwise = Nothing
+                   nx = proofAndFormulaToLineIndicesAux p f bound (i+1)
+                  in if alphaEqFormula f' f then i:nx else nx
+ | otherwise = []
 
 proofAndConclusionToLineIndices :: Proof -> Formula -> Int -> [Int]
 proofAndConclusionToLineIndices p f b = proofAndConclusionToLineIndicesAux p f b 0
@@ -196,20 +191,6 @@ proofAndConclusionToLineIndicesAux p concl bound i
 checkClaims :: Proof -> [Maybe ErrorMsg]
 checkClaims p = checkClaimsAux p 0
 
--- checkClaimsAux :: Proof -> Int -> [Maybe ErrorMsg]
--- checkClaimsAux p offset
---       | length p > offset = c:checkClaimsAux p (offset+1) where
---             c = case p!!offset of
---                   (f, r, t) -> case r of
---                         K -> checkK f
---                         S -> checkS f
---                         MP Nothing Nothing -> checkModusPonens f (ImpForm f f) f
---                         -- MPIndexed f i j -> if i<offset && j<offset
---                         --       then checkModusPonens f (lineToFormula (p!!i)) (lineToFormula (p!!j))
---                         --       else Just MPIndexOutOfBound
---                         C -> checkC f
---                         _ -> Just NotYetSupported
-
 checkClaimsAux p offset = if length p <= offset
       then []
       else c:checkClaimsAux p (offset+1) where
@@ -225,11 +206,16 @@ checkClaimsAux p offset = if length p <= offset
                         DisjE -> checkDisjE f
                         EFQ -> checkEFQ f
                         DNE -> checkDNE f
+                        AllE -> checkAllE f
+                        ExI -> checkExI f
+                        AllShift -> checkAllShift f
+                        ExShift -> checkExShift f
+                        Gen t -> checkGen p offset t
                         MP (Just s1) (Just s2) ->
                               -- Should be improved.  Brief coding possible.
                               -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
-                              let ml1 = proofAndTagToLine p s1 offset
-                                  ml2 = proofAndTagToLine p s2 offset
+                              let ml1 = proofAndTagStringToLine (take offset p) s1
+                                  ml2 = proofAndTagStringToLine (take offset p) s2
                               in if isNothing ml1 || isNothing ml2
                                     then Just MPIllReference
                                     else do (f1, r1, t1) <- ml1
@@ -238,7 +224,7 @@ checkClaimsAux p offset = if length p <= offset
                         MP Nothing Nothing ->
                               let is = proofAndConclusionToLineIndices p f offset -- line indices with matching conclusion
                                   prems = map (\i -> let (f, r, t) = (p!!i) in case f of (ImpForm g _) -> g) is
-                              in if any isJust (map (\f -> proofAndFormulaToLineIndex p f offset) prems)
+                              in if any (not . null) (map (\f -> proofAndFormulaToLineIndices p f offset) prems)
                                      then Nothing
                                      else Just MPMalformed
                         C -> checkC f

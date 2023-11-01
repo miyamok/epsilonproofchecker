@@ -1,28 +1,17 @@
 module Axiom where
-
 import Syntax
 import Data.List (nubBy, nub)
 import Data.Maybe (catMaybes)
 import Debug.Trace
 
 isCriticalFormula :: Formula -> Bool
-isCriticalFormula (ImpForm premise conclusion) = any (alphaEqFormula conclusion) reconcl
-    where
-        epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
-        substs = map (\kernel -> simpleFormulaUnificationAux premise kernel) epsKernels
-        infos = filter (uncurry (\subst -> \epsKernel -> length subst == 1)) (zip substs epsKernels)
-        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
-isCriticalFormula _ = False
-
---isCriticalFormulaAux :: Formula -> Bool
-isCriticalFormulaAux :: Formula -> [[(Term, Term)]]
-isCriticalFormulaAux (ImpForm premise conclusion) = substs
+isCriticalFormula (ImpForm premise conclusion) = any (alphaEqFormula conclusion) concl'
     where
         epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
         substs = map (\kernel -> simpleFormulaUnification premise kernel) epsKernels
         infos = filter (uncurry (\subst -> \epsKernel -> length subst == 1)) (zip substs epsKernels)
-        reconcl = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
-        result = any (\f -> alphaEqFormula f conclusion) reconcl
+        concl' = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
+isCriticalFormula _ = False
 
 simpleFormulaUnification :: Formula -> Formula -> [(Term, Term)]
 simpleFormulaUnification f g = nubBy alphaEqTermPair (simpleFormulaUnificationAux f g)
