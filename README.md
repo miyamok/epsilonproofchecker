@@ -1,4 +1,4 @@
-# epsilonproofchecker
+# epsilon --- a proof checker for Hilbert's epsilon calculus
 Proof checker for Hilbert's epsilon calculus.
 ```
 ## ghc-9.2.8 used
@@ -128,7 +128,28 @@ all x E(x)
 ```
 They denote that there is some x such that E(x) holds, and that for any x, E(x) holds.
 
-(to write about free and bound variables and term substitution)
+We have two kinds of variable occurrences due to the presence of the quantifiers.
+Assume a formula <code>E(x)</code> is free from a quantifier and <code>x</code> has at least one occurrences in <code>E(x)</code>.
+In the formula <code>all x E(x)</code>, all the occurrences of <code>x</code> is bounded, while all the occurrences of <code>x</code> in <code>E(x)</code> is free.
+This variable binding mechanism is important to formulate the logic of predicate calculus, and the definition of free varialbles <code>FV</code> is given as follows.
+```
+FV(x) = {x}
+FV(f(t)) = FV(t)
+FV(eps x E(x)) = FV(E(x)) - {x}
+FV(bot) = {}
+FV(P(t)) = FV(t)
+FV(A -> B) = FV(A) ∪ FV(B)
+FV(A & B) = FV(A) ∪ FV(B)
+FV(A | B) = FV(A) ∪ FV(B)
+FV(all x E(x)) = FV(E(x)) - {x}
+FV(ex x E(x)) = FV(E(x)) - {x}
+```
+From now on, if we write a formula in the form <code>A(x)</code>, it means that <code>x</code> may occur freely in <code>A(x)</code>, however, it is not the case that a bound variable <code>x</code> is indicated in this notation.
+Moreover, a change of bound variable names doesn't affect the meaning of formulas and terms.
+Consider a formula <code>A(x)</code> which does not have a free occurrence of variables other than <code>x</code>.
+Then, <code>ex x A(x)</code> is equivalent as <code>ex y A(y)</code> for any variable <code>y</code>.
+This is same as the fact that formal argument names of a function definition are changeable without modifying the meaning of the function.
+It also requires a delicate treatment of the substitution, that is, by replacing <code>x</code> in <code>A(x)</code> by <code>t</code>, we should avoid to get any free variable in <code>t</code> newly captured.  We assume bound variables in <code>A(x)</code> are properly renamed before the operation of substitution, so that there is no free variable in <code>t</code> which is bound in <code>A(t)</code>.  For example, let a formula <code>A(x)</code> be <code>ex y (P(x) & P(y))</code>.  Apparently, the occurrence of <code>x</code> is free and the ones of <code>y</code> are bound.  In case we consider a substitution <code>A(y)</code>, we cannot simply replace <code>x</code> in <code>ex y (P(x) & P(y))</code> by <code>y</code> to get <code>ex y (P(y) & P(y))</code>.  The right way to do the substitution is that we rename the bound variable <code>y</code> in <code>A(y)</code> before the replacement, for example by using a fresh variable <code>z</code>, we form a logically equivalent formula <code>ex z (P(x) & P(z))</code>, and perform the replacement to get <code>ex z (P(y) & P(z))</code>.
 
 In order to reason about formulas involving the quantifiers, predicate calculus employs additional 4 axioms and 1 inference rule.
 ```
