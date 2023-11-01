@@ -75,6 +75,11 @@ If there is a proof of A, we write
 ```
 ⊢A
 ```
+If a proof of <code>A</code> comes with assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
+```
+A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A
+```
+and it means that <code>A</code> is proved under the condions that <code>A<sub>1</sub>, ..., A<sub>k</sub></code> are all true.
 A reason is either an axiom or an inference rule.  We have the following axioms
 ```
 A -> B -> A
