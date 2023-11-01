@@ -253,6 +253,7 @@ If a proof comes with assumptions, those assumptions are displayed in the left h
 The inference rule <code>MP</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ B</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A -> B</code> and <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>, two of which should be somewhere in previous proof steps.
 The inference rule <code>Gen</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x A(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A(x)</code> which should be a previous proof step, under the condition that <code>x</code> doesn't have a free occurrrence in any of the assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
 The search for suitable proof steps for those inference rules is done automatically.
+Note that the formula <code>A</code> and <code>A(x)</code> are distinct from any indexed ones <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 
 Example proofs are found in the <code>examples</code> directory, which cover all of the above mentioned features.
