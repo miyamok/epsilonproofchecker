@@ -6,7 +6,7 @@ Proof checker for Hilbert's epsilon calculus.
 % ./Main examples/ex04_identity.proof
 Correct proof of
  ⊢ A -> A
-% cat ex04_identity.proof 
+% cat examples/ex04_identity.proof 
 A -> (A -> A) -> A by K
 A -> A -> A by K
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
@@ -15,7 +15,7 @@ A -> A by MP
 % ./Main examples/ex05_drinkers_paradox.proof
 Correct proof of
  ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
-% ./Main ex06_wrong.proof
+% ./Main examples/ex06_wrong.proof
 Not a proof of
 A -> B
 % ./Main examples/ex08_assumption.proof 
