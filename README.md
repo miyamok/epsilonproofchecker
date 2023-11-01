@@ -31,11 +31,9 @@ Correct proof of
 A ⊢ A
 % 
 ```
-<a name="logic"/>
 ## Logic
 Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator and an additional axiom so-called critical axiom is available.
 Elementary calculus is propositional logic with predicates and terms in its language, maintaining the same principles for logical reasoning.
-<a name="prop"/>
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
 Propositional formula <code>F</code> is defined as follows, where <code>P<sub>0</sub></code> is ranging over propositional variables and <code>A</code> is an arbitrary element of <code>P<sub>0</sub></code>.
@@ -121,7 +119,6 @@ A conjunction formula <code>A & B</code> claims that <code>A</code> and <code>B<
 A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</code> hold.  Note that the disjunction doesn't mean that there is a possibility of both <code>A</code> and <code>B</code> hold.
 
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
-<a name="elem"/>
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
 Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub></code> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let <code>V</code> be a set of variables.  Also, let <code>Q</code> be an element of <code>P<sub>1</sub></code>, a set of unary atomic predicates.
@@ -180,7 +177,6 @@ all x(A(x) -> B) -> (ex y A(y) -> B)
 ```
 Here we assumed <code>x</code> does not have a free occurrence in <code>B</code>, and also if <code>x</code> is distinct variable from <code>y</code>, then <code>y</code> doesn't have a free occurrence in <code>A(x)</code>.
 The new inference rule is called the rule of generalization, which allows to derive <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x E(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ E(x)</code> under the condition that <code>x</code> does not have a free occurrence in <code>A<sub>1</sub>, ..., A<sub>k</sub></code> and also that if <code>x</code> is distinct variable from <code>y</code>, then <code>y</code> doesn't have a free occurrence in <code>A(x)</code>.
-<a name="eps"/>
 ### Epsilon calculus
 Epsilon calculus extends elementary calculus by epsilon operator and so-called critical axiom.
 Epsilon operator is denoted by eps and forming a term taking a variable and a formula.
@@ -231,7 +227,6 @@ After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ```
-<a name="syntax"/>
 ## Syntax for proof scripts
 Epsilonproofchecker processes a proof script which is stored as a file in the system.
 A proof script is a list of proof steps, each of which consists of the following ingredients.
@@ -281,7 +276,6 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 
 Example proofs are found in the <code>examples</code> directory.
 
-<a name="todo"/>
 ## To do list
 - Proof automation through the external prover Z3
 - Epsilon equality axiom to implement
