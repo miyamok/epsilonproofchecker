@@ -75,7 +75,7 @@ If there is a proof of <code>A</code>, we write
 ```
 ⊢A
 ```
-If a proof of <code>A</code> comes with assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
+If a proof shows <code>A</code> from assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
 <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>
 and it means that <code>A</code> is proved under the condions that <code>A<sub>1</sub>, ..., A<sub>k</sub></code> are all true.
 A reason is either an axiom or an inference rule.  We have the following axioms
@@ -91,8 +91,8 @@ If ⊢A -> B and ⊢A then ⊢B
 ```
 Each of the above has the names K, S, EFQ, DNE, and MP, respectively.
 K and S are traditional names, and the rest stands for ex falso quodlibet, double negation elimitaion, and modus ponens.
-Note that the axioms are actually axiom schemas, namely, those propositional variables in the axiom formulas may be replaced by arbitrary formulas.  In order words, those occurrences of A, B, C are metavariables and diffrent from propositional variables, and those metavariables will be instantiated by concrete formulas in actual use.
-Here we give a proof of the claim A implies A.
+Note that the axioms are actually axiom schemas, namely, those propositional variables in the axiom formulas may be replaced by arbitrary formulas.  In order words, those occurrences of <code>A</code>, <code>B</code>, <code>C</code> are metavariables and diffrent from propositional variables, and those metavariables will be instantiated by concrete formulas in actual use.
+Here we give a proof of the claim <code>A</code> implies <code>A</code>.
 ```
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 A -> (A -> A) -> A by K
@@ -100,16 +100,16 @@ A -> (A -> A) -> A by K
 A -> A -> A by K
 A -> A by MP
 ```
-For example in the second line, the axiom scheme K got its metavariable A replaced by a formula A, and another metavariable B replaced by a formula A -> A.
+For example in the second line, the axiom scheme K got its metavariable <code>A</code> replaced by a formula <code>A</code>, and another metavariable <code>B</code> replaced by a formula <code>A -> A</code>.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let c and f be nullary and unary constants.  Let V be a set of variables.  Also, let Q be an element of P<sub>1</sub>, a set of unary atomic predicates.
-Then the terms t and formulas F of elementary calculus is given as follows, assuming x a variable in V.
+Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub></code> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let V be a set of variables.  Also, let <code>Q</code> be an element of <code>P<sub>1</sub></code>, a set of unary atomic predicates.
+Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in <code>V</code>.
 ```
 t ::= x | c | f(t)
 F ::= A | Q(t) | bot | F -> F
 ```
-Generally a formula E may contain a variable x.  In such a case, it is convenient to allow writing E(x) instead of E, and also allow writing E(t) for the formula obtained by replacing all occurrences of x in E by t.
+Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
 Its axioms and inference rule are same as propositional calculus.
 ### Predicate calculus
 Predicate caluclus is an extension of elementary calculus by quantifications.
@@ -118,13 +118,13 @@ The language is enriched by the existential quantifier and the universal quantif
 t ::= x | c | f(t)
 F ::= A | Q(t) | bot | F -> F | ex x F | all x F
 ```
-Assume E(x) is a formula containing a free variable x.  One interpretation of this formula is that it states some property of x.
+Assume <code>E(x)</code> is a formula containing a free variable x.  One interpretation of this formula is that it states some property of <code>x</code>.
 By means of the quantifiers, it is possible to form the following quantified formulas.
 ```
 ex x E(x)
 all x E(x)
 ```
-They denote that there is some x such that E(x) holds, and that for any x, E(x) holds.
+They denote that there is some <code>x</code> such that <code>E(x)</code> holds, and that for any <code>x</code>, <code>E(x)</code> holds.
 
 We have two kinds of variable occurrences due to the presence of the quantifiers.
 Assume a formula <code>E(x)</code> is free from a quantifier and <code>x</code> has at least one occurrences in <code>E(x)</code>.
@@ -166,20 +166,20 @@ The language definition of epsilon calculus is as follows.
 t ::= c | f(t) | eps x F
 F ::= A | Q(t) | bot | F -> F
 ```
-A term of the form eps x E(x) is called epsilon term.  Intuitive meaning of an epsilon term eps x E(x) is the term which satisfies the property of x denoted by E(x).  Therefore, epsilon operator is often explained as a choice operator.
+A term of the form <code>eps x E(x)</code> is called epsilon term.  Intuitive meaning of an epsilon term <code>eps x E(x)</code> is the term which satisfies the property of <code>x</code> denoted by <code>E(x)</code>.  Therefore, epsilon operator is often explained as a choice operator.
 This intuition is formulated by the folliong critical axiom.
 ```
 E(t) -> E(eps x E(x))
 ```
-where t is an arbitrary term in epsilon calculus.
+where <code>t</code> is an arbitrary term in epsilon calculus.
 Epsilon operator is expressive enough to define the existential and universal quantifiers of predicate logic.
-Let E(x) be a formula, then the corresponding quantified formulas are defined as follows. 
+Let <code>E(x)</code> be a formula, then the corresponding quantified formulas are defined as follows. 
 ```
 ex x E(x) := E(eps x E(x))
 all x E(x) := E(eps x ~E(x))
 ```
 We are going to look at examples.
-The following formula is known as independence of premise, where the formula A does not contain a free variable x.
+The following formula is known as independence of premise, where the formula <code>A</code> does not contain a free variable <code>x</code>.
 ```
 (A -> ex x P(x)) -> ex x (A -> P(x))
 ```
@@ -203,7 +203,7 @@ The epsilon version of the above formula is
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 ```
 A proof is given in examples/ex05_drinkers_paradox.proof
-After proving the identity formula P(eps x ~P(x)) -> P(eps x ~P(x)), the rest of the proof goes as follows.
+After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>, the rest of the proof goes as follows.
 ```
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
@@ -217,8 +217,8 @@ A proof script is a list of proof steps, each of which consists of the following
 
 Formula is what we saw in the previous section of this documentation.
 A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
-A tag is a reference name, which is a string starting with #, given to the proof step, which can be used to point this proof step later on.
-Assume E(x) is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
+A tag is a reference name, which is a string starting with <code>#</code>, given to the proof step, which can be used to point this proof step later on.
+Assume <code>E(x)</code> is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
 E(x) by R
 ```
