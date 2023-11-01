@@ -216,6 +216,7 @@ A proof script is a list of proof steps, each of which consists of the following
 1. A formula to claim
 2. A reason of claiming the formula
 3. Optional tag for future reference to this proof step
+
 Formula is what we saw in the previous section of this documentation.
 A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
 A tag is a reference name, which is a string starting with #, given to the proof step, which can be used to point this proof step later on.
