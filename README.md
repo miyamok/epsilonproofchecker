@@ -109,8 +109,31 @@ F ::= A | Q(t) | bot | F -> F
 Generally a formula E may contain a variable x.  In such a case, it is convenient to allow writing E(x) instead of E, and also allow writing E(t) for the formula obtained by replacing all occurrences of x in E by t.
 Its axioms and inference rule are same as propositional calculus.
 ### Predicate calculus
-(to be written)
+Predicate caluclus is an extension of elementary calculus by quantifications.
+The language is enriched by the existential quantifier and the universal quantifier.  The syntax is given as follows.
+```
+t ::= x | c | f(t)
+F ::= A | Q(t) | bot | F -> F | ex x F | all x F
+```
+Assume E(x) is a formula containing a free variable x.  One interpretation of this formula is that it states some property of x.
+By means of the quantifiers, it is possible to form the following quantified formulas.
+```
+ex x E(x)
+all x E(x)
+```
+They denote that there is some x such that E(x) holds, and that for any x, E(x) holds.
 
+(to write about free and bound variables and term substitution)
+
+In order to reason about formulas involving the quantifiers, predicate calculus employs additional 4 axioms and 1 inference rule.
+```
+all x A(x) -> A(t)
+A(t) -> ex x A(x)
+all x(B -> A(x)) -> (B -> all y A(y))
+all x(A(x) -> B) -> (ex y A(y) -> B)
+```
+Here we assumed <code>x</code> does not have a free occurrence in <code>B</code>, and also if <code>x</code> is distinct variable from <code>y</code>, then <code>y</code> doesn't have a free occurrence in <code>A(x)</code>.
+The new inference rule is called the rule of generalization, which allows to derive <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x E(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ E(x)</code> under the condition that <code>x</code> does not have a free occurrence in <code>A<sub>1</sub>, ..., A<sub>k</sub></code> and also that if <code>x</code> is distinct variable from <code>y</code>, then <code>y</code> doesn't have a free occurrence in <code>A(x)</code>.
 ### Epsilon calculus
 Epsilon calculus extends elementary calculus by epsilon operator and so-called critical axiom.
 Epsilon operator is denoted by eps and forming a term taking a variable and a formula.
@@ -184,18 +207,23 @@ Axiom name | Scheme | Note
 --- | --- | ---
 <code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> is left associative
 <code>K</code> | <code>A -> B -> A</code>
-<code>C</code> | <code>E(t) -> E(eps x E(x))</code> | <code>t</code> is an arbitrary term
+<code>C</code> | <code>E(t) -> E(eps x E(x))</code> | <code>t</code> is an arbitrary term in this whole table
 <code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> is right associative and has a higher priority than <code>-></code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
 <code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> is right associative and has a priority between <code>-></code> and <code>&</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
+<code>AllE</code> | <code>all x E(x) -> E(t)</code>
+<code>ExI</code> | <code>E(t) -> ex x E(x)</code>
+<code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | x ∉ FV(B) and (x=y or y ∉ FV(A(x)))
+<code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | x ∉ FV(B) and (x=y or y ∉ FV(A(x)))
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>, <code>\|</code> and <code>&</code>
 
-The inference rule <code>MP</code> derives <code>B</code> from <code>A -> B</code> and <code>A</code>, two of which should be somewhere in previous proof steps.
-The search for suitable proof steps is done automatically.
+The inference rule <code>MP</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ B</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A -> B</code> and <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>, two of which should be somewhere in previous proof steps.
+The inference rule <code>G</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x A(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A(x)</code> which should be a previous proof step, under the condition that <code>x</code> doesn't have a free occurrrence in any of the assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
+The search for suitable proof steps for those inference rules is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
 Example proofs are found in the <code>examples</code> directory, which cover all of the above mentioned features.
