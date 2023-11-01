@@ -251,8 +251,8 @@ Unary predicate variable | <code>P</code>, <code>Q</code>
 Binary predicate variable | <code>R</code>
 
 Any of the above can be followed by an optional number as an index.  For example, <code>x</code>, <code>x1</code>, <code>x2</code> are all distinct variables.
-Binary and unary constants and variables should have a suitable number of arguments, which is a comma separated list with parentheses.
-For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand <code>P</code> is not; <code>P</code> is a unary predicate variable, hence it requires one argument.
+Binary and unary constants and predicate variables should have a suitable number of arguments, which is a comma separated list with outer parentheses.
+For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand, <code>P</code> is not; <code>P</code> is a unary predicate variable and one argument is required, but it is missing.
 
 Assume <code>E(x)</code> is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
