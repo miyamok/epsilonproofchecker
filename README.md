@@ -182,7 +182,7 @@ Epsilonproofchecker supports the following axioms.
 
 Axiom name | Axiom scheme
 --- | ---
-<code>S</code> | <code>(A -> B -> C) -> (A -> B) -> (A -> C)</code>
+<code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code>
 <code>K</code> | <code>A -> B -> A</code>
 <code>C</code> | <code>E(t) -> E(eps x E(x))</code>
 <code>ConjI</code> | <code>A -> B -> A & B</code>
