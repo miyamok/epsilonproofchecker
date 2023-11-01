@@ -139,9 +139,9 @@ checkModusPonensAux :: Formula -> Formula -> Formula -> Bool
 checkModusPonensAux f (ImpForm g1 g2) g3 = alphaEqFormula g1 g3 && alphaEqFormula f g2
 checkModusPonensAux _ _ _ = False
 
--- checkDNE :: Formula -> Bool
--- checkDNE (ImpForm (NegForm (NegForm f)) g) = alphaEqFormula f g
--- checkDNE _ = False
+checkDNE :: Formula -> Maybe ErrorMsg
+checkDNE (ImpForm (ImpForm (ImpForm f (PredForm Falsum [])) (PredForm Falsum [])) g) = if alphaEqFormula f g then Nothing else Just Malformed
+checkDNE _ = Just Malformed
 
 checkEFQ :: Formula -> Maybe ErrorMsg
 checkEFQ (ImpForm (PredForm Falsum ts) f) = Nothing
@@ -224,6 +224,7 @@ checkClaimsAux p offset = if length p <= offset
                         DisjI2 -> checkDisjI2 f
                         DisjE -> checkDisjE f
                         EFQ -> checkEFQ f
+                        DNE -> checkDNE f
                         MP (Just s1) (Just s2) ->
                               -- Should be improved.  Brief coding possible.
                               -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
@@ -290,6 +291,4 @@ checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) dep
 
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)
-
-
                         return ls

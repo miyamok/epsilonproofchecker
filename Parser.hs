@@ -267,6 +267,8 @@ ruleAux = do symbol "K"
               return DisjE
        <|> do symbol "EFQ"
               return EFQ
+       <|> do symbol "DNE"
+              return DNE
        <|> do symbol "C"
               return C
        <|> do symbol "MP"

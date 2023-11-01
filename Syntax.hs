@@ -1,7 +1,6 @@
 module Syntax where
 import Data.List(nub, delete, union, unionBy, intercalate)
 import Data.Binary (encode)
-import Data.List.NonEmpty (unfold)
 
 type Name = String
 type Index = Int
@@ -98,6 +97,10 @@ makePred n a = Pred n (-1) a
 
 makeNegForm :: Formula -> Formula
 makeNegForm f = ImpForm f falsity
+
+isNegForm :: Formula -> Bool
+isNegForm (ImpForm _ (PredForm Falsum [])) = True
+isNegForm _ = False
 
 isFormula :: Formula -> Bool
 isFormula (PredForm (Pred n i a) ts) = isPredicate (Pred n i a) && a == length ts && all isTerm ts
