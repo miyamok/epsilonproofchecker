@@ -281,3 +281,4 @@ Example proofs are found in the <code>examples</code> directory.
 - Epsilon equality axiom to implement
 - Deduction theorem for proof transformation algorithm
 - Further examples
+- Writing a brief history of Hilbert's logic
