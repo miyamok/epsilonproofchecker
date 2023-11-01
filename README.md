@@ -36,7 +36,7 @@ Epsilon calculus is an extension of elementary calculus.  The language is enrich
 Elementary calculus is propositional logic with predicates and terms in its language, maintaining the same principles for logical reasoning.
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
-Propositional formula <code>F</code> is defined as follows, where <code>P<sub>0</sub></code> is ranging over propositional variables and <code>A</code> is an arbitrary element of <code>P<sub>0</sub></code>.
+Propositional formula <code>F</code> is defined as follows, where P<sub>0</sub> is ranging over propositional variables and <code>A</code> is an arbitrary element of P<sub>0</sub>.
 ```
 F ::= A | bot | F -> F
 ```
@@ -121,8 +121,8 @@ A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let <code>C<sub>0</sub></code> be a set of nullary constants, <code>C<sub>1</sub></code> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let <code>V</code> be a set of variables.  Also, let <code>Q</code> be an element of <code>P<sub>1</sub></code>, a set of unary atomic predicates.
-Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in <code>V</code>.
+Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants.  Let <code>V</code> be a set of variables.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
+Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in V.
 ```
 t ::= x | c | f(t)
 F ::= ... | Q(t)
