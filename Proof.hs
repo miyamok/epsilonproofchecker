@@ -12,14 +12,14 @@ import Debug.Trace
 --              | GenIndexed Formula | Gen Formula | EFQ Formula | DNE Formula | LEM Formula
 --              | Asm Formula deriving (Eq)
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
-             | AllE | ExI | QShiftAll | QShiftEx | Auto | MP Tag Tag
-             | GenTagged Tag | Gen | EFQ | DNE | LEM | Asm deriving (Show, Eq)
+             | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
+             | Gen Tag | EFQ | DNE | LEM | Asm deriving (Show, Eq)
 type Line = (Formula, Rule, Tag)
 type Proof = [(Formula, Rule, Tag)]
 type Tag = Maybe String
 data ErrorMsg = MPIllReference | MPWrongFormula | NotYetSupported
              | KMismatch | KMalformed | SMismatch | SMalformed | CMalformed
-             | MPMismatch | MPMalformed deriving (Eq, Show)
+             | MPMismatch | MPMalformed | Malformed deriving (Eq, Show)
 
 --instance Show Claim where show = claimToString
 -- claimToFormula :: Claim -> Formula
@@ -56,6 +56,78 @@ checkS _ = Just SMalformed
 
 checkC :: Formula -> Maybe ErrorMsg
 checkC f = if isCriticalFormula f then Nothing else Just CMalformed
+
+checkConjI :: Formula -> Maybe ErrorMsg
+checkConjI (ImpForm f (ImpForm f' (ConjForm g g'))) = if alphaEqFormula f g && alphaEqFormula f' g' then Nothing else Just Malformed
+checkConjI _ = Just Malformed
+
+checkConjE1 :: Formula -> Maybe ErrorMsg
+checkConjE1 (ImpForm (ConjForm f _) g) = if alphaEqFormula f g then Nothing else Just Malformed
+checkConjE1 _ = Just Malformed
+
+checkConjE2 :: Formula -> Maybe ErrorMsg
+checkConjE2 (ImpForm (ConjForm _ f) g) = if alphaEqFormula f g then Nothing else Just Malformed
+checkConjE2 _ = Just Malformed
+
+checkDisjI1 :: Formula -> Maybe ErrorMsg
+checkDisjI1 (ImpForm f (DisjForm g _)) = if alphaEqFormula f g then Nothing else Just Malformed
+checkDisjI1 _ = Just Malformed
+
+checkDisjI2 :: Formula -> Maybe ErrorMsg
+checkDisjI2 (ImpForm f (DisjForm _ g)) = if alphaEqFormula f g then Nothing else Just Malformed
+checkDisjI2 _ = Just Malformed
+
+checkDisjE :: Formula -> Maybe ErrorMsg
+checkDisjE (ImpForm (DisjForm f f') (ImpForm (ImpForm f1 g1) (ImpForm (ImpForm f1' g1') f2))) =
+      if alphaEqFormula f f1 && alphaEqFormula f' f1' && alphaEqFormula g1 f2 && alphaEqFormula g1' f2
+            then Nothing
+            else Just Malformed
+checkDisjE _ = Just Malformed
+
+checkAllE :: Formula -> Maybe ErrorMsg
+checkAllE (ImpForm (ForallForm v f) g) = if length substs == 1 then Nothing else Just Malformed
+      where
+            vars = nub ([v] ++ formulaToVariables f ++ formulaToVariables g)
+            freshvar = variablesToFreshVariable vars
+            substs = simpleFormulaUnification f g
+checkAllE _ = Just Malformed
+
+checkExI :: Formula -> Maybe ErrorMsg
+checkExI (ImpForm f (ExistsForm v g)) = if length substs == 1 then Nothing else Just Malformed
+      where
+            substs = simpleFormulaUnification f g
+checkExI _ = Just Malformed
+
+checkAllShift :: Formula -> Maybe ErrorMsg
+checkAllShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm f' (ForallForm v' g'))) =
+      if alphaEqFormula f f' && not (v `elem` formulaToFreeVariables f) &&
+            (v == v' || not (v' `elem` formulaToFreeVariables g)) &&
+            alphaEqFormula g' (substFormula v (VarTerm v') g)
+            then Nothing
+            else Just Malformed
+checkAllShift _ = Just Malformed
+
+checkExShift :: Formula -> Maybe ErrorMsg
+checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g')) =
+      if alphaEqFormula g g' && not (v `elem` formulaToFreeVariables g) &&
+            (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
+            alphaEqFormula f' (substFormula v (VarTerm v') f)
+            then Nothing
+            else Just Malformed
+
+checkGen :: Formula -> Formula -> Proof -> Maybe ErrorMsg
+checkGen (ForallForm v f) g p = 
+      let
+            asms = proofToAssumptionFormulas p
+            asmFvars = nub $ concat $ (map formulaToFreeVariables asms)
+            substs = simpleFormulaUnification f g
+      in if (alphaEqFormula f g && not (v `elem` asmFvars))
+            then Nothing
+            else if length substs == 1
+                  then let [(VarTerm v1, VarTerm v2)] = substs
+                        in if v==v1 then if not (v1 `elem` formulaToFreeVariables f) && not (v2 `elem` asmFvars) then Nothing else Just Malformed
+                                    else if not (v2 `elem` formulaToFreeVariables f) && not (v1 `elem` asmFvars) then Nothing else Just Malformed
+                  else Just Malformed
 
 checkModusPonens :: Formula -> Formula -> Formula -> Maybe ErrorMsg
 checkModusPonens f g1 g2
@@ -145,6 +217,12 @@ checkClaimsAux p offset = if length p <= offset
                   (f, r, t) -> case r of
                         K -> checkK f
                         S -> checkS f
+                        ConjE1 -> checkConjE1 f
+                        ConjE2 -> checkConjE2 f
+                        ConjI -> checkConjI f
+                        DisjI1 -> checkDisjI1 f
+                        DisjI2 -> checkDisjI2 f
+                        DisjE -> checkDisjE f
                         MP (Just s1) (Just s2) ->
                               -- Should be improved.  Brief coding possible.
                               -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
@@ -175,6 +253,9 @@ proofToDependencyAux p i = case p!!i of
                   K -> []
                   S -> []
                   C -> []
+                  ConjE1 -> []
+                  ConjE2 -> []
+                  ConjI -> []
                   Asm -> []
 --                  MPTagged t1 t2 -> sort $ nub ([j, k] ++ proofToDependencyAux p j ++ proofToDependencyAux p k)
                   _ -> []

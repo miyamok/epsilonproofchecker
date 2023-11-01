@@ -71,10 +71,10 @@ string (x:xs) = do char x
 
 char x = sat (== x)
 
-ident :: Parser String
-ident = do x <- lower
-           xs <- many alphanum
-           return (x:xs)
+-- ident :: Parser String
+-- ident = do x <- lower
+--            xs <- many alphanum
+--            return (x:xs)
 
 nat :: Parser Int
 nat = do xs <- some digit
@@ -96,7 +96,7 @@ token p = do space
              space
              return v
 
-identifier = token ident
+--identifier = token ident
 natural = token nat
 integer = token int
 
@@ -253,6 +253,18 @@ ruleAux = do symbol "K"
              return K
        <|> do symbol "S"
               return S
+       <|> do symbol "ConjE1"
+              return ConjE1
+       <|> do symbol "ConjE2"
+              return ConjE2
+       <|> do symbol "ConjI"
+              return ConjI
+       <|> do symbol "DisjI1"
+              return DisjI1
+       <|> do symbol "DisjI2"
+              return DisjI2
+       <|> do symbol "DisjE"
+              return DisjE
        <|> do symbol "C"
               return C
        <|> do symbol "MP"

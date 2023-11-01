@@ -13,7 +13,7 @@ main = do
     if length args == 1
         then do ls <- fmap lines (readFile (head args))
                 let p = map (\l -> fst (head (parse (line defaultPredicates defaultVariables defaultConstants) l))) ls
-                    b = checkProof p
+                    b = checkProof (traceShowId p)
                     asms = proofToAssumptionFormulas p
                     (f, r, t) = last p
                     stmt = prettyPrintFormula f

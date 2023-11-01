@@ -1,0 +1,7 @@
+A | B by Asm
+(A | B) -> (A -> B | A) -> (B -> B | A) -> (B | A) by DisjE
+(A -> B | A) -> (B -> B | A) -> (B | A) by MP
+A -> B | A by DisjI2
+(B -> B | A) -> (B | A) by MP
+B -> B | A by DisjI1
+B | A by MP

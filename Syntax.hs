@@ -178,39 +178,39 @@ epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)
 epsTranslation (ConjForm f g) = ConjForm (epsTranslation f) (epsTranslation g)
 epsTranslation (DisjForm f g) = DisjForm (epsTranslation f) (epsTranslation g)
 
-variableToString :: Variable -> String
-variableToString (Var n i) = if i == -1 then n else n ++ show i
+-- variableToString :: Variable -> String
+-- variableToString (Var n i) = if i == -1 then n else n ++ show i
 
-predicateToString :: Predicate -> String
---predicateToString Falsum = "⊥"
-predicateToString Falsum = "bot"
-predicateToString (Pred n i a) = if i == -1 then n else n ++ show i
+-- predicateToString :: Predicate -> String
+-- --predicateToString Falsum = "⊥"
+-- predicateToString Falsum = "bot"
+-- predicateToString (Pred n i a) = if i == -1 then n else n ++ show i
 
-formulaToString :: Formula -> String
-formulaToString (PredForm p ts) = if null ts then pstr else pstr ++ "(" ++ intercalate "," (map termToString ts) ++ ")"
-      where pstr = predicateToString p
--- formulaToString (NegForm f) = "¬" ++ formulaToString f
--- formulaToString (ImpForm f g) = "(" ++ formulaToString f ++ "→" ++ formulaToString g ++ ")"
--- formulaToString (ConjForm f g) = "(" ++ formulaToString f ++ "∧" ++ formulaToString g ++ ")"
--- formulaToString (DisjForm f g) = "(" ++ formulaToString f ++ "∨" ++ formulaToString g ++ ")"
--- formulaToString (ForallForm v f) = "∀" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
--- formulaToString (ExistsForm v f) = "∃" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
-formulaToString (NegForm f) = "~" ++ formulaToString f
-formulaToString (ImpForm f g) = "(" ++ formulaToString f ++ " -> " ++ formulaToString g ++ ")"
-formulaToString (ConjForm f g) = "(" ++ formulaToString f ++ " & " ++ formulaToString g ++ ")"
-formulaToString (DisjForm f g) = "(" ++ formulaToString f ++ " | " ++ formulaToString g ++ ")"
-formulaToString (ForallForm v f) = "all " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
-formulaToString (ExistsForm v f) = "ex " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- formulaToString :: Formula -> String
+-- formulaToString (PredForm p ts) = if null ts then pstr else pstr ++ "(" ++ intercalate "," (map termToString ts) ++ ")"
+--       where pstr = predicateToString p
+-- -- formulaToString (NegForm f) = "¬" ++ formulaToString f
+-- -- formulaToString (ImpForm f g) = "(" ++ formulaToString f ++ "→" ++ formulaToString g ++ ")"
+-- -- formulaToString (ConjForm f g) = "(" ++ formulaToString f ++ "∧" ++ formulaToString g ++ ")"
+-- -- formulaToString (DisjForm f g) = "(" ++ formulaToString f ++ "∨" ++ formulaToString g ++ ")"
+-- -- formulaToString (ForallForm v f) = "∀" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- -- formulaToString (ExistsForm v f) = "∃" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- formulaToString (NegForm f) = "~" ++ formulaToString f
+-- formulaToString (ImpForm f g) = "(" ++ formulaToString f ++ " -> " ++ formulaToString g ++ ")"
+-- formulaToString (ConjForm f g) = "(" ++ formulaToString f ++ " & " ++ formulaToString g ++ ")"
+-- formulaToString (DisjForm f g) = "(" ++ formulaToString f ++ " | " ++ formulaToString g ++ ")"
+-- formulaToString (ForallForm v f) = "all " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- formulaToString (ExistsForm v f) = "ex " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
 
-constantToString :: Constant -> String
-constantToString (Const n i a) = n ++ show i
+-- constantToString :: Constant -> String
+-- constantToString (Const n i a) = n ++ show i
 
-termToString :: Term -> String
-termToString (VarTerm v) = variableToString v
-termToString (AppTerm c ts) = if null ts then cstr else cstr ++ "(" ++ intercalate "," (map termToString ts) ++ ")"
-      where cstr = constantToString c
---termToString (EpsTerm v f) = "ε" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
-termToString (EpsTerm v f) = "eps " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- termToString :: Term -> String
+-- termToString (VarTerm v) = variableToString v
+-- termToString (AppTerm c ts) = if null ts then cstr else cstr ++ "(" ++ intercalate "," (map termToString ts) ++ ")"
+--       where cstr = constantToString c
+-- --termToString (EpsTerm v f) = "ε" ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
+-- termToString (EpsTerm v f) = "eps " ++ variableToString v ++ "(" ++ formulaToString f ++ ")"
 
 isImpForm :: Formula -> Bool
 isImpForm (ImpForm _ _) = True
