@@ -256,4 +256,4 @@ The search for suitable proof steps for those inference rules is done automatica
 Note that the formula <code>A</code> is distinct from any indexed ones <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 
-Example proofs are found in the <code>examples</code> directory, which cover all of the above mentioned features.
+Example proofs are found in the <code>examples</code> directory.
