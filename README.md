@@ -267,3 +267,9 @@ The search for suitable proof steps for those inference rules is done automatica
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 
 Example proofs are found in the <code>examples</code> directory.
+
+## To do list
+- Proof automation through the external prover Z3
+- Epsilon equality axiom to implement
+- Deduction theorem for proof transformation algorithm
+- Further examples
