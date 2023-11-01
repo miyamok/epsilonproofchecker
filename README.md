@@ -1,5 +1,5 @@
 # epsilon --- a proof checker for Hilbert's epsilon calculus
-Proof checker for Hilbert's epsilon calculus.
+Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in predicate calculus.
 ```
 ## ghc-9.2.8 used
 % ghc Main
