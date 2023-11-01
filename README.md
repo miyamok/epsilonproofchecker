@@ -187,7 +187,7 @@ Axiom name | Axiom scheme
 <code>C</code> | <code>E(t) -> E(eps x E(x))</code>
 <code>ConjI</code> | <code>A -> B -> A & B</code>
 <code>ConjE1</code> | <code>A & B -> A</code>
-<code>ConjE2</code> | <code>A & B -> A</code>
+<code>ConjE2</code> | <code>A & B -> B</code>
 <code>DisjI1</code> | <code>A -> A \| B</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
