@@ -161,3 +161,41 @@ After proving the identity formula P(eps x ~P(x)) -> P(eps x ~P(x)), the rest of
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ```
+## Syntax for proof scripts
+Epsilonproofchecker processes a proof script which is stored as a file in the system.
+A proof script is a list of proof steps, each of which consists of the following ingredients.
+1. A formula to claim
+2. A reason of claiming the formula
+3. Optional tag for future reference to this proof step
+Formula is what we saw in the previous section of this documentation.
+A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
+A tag is a reference name, which is a string starting with #, given to the proof step, which can be used to point this proof step later on.
+Assume E(x) is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
+```
+E(x) by R
+```
+and also one can give a tag to this proof step.
+```
+E(x) by R #myproofstep
+```
+Epsilonproofchecker supports the following axioms.
+
+Axiom name | Axiom scheme
+--- | ---
+<code>S</code> | <code>(A -> B -> C) -> (A -> B) -> (A -> C)</code>
+<code>K</code> | <code>A -> B -> A</code>
+<code>C</code> | <code>E(t) -> E(eps x E(x))</code>
+<code>ConjI</code> | <code>A -> B -> A & B</code>
+<code>ConjE1</code> | <code>A & B -> A</code>
+<code>ConjE2</code> | <code>A & B -> A</code>
+<code>DisjI1</code> | <code>A -> A \| B</code>
+<code>DisjI2</code> | <code>B -> A \| B</code>
+<code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
+<code>EFQ</code> | <code>bot -> A</code>
+<code>DNE</code> | <code>~~A -> A</code>
+
+The inference rule <code>MP</code> is deriving <code>B</code> from previous proof steps of <code>A -> B</code> and <code>A</code>.
+The search for suitable proof steps is done automatically.
+If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
+In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
+Example proofs are found in the <code>examples</code> directory, which cover all of the above mentioned features.
