@@ -216,7 +216,7 @@ primitiveformula pds vds cds = do symbol "("
                                   return f
                            <|> do symbol "~"
                                   f <- primitiveformula pds vds cds
-                                  return (NegForm f)
+                                  return (makeNegForm f)
                            <|> do symbol "all"
                                   x <- variable vds
                                   f <- primitiveformula pds vds cds
@@ -265,6 +265,8 @@ ruleAux = do symbol "K"
               return DisjI2
        <|> do symbol "DisjE"
               return DisjE
+       <|> do symbol "EFQ"
+              return EFQ
        <|> do symbol "C"
               return C
        <|> do symbol "MP"

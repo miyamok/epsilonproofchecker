@@ -6,6 +6,7 @@ prettyPrintPredicate :: Predicate -> String
 prettyPrintPredicate (Pred n i a)
  | i /= -1 = n ++ show i
  | otherwise = n
+prettyPrintPredicate Falsum = "bot"
 
 prettyPrintFormula :: Formula -> String
 -- prettyPrintFormula f p =
@@ -28,11 +29,13 @@ prettyPrintFormula (PredForm p ts)
  | otherwise = ppPred ++ ppArgs
  where ppPred = prettyPrintPredicate p
        ppArgs = prettyPrintArgTerms ts
-prettyPrintFormula (NegForm f) = "~" ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
- where ppFla = prettyPrintFormula f
+--prettyPrintFormula (NegForm f) = "~" ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
+-- where ppFla = prettyPrintFormula f
 prettyPrintFormula (ExistsForm v f) = "ex " ++ prettyPrintVariable v ++ " " ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
  where ppFla = prettyPrintFormula f
 prettyPrintFormula (ForallForm v f) = "all " ++ prettyPrintVariable v ++ " " ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
+ where ppFla = prettyPrintFormula f
+prettyPrintFormula (ImpForm f (PredForm Falsum [])) = "~" ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
  where ppFla = prettyPrintFormula f
 prettyPrintFormula (ImpForm f f') = ppFla ++ " -> " ++ ppFla'
  where ppFlaAux = prettyPrintFormula f

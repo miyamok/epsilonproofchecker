@@ -1,5 +1,7 @@
 module Syntax where
 import Data.List(nub, delete, union, unionBy, intercalate)
+import Data.Binary (encode)
+import Data.List.NonEmpty (unfold)
 
 type Name = String
 type Index = Int
@@ -10,7 +12,7 @@ data Constant = Const Name Index Arity deriving (Eq, Show)
 data Term = VarTerm Variable | AppTerm Constant [Term] | EpsTerm Variable Formula deriving (Eq, Show)
 data Predicate = Falsum | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
-               NegForm Formula | ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
+               ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
 data Binding = TermBinding Variable Term | FormulaBinding Predicate [Variable] Formula
 
@@ -70,7 +72,7 @@ formulaToFreeVariables :: Formula -> [Variable]
 formulaToFreeVariables (PredForm p ts) = nub (concatMap termToFreeVariables ts)
 formulaToFreeVariables (ForallForm v f) = delete v (formulaToFreeVariables f)
 formulaToFreeVariables (ExistsForm v f) = delete v (formulaToFreeVariables f)
-formulaToFreeVariables (NegForm f) = formulaToFreeVariables f
+--formulaToFreeVariables (NegForm f) = formulaToFreeVariables f
 formulaToFreeVariables (ImpForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
 formulaToFreeVariables (ConjForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
 formulaToFreeVariables (DisjForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
@@ -79,7 +81,7 @@ formulaToVariables :: Formula -> [Variable]
 formulaToVariables (PredForm p ts) = nub (concatMap termToVariables ts)
 formulaToVariables (ForallForm v f) = nub (v:formulaToVariables f)
 formulaToVariables (ExistsForm v f) = nub (v:formulaToVariables f)
-formulaToVariables (NegForm f) = formulaToVariables f
+--formulaToVariables (NegForm f) = formulaToVariables f
 formulaToVariables (ImpForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
 formulaToVariables (ConjForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
 formulaToVariables (DisjForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
@@ -94,11 +96,14 @@ isPredicate (Pred n i a) = not (null n) && i >= -1 && a >= 0
 makePred :: Name -> Arity -> Predicate
 makePred n a = Pred n (-1) a
 
+makeNegForm :: Formula -> Formula
+makeNegForm f = ImpForm f falsity
+
 isFormula :: Formula -> Bool
 isFormula (PredForm (Pred n i a) ts) = isPredicate (Pred n i a) && a == length ts && all isTerm ts
 isFormula (ForallForm v f) = isFormula f
 isFormula (ExistsForm v f) = isFormula f
-isFormula (NegForm f) = isFormula f
+--isFormula (NegForm f) = isFormula f
 isFormula (ImpForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (ConjForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (DisjForm f1 f2) = isFormula f1 && isFormula f2
@@ -113,7 +118,7 @@ substFormula :: Variable -> Term -> Formula -> Formula
 substFormula v t (PredForm p ts) = PredForm p (map (substTerm v t) ts)
 substFormula v t (ForallForm v' f) = if v==v' then ForallForm v' f else ForallForm v' (substFormula v t f)
 substFormula v t (ExistsForm v' f) = if v==v' then ExistsForm v' f else ExistsForm v' (substFormula v t f)
-substFormula v t (NegForm f) = NegForm (substFormula v t f)
+--substFormula v t (NegForm f) = NegForm (substFormula v t f)
 substFormula v t (ImpForm f1 f2) = ImpForm (substFormula v t f1) (substFormula v t f2)
 substFormula v t (ConjForm f1 f2) = ConjForm (substFormula v t f1) (substFormula v t f2)
 substFormula v t (DisjForm f1 f2) = DisjForm (substFormula v t f1) (substFormula v t f2)
@@ -140,7 +145,7 @@ alphaEqFormula (ExistsForm v1 f1) (ExistsForm v2 f2) = alphaEqFormula g1 g2
                      u = variablesToFreshVariable vs
                      g1 = substFormula v1 (VarTerm u) f1
                      g2 = substFormula v2 (VarTerm u) f2
-alphaEqFormula (NegForm f1) (NegForm f2) = alphaEqFormula f1 f2
+--alphaEqFormula (NegForm f1) (NegForm f2) = alphaEqFormula f1 f2
 alphaEqFormula (ImpForm f1 g1) (ImpForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (ConjForm f1 g1) (ConjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (DisjForm f1 g1) (DisjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
@@ -155,7 +160,7 @@ formulaToSubterms :: Formula -> [Term]
 formulaToSubterms (PredForm p ts) = foldr (union . termToSubterms) [] ts
 formulaToSubterms (ForallForm v f) = formulaToSubterms f
 formulaToSubterms (ExistsForm v f) = formulaToSubterms f
-formulaToSubterms (NegForm f) = formulaToSubterms f
+--formulaToSubterms (NegForm f) = formulaToSubterms f
 formulaToSubterms (ImpForm f g) = unionBy alphaEqTerm (formulaToSubterms f) (formulaToSubterms g)
 formulaToSubterms (ConjForm f g) = formulaToSubterms f `union` formulaToSubterms g
 formulaToSubterms (DisjForm f g) = formulaToSubterms f `union` formulaToSubterms g
@@ -165,15 +170,46 @@ termToImmediateSubformula (VarTerm v) = Nothing
 termToImmediateSubformula (AppTerm c ts) = Nothing
 termToImmediateSubformula (EpsTerm v f) = Just f
 
+falsity :: Formula
+falsity = PredForm Falsum []
+
+foldNegation :: Formula -> Formula
+--foldNegation (ImpForm f falsity) = NegForm (foldNegation f)
+foldNegation (PredForm p ts) = PredForm p (map foldNegationAux ts)
+foldNegation (ConjForm f f') = ConjForm (foldNegation f) (foldNegation f')
+foldNegation (DisjForm f f') = DisjForm (foldNegation f) (foldNegation f')
+foldNegation (ForallForm v f) = ForallForm v (foldNegation f)
+foldNegation (ExistsForm v f) = ExistsForm v (foldNegation f)
+
+foldNegationAux :: Term -> Term
+foldNegationAux (VarTerm v) = VarTerm v
+foldNegationAux (AppTerm c ts) = AppTerm c (map foldNegationAux ts)
+foldNegationAux (EpsTerm v f) = EpsTerm v (foldNegation f)
+
+unfoldNegation :: Formula -> Formula
+--unfoldNegation (NegForm f) = ImpForm f falsity
+unfoldNegation (PredForm p ts) = PredForm p (map unfoldNegationAux ts)
+unfoldNegation (ImpForm f f') = ImpForm (unfoldNegation f) (unfoldNegation f')
+unfoldNegation (ConjForm f f') = ConjForm (unfoldNegation f) (unfoldNegation f')
+unfoldNegation (DisjForm f f') = DisjForm (unfoldNegation f) (unfoldNegation f')
+unfoldNegation (ForallForm v f) = ForallForm v f
+unfoldNegation (ExistsForm v f) = ExistsForm v f
+
+unfoldNegationAux :: Term -> Term
+unfoldNegationAux (VarTerm v) = VarTerm v
+unfoldNegationAux (AppTerm c ts) = AppTerm c (map unfoldNegationAux ts)
+unfoldNegationAux (EpsTerm v f) = EpsTerm v (unfoldNegation f)
+
 epsTranslation :: Formula -> Formula
 epsTranslation (ExistsForm v f) = substFormula v e f'
       where e = EpsTerm v f'
             f' = epsTranslation f
 epsTranslation (ForallForm v f) = substFormula v e f'
-      where e = EpsTerm v (NegForm f')
+--      where e = EpsTerm v (NegForm f')
+      where e = EpsTerm v (makeNegForm f')
             f' = epsTranslation f
 epsTranslation (PredForm p ts) = PredForm p ts
-epsTranslation (NegForm f) = NegForm (epsTranslation f)
+--epsTranslation (NegForm f) = NegForm (epsTranslation f)
 epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)
 epsTranslation (ConjForm f g) = ConjForm (epsTranslation f) (epsTranslation g)
 epsTranslation (DisjForm f g) = DisjForm (epsTranslation f) (epsTranslation g)
@@ -228,5 +264,5 @@ isBiconForm :: Formula -> Bool
 isBiconForm (PredForm p ts) = False
 isBiconForm (ForallForm v f) = False
 isBiconForm (ExistsForm v f) = False
-isBiconForm (NegForm f) = False
+isBiconForm (ImpForm f (PredForm Falsum [])) = False
 isBiconForm _ = True

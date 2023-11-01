@@ -33,7 +33,7 @@ simpleFormulaUnificationAux (PredForm p ts) (PredForm p' ts') =
 simpleFormulaUnificationAux (ImpForm f g) (ImpForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
 simpleFormulaUnificationAux (ConjForm f g) (ConjForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
 simpleFormulaUnificationAux (DisjForm f g) (DisjForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
-simpleFormulaUnificationAux (NegForm f) (NegForm f') = simpleFormulaUnificationAux f f'
+--simpleFormulaUnificationAux (NegForm f) (NegForm f') = simpleFormulaUnificationAux f f'
 simpleFormulaUnificationAux (ForallForm v f) (ForallForm v' f') = simpleFormulaUnificationAux g g'
     where
         vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
