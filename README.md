@@ -194,7 +194,7 @@ Axiom name | Scheme | Note
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>, <code>\|</code> and <code>&</code>
 
-The inference rule <code>MP</code> is deriving <code>B</code> from previous proof steps of <code>A -> B</code> and <code>A</code>.
+The inference rule <code>MP</code> derives <code>B</code> from <code>A -> B</code> and <code>A</code>, two of which should be somewhere in previous proof steps.
 The search for suitable proof steps is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
