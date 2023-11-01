@@ -184,7 +184,7 @@ Axiom name | Axiom scheme
 --- | ---
 <code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code>
 <code>K</code> | <code>A -> B -> A</code>
-<code>C</code> | <code>E(t) -> E(eps x E(x))</code>
+<code>C</code> | <code>E(t) -> E(eps x E(x))</code> where <code>t</code> is an arbitrary term
 <code>ConjI</code> | <code>A -> B -> A & B</code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
