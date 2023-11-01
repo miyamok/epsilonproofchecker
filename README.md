@@ -239,13 +239,13 @@ The follwoing variable names, constant names, and predicate names are available.
 
 Kind | Names
 --- | ---
-Variable | x, y, z, u, v
-Nullary constant | a, b, c
-Unary function constant | f, g
-Binary function constant | h
-Propositional variable | A, B, C
-Unary predicate variable | P, Q
-Binary predicate variable | R
+Variable | <code>x</code>, <code>y</code>, <code>z</code>, <code>u</code>, <code>v</code>
+Nullary constant | <code>a</code>, <code>b</code>, <code>c</code>
+Unary function constant | <code>f</code>, <code>g</code>
+Binary function constant | <code>h</code>
+Propositional variable | <code>A</code>, <code>B</code>, <code>C</code>
+Unary predicate variable | <code>P</code>, <code>Q</code>
+Binary predicate variable | <code>R</code>
 
 Any of the above can be followed by an optional number as an index.  For example, <code>x</code>, <code>x1</code>, <code>x2</code> are all distinct variables.
 Binary and unary constants and variables should have a suitable number of arguments, which is a comma separated list with parentheses.
