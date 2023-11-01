@@ -235,6 +235,22 @@ A proof script is a list of proof steps, each of which consists of the following
 3. Optional tag for future reference to this proof step
 
 Formula is what we saw in the previous section of this documentation.
+The follwoing variable names, constant names, and predicate names are available.
+
+Kind | Names
+--- | ---
+Variable | x, y, z, u, v
+Nullary constant | a, b, c
+Unary function constant | f, g
+Binary function constant | h
+Propositional variable | A, B, C
+Unary predicate variable | P, Q
+Binary predicate variable | R
+
+Any of the above can be followed by an optional number as an index.  For example, <code>x</code>, <code>x1</code>, <code>x2</code> are all distinct variables.
+Binary and unary constants and variables should have a suitable number of arguments, which is a comma separated list with parentheses.
+For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand <code>P</code> is not.
+
 A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
 A tag is a reference name, which is a string starting with <code>#</code>, given to the proof step, which can be used to point this proof step later on.
 Assume <code>E(x)</code> is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
