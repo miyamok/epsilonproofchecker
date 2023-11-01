@@ -54,7 +54,7 @@ is abbreviated as
 ~A
 ```
 which means negation of <code>A</code> (namely, not <code>A</code>).
-Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in <code>P</code>.
+Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in P.
 The following three expressions are examples of propositional formulas.
 ```
 A
