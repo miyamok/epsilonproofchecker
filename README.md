@@ -2,12 +2,12 @@
 Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
 ##### Table of contents
 - [Logic](#logic)
-  - [Propositional calculus](#prop)
-  - [Elementary calculus](#elem)
-  - [Predicate calculus](#pred)
-  - [Epsilon calculus](#eps)
-- [Syntax for proof scripts](#syntax)
-- [To do list](#todo)
+  - [Propositional calculus](#propositional-calculus)
+  - [Elementary calculus](#elementary-calculus)
+  - [Predicate calculus](#predicate-calculus)
+  - [Epsilon calculus](#epsilon-calculus)
+- [Syntax for proof scripts](#syntax-for-proof-scripts)
+- [To do list](#to-do-list)
 ```
 ## ghc-9.2.8 used
 % ghc Main
