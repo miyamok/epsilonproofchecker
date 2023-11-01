@@ -1,4 +1,4 @@
-A & B by Asm #conj
+A & B by Asm
 A & B -> A by ConjE1
 A by MP
 A & B -> B by ConjE2
