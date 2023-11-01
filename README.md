@@ -29,12 +29,12 @@ Elementary calculus is propositional logic with predicates and terms in its lang
 
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
-Propositional formula F is defined as follows, where P<sub>0</sub> is ranging over propositional variables and A is an arbitrary element of P<sub>0</sub>.
+Propositional formula <code>F</code> is defined as follows, where <code>P<sub>0</sub></code> is ranging over propositional variables and <code>A</code> is an arbitrary element of <code>P<sub>0</sub></code>.
 ```
 F ::= A | bot | F -> F
 ```
 The arrow denotes logical implication, and bot is a special constant denoting falsum.
-The negated formula of A is written as follows using implication and falsum
+The negated formula of <code>A</code> is written as follows using implication and falsum
 ```
 A -> bot
 ```
@@ -46,8 +46,8 @@ is abbreviated as
 ```
 ~A
 ```
-which obviously means negation of A (namely, not A).
-Let A, B, and C be atomic propositions in P.
+which means negation of <code>A</code> (namely, not <code>A</code>).
+Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in <code>P</code>.
 The following three expressions are examples of propositional formulas.
 ```
 A
@@ -55,29 +55,29 @@ A -> B
 ~A -> ~B -> B -> A
 A -> B -> A
 ```
-Here we assume negation has higher priority than implication, namely, the second formula above claims that if not A holds then B holds, but doesn't mean that it is not the case that A implies B.  Using parentheses, one can write a formula meaning that it is not the case that A implies B.
+Here we assume negation has higher priority than implication, namely, the second formula above claims that if not <code>A</code> holds then <code>B</code> holds, but doesn't mean that it is not the case that <code>A</code> implies <code>B</code>.  Using parentheses, one can write a formula meaning that it is not the case that <code>A</code> implies <code>B</code>.
 ```
 ~(A -> B)
 ```
-The third formula above claims that if not A holds, and also if not B holds, and also if B holds, then A holds.
+The third formula above claims that if not <code>A</code> holds, and also if not <code>B</code> holds, and also if <code>B</code> holds, then <code>A</code> holds.
 If we supply (redundant) parentheses, it should look as
 ```
 ~A -> (~B -> (B -> A))
 ```
 Implication in the right hand side has higher priority than the left, and we say that implication is right associative.
-In order to mean that if not A implies not B, then B implies A, the use of parentheses is inevitable.
+In order to mean that if not <code>A</code> implies not <code>B</code>, then <code>B</code> implies <code>A</code>, the use of parentheses is inevitable.
 ```
 (~A -> ~B) -> B -> A
 ```
 In order to give an objective explanation that a claim is true, one gives a proof to the claim.
 A proof is a list of expressions, where an expression consists of a formula to claim and a reason of claiming it.
-If there is a proof of A, we write
+If there is a proof of <code>A</code>, we write
 ```
 ⊢A
 ```
 If a proof of <code>A</code> comes with assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
 ```
-A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A
+<code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>
 ```
 and it means that <code>A</code> is proved under the condions that <code>A<sub>1</sub>, ..., A<sub>k</sub></code> are all true.
 A reason is either an axiom or an inference rule.  We have the following axioms
