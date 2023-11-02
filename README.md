@@ -183,7 +183,7 @@ t ::= ... | eps x F
 F ::= ... 
 ```
 A term of the form <code>eps x E(x)</code> is called epsilon term.  Intuitive meaning of an epsilon term <code>eps x E(x)</code> is the term which satisfies the property of <code>x</code> denoted by <code>E(x)</code>.  Therefore, epsilon operator is often explained as a choice operator.
-The definition of free variables is extended to support epsilon terms.
+The definition of free variables is extended by the following clause to support epsilon terms.
 ```
 FV(eps x E(x)) = FV(E(x)) - {x}
 ```
