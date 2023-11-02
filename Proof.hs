@@ -130,11 +130,6 @@ checkEFQ :: Formula -> Maybe ErrorMsg
 checkEFQ (ImpForm (PredForm Falsum ts) f) = Nothing
 checkEFQ _ = Just Malformed
 
--- checkLEM :: Formula -> Bool
--- checkLEM (DisjForm f (NegForm g)) = alphaEqFormula f g
--- checkLEM (DisjForm (NegForm f) g) = alphaEqFormula f g
--- checkLEM _ = False
-
 proofToAssumptionFormulas :: Proof -> [Formula]
 proofToAssumptionFormulas [] = []
 proofToAssumptionFormulas (l:ls) = let (f, r, t) = l
@@ -278,3 +273,46 @@ checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) dep
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)
                         return ls
+
+proofToAsms :: Proof -> Proof
+proofToAsms p = filter (\(f, r, t) -> r == Asm) p
+
+proofToNonAsms :: Proof -> Proof
+proofToNonAsms p = filter (\(f, r, t) -> r /= Asm) p
+
+formulaToIdentityProof :: Formula -> Proof
+formulaToIdentityProof f =
+      let f1 = ImpForm f (ImpForm (ImpForm f f) f)
+          f2 = ImpForm f (ImpForm f f)
+          f3 = ImpForm f f
+      in [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
+          (f1, K, Nothing),
+          (ImpForm f2 f3, MP Nothing Nothing, Nothing),
+          (f2, K, Nothing),
+          (f3, MP Nothing Nothing, Nothing)]
+
+deductionAxiom :: Proof -> Formula -> Proof
+deductionAxiom p f = undefined
+
+deductionAux :: Proof -> Proof
+deductionAux p = let asmSteps = proofToAsms p
+                     (concl, r, t) = last p
+                 in case r of Asm -> init asmSteps ++ formulaToIdentityProof concl
+                              _ -> let (lastAsmFla, r', t') =  last asmSteps
+                                       newconcl = ImpForm lastAsmFla concl
+                                   in init asmSteps ++ [(concl, r, t),
+                                                        (ImpForm concl newconcl, K, Nothing),
+                                                        (newconcl, MP Nothing Nothing, Nothing)]
+
+deduction :: Proof -> Proof
+deduction p =
+  let asmSteps = proofToAsms p in
+      if null asmSteps then p
+      else let (concl, r, _) = last p
+               (asmFla, _, t) = last asmSteps
+               pureProof = proofToNonAsms p in
+                  case r of Asm -> if null pureProof
+                                    then init asmSteps ++ formulaToIdentityProof concl
+                                    else undefined
+                            S -> deductionAux p
+                            K -> deductionAux p
