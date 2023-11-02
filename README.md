@@ -150,7 +150,6 @@ This variable binding mechanism is important to formulate the logic of predicate
 ```
 FV(x) = {x}
 FV(f(t)) = FV(t)
-FV(eps x E(x)) = FV(E(x)) - {x}
 FV(bot) = {}
 FV(P(t)) = FV(t)
 FV(A -> B) = FV(A) ∪ FV(B)
@@ -177,13 +176,17 @@ Here we assumed <code>x</code> does not have a free occurrence in <code>B</code>
 The new inference rule is called the rule of generalization, which allows to derive <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x E(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ E(x)</code> under the condition that <code>x</code> does not have a free occurrence in <code>A<sub>1</sub>, ..., A<sub>k</sub></code> and also that if <code>x</code> is distinct variable from <code>y</code>, then <code>y</code> doesn't have a free occurrence in <code>A(x)</code>.
 ### Epsilon calculus
 Epsilon calculus extends elementary calculus by epsilon operator and so-called critical axiom.
-Epsilon operator is denoted by eps and forming a term taking a variable and a formula.
+Epsilon operator is denoted by <code>eps</code> and forming a term taking a variable and a formula.
 The language definition of epsilon calculus is as follows.
 ```
 t ::= ... | eps x F
 F ::= ... 
 ```
 A term of the form <code>eps x E(x)</code> is called epsilon term.  Intuitive meaning of an epsilon term <code>eps x E(x)</code> is the term which satisfies the property of <code>x</code> denoted by <code>E(x)</code>.  Therefore, epsilon operator is often explained as a choice operator.
+The definition of free variables is extended to support epsilon terms.
+```
+FV(eps x E(x)) = FV(E(x)) - {x}
+```
 This intuition is formulated by the folliong critical axiom.
 ```
 E(t) -> E(eps x E(x))
