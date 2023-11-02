@@ -228,7 +228,7 @@ After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ```
 ## Syntax for proof scripts
-Epsilonproofchecker processes a proof script which is stored as a file in the system.
+The proof checker epsilon processes a proof script which is stored as a file in the system.
 A proof script is a list of proof steps, each of which consists of the following ingredients.
 1. A formula to claim
 2. A reason of claiming the formula
@@ -262,7 +262,7 @@ and also one can give a tag to this proof step.
 ```
 E(x) by R #myproofstep
 ```
-Epsilonproofchecker supports the following axioms.
+The proof checker epsilon supports the following axioms.
 
 Axiom name | Scheme | Note
 --- | --- | ---
