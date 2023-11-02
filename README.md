@@ -60,7 +60,7 @@ Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in
 The following three expressions are examples of propositional formulas.
 ```
 A
-A -> B
+~A -> B
 ~A -> ~B -> B -> A
 A -> B -> A
 ```
