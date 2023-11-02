@@ -52,7 +52,7 @@ This formula, <code>A -> bot</code>, denotes the negation of <code>A</code> (nam
 ```
 ~A
 ```
-Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in P<sub>0</sub>.
+Let <code>A</code>, <code>B</code>, and <code>C</code> be propositional variables in P<sub>0</sub>.
 The following three expressions are examples of propositional formulas.
 ```
 A
