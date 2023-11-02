@@ -187,7 +187,7 @@ The definition of free variables is extended by the following clause to support 
 ```
 FV(eps x E(x)) = FV(E(x)) - {x}
 ```
-This intuition is formulated by the folliong critical axiom.
+This intuition is formulated by the following critical axiom.
 ```
 E(t) -> E(eps x E(x))
 ```
