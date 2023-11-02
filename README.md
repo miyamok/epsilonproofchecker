@@ -42,21 +42,17 @@ Propositional formula <code>F</code> is defined as follows, where P<sub>0</sub> 
 ```
 F ::= A | bot | F -> F
 ```
-The arrow denotes logical implication, and bot is a special constant denoting falsum.
-The negated formula of <code>A</code> is written as follows using implication and falsum
+The arrow denotes logical implication, and bot is a special constant denoting falsum, which means the condtradiction.
+The following formula means that if <code>A</code> then it contradicts.
 ```
 A -> bot
 ```
-and the formula
-```
-A -> bot
-```
-is abbreviated as
+In order words, it's not the case that <code>A</code> holds.
+This formula, <code>A -> bot</code>, denotes the negation of <code>A</code> (namely, not <code>A</code>), and is abbreviated as
 ```
 ~A
 ```
-which means negation of <code>A</code> (namely, not <code>A</code>).
-Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in P.
+Let <code>A</code>, <code>B</code>, and <code>C</code> be atomic propositions in P<sub>0</sub>.
 The following three expressions are examples of propositional formulas.
 ```
 A
