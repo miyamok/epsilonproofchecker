@@ -32,7 +32,7 @@ A ⊢ A
 % 
 ```
 ## Logic
-Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator and an additional axiom so-called critical axiom is available.
+Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional axiom so-called critical axiom is available.
 Elementary calculus is propositional logic with predicates and terms in its language, maintaining the same principles for logical reasoning.
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
