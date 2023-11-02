@@ -97,7 +97,7 @@ If Γ⊢A -> B and Γ⊢A then Γ⊢B
 Each of the above has the names <code>K</code>, <code>S</code>, <code>EFQ</code>, <code>DNE</code>, and <code>MP</code>, respectively.
 <code>K</code> and <code>S</code> are traditional names, and the rest stands for ex falso quodlibet, double negation elimitaion, and modus ponens.
 Note that the axioms are actually axiom schemas, namely, those propositional variables in the axiom formulas may be replaced by arbitrary formulas.  In order words, those occurrences of <code>A</code>, <code>B</code>, <code>C</code> are metavariables and diffrent from propositional variables, and those metavariables will be instantiated by concrete formulas in actual use.
-Here we give a proof of the claim <code>A</code> implies <code>A</code>.
+Here we give a proof of <code>A -> A</code>.
 ```
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 A -> (A -> A) -> A by K
