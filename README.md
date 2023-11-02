@@ -82,7 +82,7 @@ If there is a proof of <code>A</code>, we write
 ```
 If a proof concludes <code>A</code> from unproved assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
 <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>.
-We often abbreviate the sequence of assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub> as <code>Γ</code>.
+We often abbreviate the sequence of assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code> as <code>Γ</code>.
 A reason is either an axiom, an inference rule, or a reference to an assumption.  We have the following axioms
 ```
 A -> B -> A
