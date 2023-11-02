@@ -80,10 +80,10 @@ If there is a proof of <code>A</code>, we write
 ```
 ⊢A
 ```
-If a proof shows <code>A</code> from assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
-<code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>
-and it means that <code>A</code> is proved under the condions that <code>A<sub>1</sub>, ..., A<sub>k</sub></code> are all true.
-A reason is either an axiom or an inference rule.  We have the following axioms
+If a proof concludes <code>A</code> from unproved assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>, we write
+<code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ A</code>.
+We often abbreviate the sequence of assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub> as <code>Γ</code>.
+A reason is either an axiom, an inference rule, or a reference to an assumption.  We have the following axioms
 ```
 A -> B -> A
 (A -> B -> C) -> (A -> B) -> A -> C
@@ -92,7 +92,7 @@ bot -> A
 ```
 and one inference rule.
 ```
-If ⊢A -> B and ⊢A then ⊢B
+If Γ⊢A -> B and Γ⊢A then Γ⊢B
 ```
 Each of the above has the names <code>K</code>, <code>S</code>, <code>EFQ</code>, <code>DNE</code>, and <code>MP</code>, respectively.
 <code>K</code> and <code>S</code> are traditional names, and the rest stands for ex falso quodlibet, double negation elimitaion, and modus ponens.
