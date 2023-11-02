@@ -207,7 +207,7 @@ Applying the definition of the existential quantifier by epsilon operator, the a
 ```
 (A -> P(eps x P(x))) -> A -> B(eps x(A -> P(x)))
 ```
-A proof to this formula is given in examples/ex01_ex01_independence_of_premise.proof .
+A proof to this formula is given in examples/ex01_independence_of_premise.proof .
 ```
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
