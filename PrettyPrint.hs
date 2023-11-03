@@ -11,21 +11,6 @@ prettyPrintPredicate (Pred n i a)
 prettyPrintPredicate Falsum = "bot"
 
 prettyPrintFormula :: Formula -> String
--- prettyPrintFormula f p =
---     let ppFla = case f of
---          (PredForm p ts) | null ts -> if predToArity p == 0 then ppPred else ppPred ++ "()"
---                          | otherwise -> ppPred
---                          where ppPred = prettyPrintPredicate p
---          (NegForm f) -> "~" 
---  in if p then "(" ++ ppFla ++ ")" else ppFla
-
--- prettyPrintFormula (PredForm p ts) parens
--- let ppFla 
---      | null ts = if predToArity p == 0 then ppPred else ppPred ++ "()"
---      | otherwise = ppPred
---      where ppPred = prettyPrintPredicate p
-
--- in if parens then "(" ++ ppFla ++ ")" else ppFla
 prettyPrintFormula (PredForm p ts)
  | null ts = if predToArity p == 0 then ppPred else ppPred ++ "()"
  | otherwise = ppPred ++ ppArgs

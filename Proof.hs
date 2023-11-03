@@ -252,13 +252,6 @@ checkClaimsAux p offset = if length p <= offset
                         Asm -> Nothing
                         _ -> Just NotYetSupported
 
---proofAndFormulaToMPPremiseIndices :: Proof -> Formula -> 
-
--- proofToMPPremiseIndices :: Proof -> [(Int, Int)]
--- proofToMPPremiseIndices p = let is = proofAndMPConclusionToLineIndices p
---                                 premFlas = map (\i -> let (f, r, t) = p!!i in formulaInImpFormToPremise f) is
---                              in undefined
-
 proofToDependency :: Proof -> [Int]
 --proofToDependency p = proofToDependencyAux p (length p-1)
 proofToDependency p = [0..length p-1]
@@ -273,35 +266,12 @@ proofToDependencyAux p i = case p!!i of
                   ConjE2 -> []
                   ConjI -> []
                   Asm -> []
---                  MPTagged t1 t2 -> sort $ nub ([j, k] ++ proofToDependencyAux p j ++ proofToDependencyAux p k)
                   _ -> []
 
 checkProof :: Proof -> Bool
 checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) deps
       where cs = checkClaims p
             deps = proofToDependency p
--- checkProofAux [] offset = []
--- checkProofAux (c:cs) offset = b:checkProofAux cs (offset + 1)
---       where
---             b = case c of
---                   Auto f -> checkAuto f
---                   MPIndexed f i1 i2 -> checkModusPonens f f1 f2
---                         where f1 = 
--- checkFormulasAux (Auto f:cs) offset = checkAuto f:checkFormulasAux cs offset
--- checkFormulasAux ((MPIndexed f i1 i2):cs) offset = checkModusPonens f g1 g2:checkFormulasAux cs offset
---              where n = length cs-1
---                    g1 = case cs!!(n-i1) of
---                              Auto f' -> f'
---                              MPIndexed f' i1' i2' -> f'
---                    g2 = case cs!!(n-i2) of
---                              Auto f' -> f'
---                              MPIndexed f' i1' i2' -> f'
-
--- checkProofAux :: [Formula] -> Proof -> Bool
--- checkProofAux as (f:fs) = True
-
--- checkProof :: Proof -> Bool
--- checkProof = checkProofAux []
 
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)
@@ -321,14 +291,6 @@ formulaToIdentityProof f =
           (ImpForm (ImpForm f f') f', MP Nothing Nothing, Nothing),
           (makeKFormula f f, K, Nothing),
           (f', MP Nothing Nothing, Nothing)]
-      -- let f1 = ImpForm f (ImpForm (ImpForm f f) f)
-      --     f2 = ImpForm f (ImpForm f f)
-      --     f3 = ImpForm f f
-      -- in [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
-      --     (f1, K, Nothing),
-      --     (ImpForm f2 f3, MP Nothing Nothing, Nothing),
-      --     (f2, K, Nothing),
-      --     (f3, MP Nothing Nothing, Nothing)]
 
 deductionAsm :: Formula -> Step -> Proof
 deductionAsm f (g, Asm, t)
@@ -375,8 +337,7 @@ deductionAux asmProof nonAsmProof =
           ihProof = deductionAux asmProof (init nonAsmProof)
           ihAsmProof = traceShowId $ proofToAsms ihProof
           ihNonAsmProof = proofToNonAsms ihProof
-      in init asmProof ++ ihNonAsmProof ++ case r of --Asm -> init asmProof ++ formulaToIdentityProof concl
-                      --              else undefined -- case if Asm appears in the middle of the proof
+      in init asmProof ++ ihNonAsmProof ++ case r of
                       MP Nothing Nothing ->
                         let mPIndeces = proofInMPFormToMPPremisesIndices wholeProof
                             (i,j) = head mPIndeces
