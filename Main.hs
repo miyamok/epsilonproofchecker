@@ -23,7 +23,7 @@ main = do
                  onceFlag = "-1" `elem` args
                  pFlag = "-p" `elem` args in
              do ls <- fmap lines (readFile filename)
-                let parsedList = traceShowId $ map (parse $ step defaultPredicates defaultVariables defaultConstants) ls
+                let parsedList = map (parse $ step defaultPredicates defaultVariables defaultConstants) ls
                  in case elemIndex [] parsedList of
                     Just i -> do putStrLn ("parse error at line " ++ show (i+1))
                                  putStrLn (ls!!i)
