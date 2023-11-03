@@ -1,6 +1,6 @@
 # epsilon --- a proof checker for Hilbert's epsilon calculus
 Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting for Hilbert style system easier.
+The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
