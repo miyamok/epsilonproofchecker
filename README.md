@@ -278,6 +278,7 @@ A -> (A -> A) -> A by K
 A -> A -> A by K
 A -> A by MP
 ```
+This proof transformation feature does not support the tagged inference rules yet.
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof checker epsilon processes a proof script which is stored as a file in the system.
