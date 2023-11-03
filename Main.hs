@@ -10,10 +10,11 @@ import PrettyPrint
 main :: IO ()
 main = do
     args <- getArgs
-    if length args == 0
-        then do putStrLn "at least one argument required for the path to your proof script."
+    if null args || all (\s -> head s == '-') args
+        then do putStrLn "a path to a proof script required"
                 putStrLn "-d option to apply proof transformation due to deduction theorem"
                 putStrLn "-p option to print out the proof"
+                putStrLn "-1 option to limit the application of deduction theorem only once"
                 putStrLn "Usage:"
                 putStrLn "% ./Main [options] filepath"
         else let filename = last args
