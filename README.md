@@ -1,5 +1,6 @@
 # epsilon --- a proof checker for Hilbert's epsilon calculus
 Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
+The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -278,6 +279,7 @@ A -> (A -> A) -> A by K
 A -> A -> A by K
 A -> A by MP
 ```
+This proof transformation feature does not support the tagged inference rules yet.
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof checker epsilon processes a proof script which is stored as a file in the system.
@@ -348,6 +350,5 @@ Example proofs are found in the <code>examples</code> directory.
 ## To do list
 - Proof automation through the external prover Z3
 - Epsilon equality axiom to implement
-- Deduction theorem for proof transformation algorithm
 - Further examples
 - Writing a brief history of Hilbert's logic
