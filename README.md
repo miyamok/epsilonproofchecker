@@ -249,14 +249,29 @@ Correct proof of
 % cat examples/ex01_independence_of_premise.proof
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
+The oprion <code>-p</code> is to display the proof.
+```
+% ./Main -p examples/ex01_independence_of_premise.proof
+Correct proof of
+ ⊢ (A -> P(eps x P(x))) -> A -> P(eps x(A -> P(x)))
+(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
+```
 The option <code>-d</code> applies the proof transformation due to deduction theorem.
+Combinating with the oprion <code>-p</code>, it shows the transformed proof.
 ```
 % cat examples/ex08_assumption.proof  
 A by Asm
 B by Asm
-% ./Main -d examples/ex08_assumption.proof 
-Correct proof of
+% ./Main -d examples/ex08_assumption.proof
+The input is a correct proof of
 A, B ⊢ B
+It generated a correct proof of
+⊢ A -> B -> B
+% ./Main -d -p examples/ex08_assumption.proof
+The input is a correct proof of
+A, B ⊢ B
+It generated a correct proof of
+⊢ A -> B -> B
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 A -> (A -> A) -> A by K
 (A -> A -> A) -> A -> A by MP
