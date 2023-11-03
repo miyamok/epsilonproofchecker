@@ -386,5 +386,6 @@ Example proofs are found in the <code>examples</code> directory.
 ## To do list
 - Proof automation through the external prover Z3
 - Epsilon equality axiom to implement
+- Feature to do custom declaration for variable names, constant names, and predicate names
 - Further examples
 - Writing a brief history of Hilbert's logic
