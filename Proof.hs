@@ -8,15 +8,16 @@ import Debug.Trace
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
              | Gen Tag | EFQ | DNE | LEM | Asm deriving (Show, Eq)
-type Line = (Formula, Rule, Tag)
+type Step = (Formula, Rule, Tag)
 type Proof = [(Formula, Rule, Tag)]
 type Tag = Maybe String
+-- type Tag = NoTag | Expl String | Impl String
 data ErrorMsg = MPIllReference | MPWrongFormula | NotYetSupported
              | KMismatch | KMalformed | SMismatch | SMalformed | CMalformed
              | MPMismatch | MPMalformed | Malformed deriving (Eq, Show)
 
-lineToFormula :: Line -> Formula
-lineToFormula (f, _, _) = f
+stepToFormula :: Step -> Formula
+stepToFormula (f, _, _) = f
 
 checkAuto :: Formula -> Bool
 checkAuto f = True
@@ -148,44 +149,69 @@ proofAndTagStringToIndicesAux p s i
                 in case t of Nothing -> nx
                              Just s' -> if s'==s then i:nx else nx
 
-proofAndTagStringToLine :: Proof -> String -> Maybe Line
-proofAndTagStringToLine p t = proofAndTagStringToLineAux p t 0
+proofAndTagStringToStep :: Proof -> String -> Maybe Step
+proofAndTagStringToStep p t = proofAndTagStringToStepAux p t 0
 
-proofAndTagStringToLineAux :: Proof -> String -> Int -> Maybe Line
-proofAndTagStringToLineAux p t i
+proofAndTagStringToStepAux :: Proof -> String -> Int -> Maybe Step
+proofAndTagStringToStepAux p t i
  | i >= length p = Nothing
  | otherwise = let l = p!!i
                    (f, r, t') = l
-                   next = proofAndTagStringToLineAux p t (i+1)
+                   next = proofAndTagStringToStepAux p t (i+1)
                in case t' of Nothing -> next
                              Just s' -> if s' == t then Just l else next
 
-proofAndFormulaToLineIndices :: Proof -> Formula -> Int -> [Int]
-proofAndFormulaToLineIndices p f bound = proofAndFormulaToLineIndicesAux p f bound 0
+proofAndFormulaToStepIndices :: Proof -> Formula -> Int -> [Int]
+proofAndFormulaToStepIndices p f bound = proofAndFormulaToStepIndicesAux p f bound 0
 
-proofAndFormulaToLineIndicesAux :: Proof -> Formula -> Int -> Int -> [Int]
-proofAndFormulaToLineIndicesAux p f bound i
+proofAndFormulaToStepIndicesAux :: Proof -> Formula -> Int -> Int -> [Int]
+proofAndFormulaToStepIndicesAux p f bound i
  | i < bound = let l = p!!i
                    (f', r', t') = l
-                   nx = proofAndFormulaToLineIndicesAux p f bound (i+1)
+                   nx = proofAndFormulaToStepIndicesAux p f bound (i+1)
                   in if alphaEqFormula f' f then i:nx else nx
  | otherwise = []
 
-proofAndConclusionToLineIndices :: Proof -> Formula -> Int -> [Int]
-proofAndConclusionToLineIndices p f b = proofAndConclusionToLineIndicesAux p f b 0
+proofAndMPConclusionToStepIndices :: Proof -> Formula -> [Int]
+proofAndMPConclusionToStepIndices p f = proofAndMPConclusionToStepIndicesAux p f 0
 
-proofAndConclusionToLineIndicesAux :: Proof -> Formula -> Int -> Int -> [Int]
-proofAndConclusionToLineIndicesAux p concl bound i
- | i < bound = let l = p!!i
-                   (f, r, t) = l
-                   nx = proofAndConclusionToLineIndicesAux p concl bound (i+1)
+proofAndMPConclusionToStepIndicesAux :: Proof -> Formula -> Int -> [Int]
+proofAndMPConclusionToStepIndicesAux p concl i
+ | i < length p = let l = p!!i
+                      (f, r, t) = l
+                      nx = proofAndMPConclusionToStepIndicesAux p concl (i+1)
                   in case f of (ImpForm g g') -> if alphaEqFormula concl g' then i:nx else nx
                                _ -> nx
  | otherwise = []
 
+proofInMPFormToMPPremisesIndices :: Proof -> [(Int, Int)]
+proofInMPFormToMPPremisesIndices p = proofInMPFormToMPPremisesIndicesAux p concl 0
+      where (concl, MP _ _, t) = last p
+
+proofInMPFormToMPPremisesIndicesAux :: Proof -> Formula -> Int -> [(Int, Int)]
+proofInMPFormToMPPremisesIndicesAux p concl i
+ | i < length p = let (f, r, t) = p!!i
+                      nx = proofInMPFormToMPPremisesIndicesAux p concl (i+1)
+                  in case f of (ImpForm g g') ->
+                                 if alphaEqFormula concl g'
+                                    then let js = proofAndFormulaToStepIndices p g (length p)
+                                    in map (\j -> (i, j)) js ++ nx
+                                    else nx
+                               _ -> nx
+ | otherwise = []
+
+proofInMPFormToMPPremisesSteps :: Proof -> [(Step, Step)]
+proofInMPFormToMPPremisesSteps p = map (\(i,j) -> (p!!i, p!!j)) (proofInMPFormToMPPremisesIndices p)
+
+proofInMPFormToMPPrinciplePremiseFormulas :: Proof -> [Formula]
+proofInMPFormToMPPrinciplePremiseFormulas p = let (concl, _, _) = last p
+                                                  is = proofAndMPConclusionToStepIndices p concl
+                                                in map (\i -> let (f, _, _) = p!!i in f) is
+                                                
 checkClaims :: Proof -> [Maybe ErrorMsg]
 checkClaims p = checkClaimsAux p 0
 
+checkClaimsAux :: [(Formula, Rule, Tag)] -> Int -> [Maybe ErrorMsg]
 checkClaimsAux p offset = if length p <= offset
       then []
       else c:checkClaimsAux p (offset+1) where
@@ -209,22 +235,29 @@ checkClaimsAux p offset = if length p <= offset
                         MP (Just s1) (Just s2) ->
                               -- Should be improved.  Brief coding possible.
                               -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
-                              let ml1 = proofAndTagStringToLine (take offset p) s1
-                                  ml2 = proofAndTagStringToLine (take offset p) s2
+                              let ml1 = proofAndTagStringToStep (take offset p) s1
+                                  ml2 = proofAndTagStringToStep (take offset p) s2
                               in if isNothing ml1 || isNothing ml2
                                     then Just MPIllReference
                                     else do (f1, r1, t1) <- ml1
                                             (f2, r2, t2) <- ml2
                                             checkModusPonens f f1 f2
                         MP Nothing Nothing ->
-                              let is = proofAndConclusionToLineIndices p f offset -- line indices with matching conclusion
+                              let is = proofAndMPConclusionToStepIndices (take offset p) f -- Step indices with matching conclusion
                                   prems = map (\i -> let (f, r, t) = (p!!i) in case f of (ImpForm g _) -> g) is
-                              in if any (not . null) (map (\f -> proofAndFormulaToLineIndices p f offset) prems)
+                              in if any (not . null) (map (\f -> proofAndFormulaToStepIndices p f offset) prems)
                                      then Nothing
                                      else Just MPMalformed
                         C -> checkC f
                         Asm -> Nothing
                         _ -> Just NotYetSupported
+
+--proofAndFormulaToMPPremiseIndices :: Proof -> Formula -> 
+
+-- proofToMPPremiseIndices :: Proof -> [(Int, Int)]
+-- proofToMPPremiseIndices p = let is = proofAndMPConclusionToLineIndices p
+--                                 premFlas = map (\i -> let (f, r, t) = p!!i in formulaInImpFormToPremise f) is
+--                              in undefined
 
 proofToDependency :: Proof -> [Int]
 --proofToDependency p = proofToDependencyAux p (length p-1)
@@ -294,25 +327,76 @@ formulaToIdentityProof f =
 deductionAxiom :: Proof -> Formula -> Proof
 deductionAxiom p f = undefined
 
-deductionAux :: Proof -> Proof
-deductionAux p = let asmSteps = proofToAsms p
-                     (concl, r, t) = last p
-                 in case r of Asm -> init asmSteps ++ formulaToIdentityProof concl
-                              _ -> let (lastAsmFla, r', t') =  last asmSteps
-                                       newconcl = ImpForm lastAsmFla concl
+deductionBase :: Proof -> Proof
+deductionBase p = let asmSteps = proofToAsms p
+                      (concl, r, t) = last p
+                  in case r of Asm -> init asmSteps ++ formulaToIdentityProof concl
+                               _ -> let l = last asmSteps
+                                        (lastAsmFla, r', t') = l
+                                        newconcl = ImpForm lastAsmFla concl
                                    in init asmSteps ++ [(concl, r, t),
                                                         (ImpForm concl newconcl, K, Nothing),
                                                         (newconcl, MP Nothing Nothing, Nothing)]
 
 deduction :: Proof -> Proof
-deduction p =
-  let asmSteps = proofToAsms p in
-      if null asmSteps then p
-      else let (concl, r, _) = last p
-               (asmFla, _, t) = last asmSteps
-               pureProof = proofToNonAsms p in
-                  case r of Asm -> if null pureProof
-                                    then init asmSteps ++ formulaToIdentityProof concl
-                                    else undefined
-                            S -> deductionAux p
-                            K -> deductionAux p
+deduction p
+ | null as = p -- nothing to do
+ | null pureProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
+ | otherwise = deduction $ deductionAux as pureProof
+--  | null pureProof = deductionBase p -- Asm reference is the conclusion of the proof
+--  | otherwise = deductionAux as pureProof
+ where
+      as = proofToAsms p
+      pureProof = proofToNonAsms p
+
+deductionAux :: [Step] -> Proof -> Proof
+deductionAux asmSteps [] = deductionBase asmSteps
+deductionAux asmSteps pureProof =
+      let (concl, r, _) = last pureProof
+          (asmFla, _, t) = last asmSteps
+          ih = deductionAux (asmSteps) (init pureProof)
+      in ih ++ case r of --Asm -> init asmSteps ++ formulaToIdentityProof concl
+                      --              else undefined -- case if Asm appears in the middle of the proof
+                      MP Nothing Nothing ->
+                        let (i,j) = head (proofInMPFormToMPPremisesIndices (asmSteps ++ pureProof))
+                            principlePrem = head (proofInMPFormToMPPrinciplePremiseFormulas (asmSteps ++ pureProof))
+                            (ImpForm prem _) = principlePrem
+                            f1 = ImpForm asmFla principlePrem
+                            f2 = ImpForm asmFla prem
+                            f3 = ImpForm asmFla concl
+                        in [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
+                            (ImpForm f2 f3, MP Nothing Nothing, Nothing),
+                            (f3, MP Nothing Nothing, Nothing)]
+                      MP t t' -> undefined
+                      Gen t -> undefined
+                      _ -> deductionBase (asmSteps ++ pureProof) -- case for axioms
+
+-- deductionAux :: Proof -> Proof
+-- deductionAux p =
+--   let asmSteps = proofToAsms p
+--       (concl, r, _) = last p
+--       (asmFla, _, t) = last asmSteps
+--       pureProof = proofToNonAsms p in
+--             case r of Asm -> if null pureProof
+--                                     then init asmSteps ++ formulaToIdentityProof concl
+--                                     else undefined -- case if Asm appears in the middle of the proof
+--                       S -> deductionAux (init p) ++ deductionBase p
+--                       K -> deductionAux (init p) ++ deductionBase p
+--                       ConjI -> deductionAux (init p) ++ deductionBase p
+--                       ConjE1 -> deductionAux (init p) ++ deductionBase p
+--                       ConjE2 -> deductionAux (init p) ++ deductionBase p
+--                       DisjI1 -> deductionAux (init p) ++ deductionBase p
+--                       DisjI2 -> deductionAux (init p) ++ deductionBase p
+--                       DisjE -> deductionAux (init p) ++ deductionBase p
+--                       EFQ -> deductionAux (init p) ++ deductionBase p
+--                       DNE -> deductionAux (init p) ++ deductionBase p
+--                       MP Nothing Nothing ->
+--                         let (i,j) = head (proofInMPFormToMPPremisesIndices p)
+--                             principlePrem = head (proofInMPFormToMPPrinciplePremiseFormulas p)
+--                             (ImpForm prem _) = principlePrem
+--                             f1 = ImpForm asmFla principlePrem
+--                             f2 = ImpForm asmFla prem
+--                             f3 = ImpForm asmFla concl
+--                         in deductionAux (init p) ++ [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
+--                                                      (ImpForm f2 f3, MP Nothing Nothing, Nothing),
+--                                                      (f3, MP Nothing Nothing, Nothing)]

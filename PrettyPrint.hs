@@ -1,6 +1,8 @@
 module PrettyPrint where
 import Syntax
+import Proof
 import Data.List
+import Distribution.Pretty (Pretty(pretty))
 
 prettyPrintPredicate :: Predicate -> String
 prettyPrintPredicate (Pred n i a)
@@ -74,3 +76,24 @@ prettyPrintTerm (EpsTerm v f) = concat ["eps ", prettyPrintVariable v, ppKer]
     where
         ppFla = prettyPrintFormula f
         ppKer = if isBiconForm f then "(" ++ ppFla ++ ")" else " " ++ ppFla
+
+prettyPrintReason :: Rule -> String
+prettyPrintReason r = case r of (MP Nothing Nothing) -> "MP"
+                                (MP (Just s) (Just s')) -> "MP(" ++ s ++ ", " ++ s' ++ ")"
+                                (Gen Nothing) -> "Gen"
+                                (Gen (Just s)) -> "Gen(" ++ s ++ ")"
+                                r -> show r
+
+prettyPrintProofStep :: Step -> String
+prettyPrintProofStep (f, r, t) =
+    prettyPrintFormula f ++
+    " by " ++ 
+    prettyPrintReason r ++
+    prettyPrintTag t
+
+prettyPrintTag :: Tag -> String
+prettyPrintTag Nothing = ""
+prettyPrintTag (Just s) = " #" ++ s
+
+prettyPrintProof :: Proof -> String
+prettyPrintProof p = intercalate "\n" (map prettyPrintProofStep p)

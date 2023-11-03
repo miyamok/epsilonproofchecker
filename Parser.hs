@@ -241,7 +241,11 @@ tag :: Parser (Maybe String)
 tag = do symbol "#"
          t <- some alphanum
          return (Just t)
-        <|> return Nothing
+       <|> return Nothing
+-- tag = do symbol "#"
+--          do t <- some alphanum
+--             return (Just t)
+--        <|> empty
 
 rule :: Parser Rule
 rule = do symbol "by"
@@ -298,8 +302,8 @@ ruleAux = do symbol "K"
        <|> do symbol "Asm"
               return Asm
 
-line :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Line
-line pds vds cds = do f <- formula pds vds cds
+step :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Step
+step pds vds cds = do f <- formula pds vds cds
                       r <- rule
                       t <- tag
                       return (f, r, t)

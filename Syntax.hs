@@ -269,3 +269,6 @@ isBiconForm (ForallForm v f) = False
 isBiconForm (ExistsForm v f) = False
 isBiconForm (ImpForm f (PredForm Falsum [])) = False
 isBiconForm _ = True
+
+formulaInImpFormToPremise :: Formula -> Formula
+formulaInImpFormToPremise (ImpForm f _) = f
