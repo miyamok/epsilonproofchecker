@@ -305,7 +305,7 @@ B -> all x P(x) by Asm
 at the begining of the proof, and also manually adding the following 2 lines
 ```
 B -> P(y) by MP
-all y (B -> P(y)) by Gen
+all y(B -> P(y)) by Gen
 ```
 at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllShift.proof</code>.  By issueing the following command
 ```
