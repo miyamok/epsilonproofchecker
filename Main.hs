@@ -26,15 +26,47 @@ main = do
                     (f, r, t) = last p
                     stmt = prettyPrintFormula f
                     fs = intercalate ", " (map prettyPrintFormula asms)
-                  in if b then
-                    do  putStrLn "Correct proof of"
-                        putStrLn (intercalate " " [fs, "⊢", stmt])
-                        if dFlag then
-                         let dp = deduction p in
-                             do putStrLn (prettyPrintProof dp)
-                                if checkProof dp then return () else putStrLn "deduction failed!"
-                        else if pFlag then putStrLn (prettyPrintProof p) else return ()
-                     else do putStrLn "Not a proof of"
-                             putStrLn stmt
-                             return ()
-    return ()
+                  in if not b
+                    then do putStrLn "The input is not a proof of"
+                            putStrLn stmt
+                    else if dFlag
+                        then do putStrLn "The input is a correct proof of"
+                                putStrLn (intercalate " " [fs, "⊢", stmt])
+                                let dp = deduction p in
+                                    if checkProof dp
+                                        then do putStrLn "It generated a correct proof of"
+                                                let (f', _, _) = last dp in
+                                                       do putStrLn ("⊢ " ++ prettyPrintFormula f')
+                                                          if pFlag then putStrLn (prettyPrintProof dp)
+                                                                   else return ()
+                                        else putStrLn "Proof transformation doesn't support this proof yet."
+                    else do putStrLn "Correct proof of"
+                            putStrLn (intercalate " " [fs, "⊢", stmt])
+                            if pFlag then putStrLn (prettyPrintProof p) else return ()
+
+
+                    --               else 
+
+                    -- do  putStrLn "Correct proof of"
+                    --     putStrLn (intercalate " " [fs, "⊢", stmt])
+                    --     if dFlag then
+                    --      let dp = deduction p in
+                    --          do putStrLn (prettyPrintProof dp)
+                    --             if checkProof dp then return () else putStrLn "deduction failed!"
+                    --     else if pFlag then putStrLn (prettyPrintProof p) else return ()
+                    --  else do putStrLn "Not a proof of"
+                    --          putStrLn stmt
+                    --          return ()
+
+                --   in if b then
+                --     do  putStrLn "Correct proof of"
+                --         putStrLn (intercalate " " [fs, "⊢", stmt])
+                --         if dFlag then
+                --          let dp = deduction p in
+                --              do putStrLn (prettyPrintProof dp)
+                --                 if checkProof dp then return () else putStrLn "deduction failed!"
+                --         else if pFlag then putStrLn (prettyPrintProof p) else return ()
+                --      else do putStrLn "Not a proof of"
+                --              putStrLn stmt
+                --              return ()
+                --return ()
