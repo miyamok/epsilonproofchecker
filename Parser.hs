@@ -324,3 +324,7 @@ pt s = let res = parse (term defaultPredicates defaultVariables defaultConstants
 pf :: String -> Formula
 pf s = let res = parse (formula defaultPredicates defaultVariables defaultConstants) s
        in case res of [(f, r)] -> f
+
+parseFailed :: (a, String) -> Bool
+parseFailed (_, "") = False
+parseFailed (_, _) = True

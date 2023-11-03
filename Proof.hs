@@ -379,7 +379,8 @@ deductionAux asmSteps pureProof =
       in ihAsm ++ dedAsmProof ++ ihPure ++ case r of --Asm -> init asmSteps ++ formulaToIdentityProof concl
                       --              else undefined -- case if Asm appears in the middle of the proof
                       MP Nothing Nothing ->
-                        let (i,j) = head (proofInMPFormToMPPremisesIndices wholeProof)
+                        let mPIndeces = proofInMPFormToMPPremisesIndices wholeProof
+                            (i,j) = head mPIndeces
                             (principleFla, _, _) = wholeProof!!i
                             (subFla, _, _) = wholeProof!!j
                             f1 = ImpForm asmFla principleFla
