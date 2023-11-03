@@ -6,7 +6,8 @@ Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs 
   - [Elementary calculus](#elementary-calculus)
   - [Predicate calculus](#predicate-calculus)
   - [Epsilon calculus](#epsilon-calculus)
-- [Syntax for proof scripts](#syntax-for-proof-scripts)
+- [Usage of the epsilon proof checker](#usage-of-the-epsilon-proof-checker)
+  - [Syntax for proof scripts](#syntax-for-proof-scripts)
 - [To do list](#to-do-list)
 ```
 ## ghc-9.2.8 used
@@ -228,7 +229,51 @@ After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ```
-## Syntax for proof scripts
+## Usage of the epsilon proof checker
+The Glasgow Haskell Compiler is prerequisite.
+Get the source code and compile the code.
+```
+% cd epsilonproofcheker
+% ghc Main
+```
+Then you can try examples in the <code>examples</code> directory.
+```
+% ./Main examples/ex01_independence_of_premise.proof
+Correct proof of
+ ⊢ (A -> P(eps x P(x))) -> A -> P(eps x(A -> P(x)))
+% cat examples/ex01_independence_of_premise.proof
+(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
+```
+The option <code>-d</code> applies the proof transformation due to deduction theorem.
+```
+% cat examples/ex08_assumption.proof  
+A by Asm
+B by Asm
+% ./Main -d examples/ex08_assumption.proof 
+Correct proof of
+A, B ⊢ B
+(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
+A -> (A -> A) -> A by K
+(A -> A -> A) -> A -> A by MP
+A -> A -> A by K
+A -> A by MP
+(B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by S
+((B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B) -> A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by K
+A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by MP
+B -> (B -> B) -> B by K
+(B -> (B -> B) -> B) -> A -> B -> (B -> B) -> B by K
+A -> B -> (B -> B) -> B by MP
+(A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B) -> (A -> B -> (B -> B) -> B) -> A -> (B -> B -> B) -> B -> B by S
+(A -> B -> (B -> B) -> B) -> A -> (B -> B -> B) -> B -> B by MP
+A -> (B -> B -> B) -> B -> B by MP
+B -> B -> B by K
+(B -> B -> B) -> A -> B -> B -> B by K
+A -> B -> B -> B by MP
+(A -> (B -> B -> B) -> B -> B) -> (A -> B -> B -> B) -> A -> B -> B by S
+(A -> B -> B -> B) -> A -> B -> B by MP
+A -> B -> B by MP
+```
+### Syntax for proof scripts
 The proof checker epsilon processes a proof script which is stored as a file in the system.
 A proof script is a list of proof steps, each of which consists of the following ingredients.
 1. A formula to claim
