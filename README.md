@@ -1,5 +1,5 @@
-# epsilon --- a proof checker for Hilbert's epsilon calculus
-Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
+# epsilon --- a proof assistant system for Hilbert's epsilon calculus
+Proof assistant system for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
 The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier.
 ##### Table of contents
 - [Logic](#logic)
@@ -8,7 +8,7 @@ The proof scripting language is simple, and there is a feature of proof transfor
   - [Predicate calculus](#predicate-calculus)
   - [Epsilon calculus](#epsilon-calculus)
   - [Deduction theorem](#deduction-theorem)
-- [Usage of the epsilon proof checker](#usage-of-the-epsilon-proof-checker)
+- [Usage of the epsilon proof assistant](#usage-of-the-epsilon-proof-assistant)
   - [Syntax for proof scripts](#syntax-for-proof-scripts)
 - [To do list](#to-do-list)
 ```
@@ -234,8 +234,8 @@ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ### Deduction theorem
 Deduction theorem claims that if <code>Γ, A ⊢ B</code> then <code>Γ ⊢ A -> B</code>.
 An interesting aspect of the proof of this theorem is that it actually tells us how to get a proof of <code>Γ ⊢ A -> B</code> from a proof of <code>Γ, A ⊢ B</code>.
-The epsilon proof checker has a feature of proof transformation, which implements the algorithm in the proof of deduction theorem.
-## Usage of the epsilon proof checker
+The epsilon proof assitant has a feature of proof transformation, which implements the algorithm in the proof of deduction theorem.
+## Usage of the epsilon proof assistant
 The Glasgow Haskell Compiler is prerequisite.
 Get the source code and compile the code in the following way.
 ```
@@ -317,7 +317,7 @@ The outcome consists of 170 lines, and would be hard without relying on the proo
 The proof transformation feature does not support the tagged inference rules yet.  It works fine with untagged proofs.
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
-The proof checker epsilon processes a proof script which is stored as a file in the system.
+The proof assistant epsilon processes a proof script which is stored as a file in the system.
 A proof script is a list of proof steps, each of which consists of the following ingredients.
 1. A formula to claim
 2. A reason of claiming the formula
@@ -351,7 +351,7 @@ and also one can give a tag to this proof step.
 ```
 E(x) by R #myproofstep
 ```
-The proof checker epsilon supports the following axioms.
+The proof assistant epsilon supports the following axioms.
 
 Axiom name | Scheme | Note
 --- | --- | ---
