@@ -3,20 +3,24 @@ import Proof
 import Axiom
 import Parser
 import System.Directory.Internal.Prelude (getArgs)
+import System.Directory
 import Debug.Trace
 import Data.List
 import PrettyPrint
 
+printHelpMessage :: IO ()
+printHelpMessage = do putStrLn "-d option to apply proof transformation due to deduction theorem"
+                      putStrLn "-p option to print out the proof"
+                      putStrLn "-1 option to limit the application of deduction theorem only once"
+                      putStrLn "Usage:"
+                      putStrLn "% ./Main [options] filepath"
+
 main :: IO ()
 main = do
     args <- getArgs
-    if null args || all (\s -> head s == '-') args
-        then do putStrLn "a path to a proof script required"
-                putStrLn "-d option to apply proof transformation due to deduction theorem"
-                putStrLn "-p option to print out the proof"
-                putStrLn "-1 option to limit the application of deduction theorem only once"
-                putStrLn "Usage:"
-                putStrLn "% ./Main [options] filepath"
+    if null args || not (all (\a -> a `elem` ["-d", "-p", "-1", "--debug"]) (init args))
+        then do putStrLn "Wrong argument given"
+                printHelpMessage
         else let filename = last args
                  debugFlag = "--debug" `elem` args
                  dFlag = "-d" `elem` args
@@ -57,30 +61,3 @@ main = do
                                 else do putStrLn "Correct proof of"
                                         putStrLn (intercalate " " [fs, "⊢", stmt])
                                         if pFlag then putStrLn (prettyPrintProof p) else return ()
-
-
-                    --               else 
-
-                    -- do  putStrLn "Correct proof of"
-                    --     putStrLn (intercalate " " [fs, "⊢", stmt])
-                    --     if dFlag then
-                    --      let dp = deduction p in
-                    --          do putStrLn (prettyPrintProof dp)
-                    --             if checkProof dp then return () else putStrLn "deduction failed!"
-                    --     else if pFlag then putStrLn (prettyPrintProof p) else return ()
-                    --  else do putStrLn "Not a proof of"
-                    --          putStrLn stmt
-                    --          return ()
-
-                --   in if b then
-                --     do  putStrLn "Correct proof of"
-                --         putStrLn (intercalate " " [fs, "⊢", stmt])
-                --         if dFlag then
-                --          let dp = deduction p in
-                --              do putStrLn (prettyPrintProof dp)
-                --                 if checkProof dp then return () else putStrLn "deduction failed!"
-                --         else if pFlag then putStrLn (prettyPrintProof p) else return ()
-                --      else do putStrLn "Not a proof of"
-                --              putStrLn stmt
-                --              return ()
-                --return ()
