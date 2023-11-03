@@ -6,6 +6,7 @@ Proof checker for Hilbert's epsilon calculus.  It supports Hilbert style proofs 
   - [Elementary calculus](#elementary-calculus)
   - [Predicate calculus](#predicate-calculus)
   - [Epsilon calculus](#epsilon-calculus)
+  - [Deduction theorem](#deduction-theorem)
 - [Usage of the epsilon proof checker](#usage-of-the-epsilon-proof-checker)
   - [Syntax for proof scripts](#syntax-for-proof-scripts)
 - [To do list](#to-do-list)
@@ -229,9 +230,13 @@ After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 ```
+### Deduction theorem
+Deduction theorem claims that if <code>Γ, A ⊢ B</code> then <code>Γ ⊢ A -> B</code>.
+An interesting aspect of the proof of this theorem is that it actually tells us how to get a proof of <code>Γ ⊢ A -> B</code> from a proof of <code>Γ, A ⊢ B</code>.
+The epsilon proof checker has a feature of proof transformation, which implements the algorithm in the proof of deduction theorem.
 ## Usage of the epsilon proof checker
 The Glasgow Haskell Compiler is prerequisite.
-Get the source code and compile the code.
+Get the source code and compile the code in the following way.
 ```
 % cd epsilonproofcheker
 % ghc Main
@@ -273,6 +278,7 @@ A -> B -> B -> B by MP
 (A -> B -> B -> B) -> A -> B -> B by MP
 A -> B -> B by MP
 ```
+The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof checker epsilon processes a proof script which is stored as a file in the system.
 A proof script is a list of proof steps, each of which consists of the following ingredients.
