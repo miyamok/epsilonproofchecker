@@ -47,6 +47,8 @@ main = do
                                 in if not b
                                 then do putStrLn "The input is not a proof of"
                                         putStrLn stmt
+                                        putStrLn "from the following assumptions"
+                                        putStrLn fs
                                 else if dFlag
                                     then do putStrLn "The input is a correct proof of"
                                             putStrLn (intercalate " " [fs, "⊢", stmt])

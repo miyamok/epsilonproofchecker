@@ -93,8 +93,8 @@ checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g
             then Nothing
             else Just Malformed
 
-genProofToPremiseIndices :: Proof -> [Int]
-genProofToPremiseIndices p
+proofInGenFormToPremiseIndices :: Proof -> [Int]
+proofInGenFormToPremiseIndices p
  | length p < 2 = []
  | otherwise = let (genFla, _, _) = last p
                    genFlaKernel = case genFla of (ForallForm v f) -> f
@@ -105,7 +105,7 @@ genProofToPremiseIndices p
 checkGen :: Proof -> Int -> Tag -> Maybe ErrorMsg
 checkGen p i t =
       let pproof = take (i+1) p
-          is = genProofToPremiseIndices pproof
+          is = proofInGenFormToPremiseIndices pproof
           asms = proofToAssumptionFormulas p
           freeVars = concat $ map formulaToFreeVariables asms
           genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
@@ -375,7 +375,6 @@ deductionAux asmProof nonAsmProof =
           ihProof = deductionAux asmProof (init nonAsmProof)
           ihAsmProof = traceShowId $ proofToAsms ihProof
           ihNonAsmProof = proofToNonAsms ihProof
-          --dedAsmProof = concat (map (deductionAsm asmFla) (init asmProof))
       in init asmProof ++ ihNonAsmProof ++ case r of --Asm -> init asmProof ++ formulaToIdentityProof concl
                       --              else undefined -- case if Asm appears in the middle of the proof
                       MP Nothing Nothing ->
@@ -390,33 +389,13 @@ deductionAux asmProof nonAsmProof =
                             (ImpForm f2 f3, MP Nothing Nothing, Nothing),
                             (f3, MP Nothing Nothing, Nothing)]
                       MP t t' -> undefined
-                      Gen t -> undefined
+                      Gen Nothing ->
+                        let i = last $ proofInGenFormToPremiseIndices wholeProof
+                            (ForallForm var kernel) = concl
+                            newPrem = ForallForm var (ImpForm asmFla kernel)
+                            newConcl = ImpForm asmFla concl
+                        in [(ForallForm var (ImpForm asmFla kernel), Gen Nothing, Nothing),
+                            (ImpForm newPrem newConcl, AllShift, Nothing),
+                            (newConcl, MP Nothing Nothing, Nothing)]
+                      Gen _ -> undefined
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
-
--- deductionAux :: [Step] -> Proof -> Proof
--- deductionAux asmSteps [] = deductionBase asmSteps
--- deductionAux asmSteps pureProof =
---       let (concl, r, _) = last pureProof
---           (asmFla, _, t) = last asmSteps
---           wholeProof = asmSteps ++ pureProof
---           ih = deductionAux asmSteps (init pureProof)
---           ihAsm = proofToAsms ih
---           ihPure = proofToNonAsms ih
---           dedAsmProof = concat (map (deductionAsm asmFla) (init asmSteps))
---       in ihAsm ++ dedAsmProof ++ ihPure ++ case r of --Asm -> init asmSteps ++ formulaToIdentityProof concl
---                       --              else undefined -- case if Asm appears in the middle of the proof
---                       MP Nothing Nothing ->
---                         let mPIndeces = proofInMPFormToMPPremisesIndices wholeProof
---                             (i,j) = head mPIndeces
---                             (principleFla, _, _) = wholeProof!!i
---                             (subFla, _, _) = wholeProof!!j
---                             f1 = ImpForm asmFla principleFla
---                             f2 = ImpForm asmFla subFla
---                             f3 = ImpForm asmFla concl
---                         in [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
---                             (ImpForm f2 f3, MP Nothing Nothing, Nothing),
---                             (f3, MP Nothing Nothing, Nothing)]
---                       MP t t' -> undefined
---                       Gen t -> undefined
---                       _ -> deductionBase (asmSteps ++ pureProof) -- case for axioms
-
