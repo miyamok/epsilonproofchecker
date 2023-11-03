@@ -314,7 +314,8 @@ at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllS
 we see a proof of the inverse of the axiom <code>AllShift</code>.
 The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
 
-The proof transformation feature does not support the tagged inference rules yet.  It works fine with untagged proofs.
+The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
+
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof assistant epsilon processes a proof script which is stored as a file in the system.
