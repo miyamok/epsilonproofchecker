@@ -281,9 +281,9 @@ A -> A by MP
 ```
 One example showing the power of this proof transformation is the proof of the inverse of <code>AllShift</code> formula.
 ```
-(B -> all y A(y)) -> all x(B -> A(x))
+(B -> all x P(x)) -> all y (B -> P(y))
 ```
-First the proof of <code>B -> all x P(x), B ⊢ all x P(x)</code> is proved in <code>ex12_inverse_AllShift_preparation.proof</code>.
+First step is to prove the formula <code>B -> all x P(x), B ⊢ all x P(x)</code> which is done in <code>ex12_inverse_AllShift_preparation.proof</code>.
 ```
 % cat examples/ex12_inverse_AllShift_preparation.proof 
 B -> all x P(x) by Asm
@@ -300,12 +300,12 @@ it generates a proof of <code>⊢ (B -> all x P(x)) -> B -> P(y)</code>, which c
 We now make a short modification to this output proof.
 Manually adding the assumption
 ```
-(B -> all x P(x)) by Asm
+B -> all x P(x) by Asm
 ```
 at the begining of the proof, and also manually adding the following 2 lines
 ```
 B -> P(y) by MP
-all x (B -> P(x)) by Gen
+all y (B -> P(y)) by Gen
 ```
 at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllShift.proof</code>.  By issueing the following command
 ```
