@@ -14,9 +14,12 @@ main = do
         then do putStrLn "at least one argument required for the path to your proof script."
                 putStrLn "-d option to apply proof transformation due to deduction theorem"
                 putStrLn "-p option to print out the proof"
-                putStrLn "Usage:  > ./Main [-p] [-t] FILENAME"
+                putStrLn "Usage:"
+                putStrLn "% ./Main [options] filepath"
         else let filename = last args
+                 debugFlag = "--debug" `elem` args
                  dFlag = "-d" `elem` args
+                 onceFlag = "-1" `elem` args
                  pFlag = "-p" `elem` args in
              do ls <- fmap lines (readFile filename)
                 let p = map (\l -> fst (head (parse (step defaultPredicates defaultVariables defaultConstants) l))) ls
@@ -32,14 +35,15 @@ main = do
                     else if dFlag
                         then do putStrLn "The input is a correct proof of"
                                 putStrLn (intercalate " " [fs, "⊢", stmt])
-                                let dp = deduction p in
+                                let dp = if onceFlag then deductionOnce p else deduction p in
                                     if checkProof dp
                                         then do putStrLn "It generated a correct proof of"
                                                 let (f', _, _) = last dp in
                                                        do putStrLn ("⊢ " ++ prettyPrintFormula f')
                                                           if pFlag then putStrLn (prettyPrintProof dp)
                                                                    else return ()
-                                        else putStrLn "Proof transformation doesn't support this proof yet."
+                                        else do putStrLn "Proof transformation doesn't support this proof yet."
+                                                if debugFlag then putStrLn (prettyPrintProof dp) else return ()
                     else do putStrLn "Correct proof of"
                             putStrLn (intercalate " " [fs, "⊢", stmt])
                             if pFlag then putStrLn (prettyPrintProof p) else return ()

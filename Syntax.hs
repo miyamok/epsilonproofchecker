@@ -272,3 +272,9 @@ isBiconForm _ = True
 
 formulaInImpFormToPremise :: Formula -> Formula
 formulaInImpFormToPremise (ImpForm f _) = f
+
+makeKFormula :: Formula -> Formula -> Formula
+makeKFormula f g = ImpForm f (ImpForm g f)
+
+makeSFormula :: Formula -> Formula -> Formula -> Formula
+makeSFormula f g h = ImpForm (ImpForm f (ImpForm g h)) (ImpForm (ImpForm f g) (ImpForm f h))
