@@ -207,7 +207,7 @@ proofInMPFormToMPPrinciplePremiseFormulas :: Proof -> [Formula]
 proofInMPFormToMPPrinciplePremiseFormulas p = let (concl, _, _) = last p
                                                   is = proofAndMPConclusionToStepIndices p concl
                                                 in map (\i -> let (f, _, _) = p!!i in f) is
-                                                
+
 checkClaims :: Proof -> [Maybe ErrorMsg]
 checkClaims p = checkClaimsAux p 0
 
@@ -270,7 +270,7 @@ proofToDependencyAux p i = case p!!i of
 
 stepToUntaggedStep :: Step -> Step
 stepToUntaggedStep (f, MP _ _, _) = (f, MP Nothing Nothing, Nothing)
-stepToUntaggedStep (f, Gen _, _) = (f, MP Nothing Nothing, Nothing)
+stepToUntaggedStep (f, Gen _, _) = (f, Gen Nothing, Nothing)
 stepToUntaggedStep (f, r, _) = (f, r, Nothing)
 
 proofToUntaggedProof :: Proof -> Proof
@@ -337,13 +337,13 @@ deductionOnce p
 deductionAux :: Proof -> Proof -> Proof
 deductionAux asmProof [] = let initAsms = init asmProof
                                (asmFla, Asm, _) = last asmProof
-                           in initAsms ++ concat (map (deductionAsm asmFla) asmProof)                               
+                           in initAsms ++ concat (map (deductionAsm asmFla) asmProof)
 deductionAux asmProof nonAsmProof =
       let (concl, r, _) = last nonAsmProof
           (asmFla, _, t) = last asmProof
           wholeProof = asmProof ++ nonAsmProof
           ihProof = deductionAux asmProof (init nonAsmProof)
-          ihAsmProof = traceShowId $ proofToAsms ihProof
+          ihAsmProof = proofToAsms ihProof
           ihNonAsmProof = proofToNonAsms ihProof
       in init asmProof ++ ihNonAsmProof ++ case r of
                       MP Nothing Nothing ->

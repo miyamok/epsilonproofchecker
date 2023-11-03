@@ -1,4 +1,4 @@
-(B -> all x P(x)) by Asm
+B -> all x P(x) by Asm
 ((B -> all x P(x)) -> ((B -> all x P(x)) -> B -> all x P(x)) -> B -> all x P(x)) -> ((B -> all x P(x)) -> (B -> all x P(x)) -> B -> all x P(x)) -> (B -> all x P(x)) -> B -> all x P(x) by S
 (B -> all x P(x)) -> ((B -> all x P(x)) -> B -> all x P(x)) -> B -> all x P(x) by K
 ((B -> all x P(x)) -> (B -> all x P(x)) -> B -> all x P(x)) -> (B -> all x P(x)) -> B -> all x P(x) by MP
@@ -53,4 +53,4 @@ all x P(x) -> P(y) by AllE
 ((B -> all x P(x)) -> B -> all x P(x)) -> (B -> all x P(x)) -> B -> P(y) by MP
 (B -> all x P(x)) -> B -> P(y) by MP
 B -> P(y) by MP
-all x (B -> P(x)) by Gen
+all y(B -> P(y)) by Gen
