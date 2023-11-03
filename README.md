@@ -279,7 +279,42 @@ A -> (A -> A) -> A by K
 A -> A -> A by K
 A -> A by MP
 ```
-This proof transformation feature does not support the tagged inference rules yet.
+One example showing the power of this proof transformation is the proof of the inverse of <code>AllShift</code> formula.
+```
+(B -> all y A(y)) -> all x(B -> A(x))
+```
+First the proof of <code>B -> all x P(x), B ⊢ all x P(x)</code> is proved in <code>ex12_inverse_AllShift_preparation.proof</code>.
+```
+% cat examples/ex12_inverse_AllShift_preparation.proof 
+B -> all x P(x) by Asm
+B by Asm
+all x P(x) by MP
+all x P(x) -> P(y) by AllE
+P(y) by MP
+```
+Issueing the following command,
+```
+% ./Main -p -d examples/ex12_inverse_AllShift_preparation.proof 
+```
+it generates a proof of <code>⊢ (B -> all x P(x)) -> B -> P(y)</code>, which consists of 53 lines.
+We now make a short modification to this output proof.
+Manually adding the assumption
+```
+(B -> all x P(x)) by Asm
+```
+at the begining of the proof, and also manually adding the following 2 lines
+```
+B -> P(y) by MP
+all x (B -> P(x)) by Gen
+```
+at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllShift.proof</code>.  By issueing the following command
+```
+% ./Main -p -d examples/ex13_inverse_AllShift.proof
+```
+we see a proof of the inverse of the axiom <code>AllShift</code>.
+The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
+
+The proof transformation feature does not support the tagged inference rules yet.  It works fine with untagged proofs.
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof checker epsilon processes a proof script which is stored as a file in the system.
