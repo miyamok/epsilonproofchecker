@@ -331,7 +331,9 @@ formulaToIdentityProof f =
       --     (f3, MP Nothing Nothing, Nothing)]
 
 deductionAsm :: Formula -> Step -> Proof
-deductionAsm f (g, Asm, t) = [(ImpForm g (ImpForm f g), K, Nothing), (ImpForm f g, MP Nothing Nothing, Nothing)]
+deductionAsm f (g, Asm, t)
+ | alphaEqFormula f g = formulaToIdentityProof f
+ | otherwise = [(ImpForm g (ImpForm f g), K, Nothing), (ImpForm f g, MP Nothing Nothing, Nothing)]
 
 deductionBase :: Proof -> Proof
 deductionBase p = let asmSteps = proofToAsms p
@@ -346,37 +348,35 @@ deductionBase p = let asmSteps = proofToAsms p
 
 deduction :: Proof -> Proof
 deduction p
- | null as = p -- nothing to do
- | null pureProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
- | otherwise = deduction $ deductionAux as pureProof
---  | null pureProof = deductionBase p -- Asm reference is the conclusion of the proof
---  | otherwise = deductionAux as pureProof
+ | null asmProof = p -- nothing to do
+ | null nonAsmProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
+ | otherwise = deduction $ deductionAux asmProof nonAsmProof
  where
-      as = proofToAsms p
-      pureProof = proofToNonAsms p
+      asmProof = proofToAsms p
+      nonAsmProof = proofToNonAsms p
 
 deductionOnce :: Proof -> Proof
 deductionOnce p
- | null as = p -- nothing to do
- | null pureProof = deductionBase p -- Asm reference is the conclusion of the proof
- | otherwise = deductionAux as pureProof
---  | null pureProof = deductionBase p -- Asm reference is the conclusion of the proof
---  | otherwise = deductionAux as pureProof
+ | null asmProof = p -- nothing to do
+ | null nonAsmProof = deductionBase p -- Asm reference is the conclusion of the proof
+ | otherwise = deductionAux asmProof nonAsmProof
  where
-      as = proofToAsms p
-      pureProof = proofToNonAsms p
+      asmProof = proofToAsms p
+      nonAsmProof = proofToNonAsms p
 
-deductionAux :: [Step] -> Proof -> Proof
-deductionAux asmSteps [] = deductionBase asmSteps
-deductionAux asmSteps pureProof =
-      let (concl, r, _) = last pureProof
-          (asmFla, _, t) = last asmSteps
-          wholeProof = asmSteps ++ pureProof
-          ih = deductionAux asmSteps (init pureProof)
-          ihAsm = proofToAsms ih
-          ihPure = proofToNonAsms ih
-          dedAsmProof = concat (map (deductionAsm asmFla) (init asmSteps))
-      in ihAsm ++ dedAsmProof ++ ihPure ++ case r of --Asm -> init asmSteps ++ formulaToIdentityProof concl
+deductionAux :: Proof -> Proof -> Proof
+deductionAux asmProof [] = let initAsms = init asmProof
+                               (asmFla, Asm, _) = last asmProof
+                           in initAsms ++ concat (map (deductionAsm asmFla) asmProof)                               
+deductionAux asmProof nonAsmProof =
+      let (concl, r, _) = last nonAsmProof
+          (asmFla, _, t) = last asmProof
+          wholeProof = asmProof ++ nonAsmProof
+          ihProof = deductionAux asmProof (init nonAsmProof)
+          ihAsmProof = traceShowId $ proofToAsms ihProof
+          ihNonAsmProof = proofToNonAsms ihProof
+          --dedAsmProof = concat (map (deductionAsm asmFla) (init asmProof))
+      in init asmProof ++ ihNonAsmProof ++ case r of --Asm -> init asmProof ++ formulaToIdentityProof concl
                       --              else undefined -- case if Asm appears in the middle of the proof
                       MP Nothing Nothing ->
                         let mPIndeces = proofInMPFormToMPPremisesIndices wholeProof
@@ -391,34 +391,32 @@ deductionAux asmSteps pureProof =
                             (f3, MP Nothing Nothing, Nothing)]
                       MP t t' -> undefined
                       Gen t -> undefined
-                      _ -> deductionBase (asmSteps ++ pureProof) -- case for axioms
+                      _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
 
--- deductionAux :: Proof -> Proof
--- deductionAux p =
---   let asmSteps = proofToAsms p
---       (concl, r, _) = last p
---       (asmFla, _, t) = last asmSteps
---       pureProof = proofToNonAsms p in
---             case r of Asm -> if null pureProof
---                                     then init asmSteps ++ formulaToIdentityProof concl
---                                     else undefined -- case if Asm appears in the middle of the proof
---                       S -> deductionAux (init p) ++ deductionBase p
---                       K -> deductionAux (init p) ++ deductionBase p
---                       ConjI -> deductionAux (init p) ++ deductionBase p
---                       ConjE1 -> deductionAux (init p) ++ deductionBase p
---                       ConjE2 -> deductionAux (init p) ++ deductionBase p
---                       DisjI1 -> deductionAux (init p) ++ deductionBase p
---                       DisjI2 -> deductionAux (init p) ++ deductionBase p
---                       DisjE -> deductionAux (init p) ++ deductionBase p
---                       EFQ -> deductionAux (init p) ++ deductionBase p
---                       DNE -> deductionAux (init p) ++ deductionBase p
+-- deductionAux :: [Step] -> Proof -> Proof
+-- deductionAux asmSteps [] = deductionBase asmSteps
+-- deductionAux asmSteps pureProof =
+--       let (concl, r, _) = last pureProof
+--           (asmFla, _, t) = last asmSteps
+--           wholeProof = asmSteps ++ pureProof
+--           ih = deductionAux asmSteps (init pureProof)
+--           ihAsm = proofToAsms ih
+--           ihPure = proofToNonAsms ih
+--           dedAsmProof = concat (map (deductionAsm asmFla) (init asmSteps))
+--       in ihAsm ++ dedAsmProof ++ ihPure ++ case r of --Asm -> init asmSteps ++ formulaToIdentityProof concl
+--                       --              else undefined -- case if Asm appears in the middle of the proof
 --                       MP Nothing Nothing ->
---                         let (i,j) = head (proofInMPFormToMPPremisesIndices p)
---                             principlePrem = head (proofInMPFormToMPPrinciplePremiseFormulas p)
---                             (ImpForm prem _) = principlePrem
---                             f1 = ImpForm asmFla principlePrem
---                             f2 = ImpForm asmFla prem
+--                         let mPIndeces = proofInMPFormToMPPremisesIndices wholeProof
+--                             (i,j) = head mPIndeces
+--                             (principleFla, _, _) = wholeProof!!i
+--                             (subFla, _, _) = wholeProof!!j
+--                             f1 = ImpForm asmFla principleFla
+--                             f2 = ImpForm asmFla subFla
 --                             f3 = ImpForm asmFla concl
---                         in deductionAux (init p) ++ [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
---                                                      (ImpForm f2 f3, MP Nothing Nothing, Nothing),
---                                                      (f3, MP Nothing Nothing, Nothing)]
+--                         in [(ImpForm f1 (ImpForm f2 f3), S, Nothing),
+--                             (ImpForm f2 f3, MP Nothing Nothing, Nothing),
+--                             (f3, MP Nothing Nothing, Nothing)]
+--                       MP t t' -> undefined
+--                       Gen t -> undefined
+--                       _ -> deductionBase (asmSteps ++ pureProof) -- case for axioms
+
