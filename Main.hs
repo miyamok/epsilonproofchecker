@@ -52,7 +52,8 @@ main = do
                                 else if dFlag
                                     then do putStrLn "The input is a correct proof of"
                                             putStrLn (intercalate " " [fs, "⊢", stmt])
-                                            let dp = if onceFlag then deductionOnce p else deduction p in
+                                            let up = proofToUntaggedProof p
+                                                dp = if onceFlag then deductionOnce up else deduction up in
                                                 if checkProof dp
                                                     then do putStrLn "It generated a correct proof of"
                                                             let (f', _, _) = last dp in

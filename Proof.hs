@@ -268,6 +268,14 @@ proofToDependencyAux p i = case p!!i of
                   Asm -> []
                   _ -> []
 
+stepToUntaggedStep :: Step -> Step
+stepToUntaggedStep (f, MP _ _, _) = (f, MP Nothing Nothing, Nothing)
+stepToUntaggedStep (f, Gen _, _) = (f, MP Nothing Nothing, Nothing)
+stepToUntaggedStep (f, r, _) = (f, r, Nothing)
+
+proofToUntaggedProof :: Proof -> Proof
+proofToUntaggedProof = map stepToUntaggedStep
+
 checkProof :: Proof -> Bool
 checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) deps
       where cs = checkClaims p
