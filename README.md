@@ -269,29 +269,14 @@ It generated a correct proof of
 ⊢ A -> B -> B
 % ./Main -d -p examples/ex08_assumption.proof
 The input is a correct proof of
-A, B ⊢ B
+A ⊢ A
 It generated a correct proof of
-⊢ A -> B -> B
+⊢ A -> A
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 A -> (A -> A) -> A by K
 (A -> A -> A) -> A -> A by MP
 A -> A -> A by K
 A -> A by MP
-(B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by S
-((B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B) -> A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by K
-A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B by MP
-B -> (B -> B) -> B by K
-(B -> (B -> B) -> B) -> A -> B -> (B -> B) -> B by K
-A -> B -> (B -> B) -> B by MP
-(A -> (B -> (B -> B) -> B) -> (B -> B -> B) -> B -> B) -> (A -> B -> (B -> B) -> B) -> A -> (B -> B -> B) -> B -> B by S
-(A -> B -> (B -> B) -> B) -> A -> (B -> B -> B) -> B -> B by MP
-A -> (B -> B -> B) -> B -> B by MP
-B -> B -> B by K
-(B -> B -> B) -> A -> B -> B -> B by K
-A -> B -> B -> B by MP
-(A -> (B -> B -> B) -> B -> B) -> (A -> B -> B -> B) -> A -> B -> B by S
-(A -> B -> B -> B) -> A -> B -> B by MP
-A -> B -> B by MP
 ```
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
