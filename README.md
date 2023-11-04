@@ -318,16 +318,22 @@ at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllS
 we see a proof of the inverse of the axiom <code>AllShift</code>.
 The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
 
-On the other hand, it is possible to do automated theorem proving in case Microsoft's z3 (https://github.com/Z3Prover/z3) is installed and avaialble in your command line.
+On the other hand, it is also possible to make use of an external automated theorem prover.
+For this moment, the epsilon proof assistant supports Microsoft's z3 (https://github.com/Z3Prover/z3).
+It should be properly installed and be avaialble from your command line via command z3.
 ```
+% z3 -version
+Z3 version 4.12.3 - 64 bit
 % ./Main -p examples/ex15_pred_auto.proof 
 Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
+Note that Auto does not supply a syntactic proof of the claimed formula in our calculi, but it totally relies on what the external prover said. 
+It implies that the correctness check for Auto relies on the correctness of the external prover, and the epsiolon proof checker does not guarantee anything.
 
 The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
-It currently doen't support a proof with Auto.
+The proof transformation currently doesn't support a proof involving Auto.
 
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
