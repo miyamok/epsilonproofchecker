@@ -1,6 +1,6 @@
 # epsilon - a proof assistant for Hilbert's epsilon calculus and predicate calculus
 Proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft z3.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft z3 (https://github.com/Z3Prover/z3)).
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -32,7 +32,9 @@ A -> B
 % ./Main examples/ex08_assumption.proof 
 Correct proof of
 A ⊢ A
-% ./Main examples/ex14_prop_auto.proof ## assume z3 command is available
+% z3 -version ## assume Microsoft's z3 is installed
+Z3 version 4.12.3 - 64 bit
+% ./Main examples/ex14_prop_auto.proof
 Correct proof of
  ⊢ A -> A
 % cat examples/ex14_prop_auto.proof 
