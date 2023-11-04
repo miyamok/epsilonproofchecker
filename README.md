@@ -372,7 +372,7 @@ Axiom name | &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbs
 <code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> is left associative
 <code>K</code> | <code>A -> B -> A</code>
 <code>C</code> | <code>E(t) -> E(eps x E(x))</code> | <code>t</code> is an arbitrary term in this whole table
-<code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> is right associative and has a higher priority than <code>-></code>
+<code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> is right associative and has a higher<br /> priority than <code>-></code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
 <code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> is right associative and has a priority<br /> between <code>-></code> and <code>&</code>
