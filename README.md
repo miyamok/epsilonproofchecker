@@ -1,6 +1,6 @@
 # epsilon - a proof assistant for Hilbert's epsilon calculus
 Proof assistant system for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also a feature of proof automation relying on an external tool Microsoft Z3.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft Z3.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
