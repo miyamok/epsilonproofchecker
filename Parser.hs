@@ -313,3 +313,40 @@ pf s = let res = parse (formula defaultPredicates defaultVariables defaultConsta
 parseFailed :: (a, String) -> Bool
 parseFailed (_, "") = False
 parseFailed (_, _) = True
+
+-------------------------------
+-- declarations
+-------------------------------
+
+variableDeclaration :: Parser [String]
+variableDeclaration = do kind <- string "variables "
+                         do name <- some letter
+                            names <- many (do string " "
+                                              some letter)
+                            return (name:names)
+
+
+constantDeclaration :: Parser (Int, [String])
+constantDeclaration = do arity <- nat
+                         kind <- string "ary-constants "
+                         do name <- some letter
+                            names <- many (do string " "
+                                              some letter)
+                            return (arity, name:names)
+
+predicateDeclaration :: Parser (Int, [String])
+predicateDeclaration = do arity <- nat
+                          kind <- string "ary-predicates "
+                          do name <- some letter
+                             names <- many (do string " "
+                                               some letter)
+                             return (arity, name:names)
+
+--------------------------------
+-- comment line
+--------------------------------
+
+commentLine :: Parser ()
+commentLine = do string "--"
+                 many (sat (\c -> True))
+                 return ()

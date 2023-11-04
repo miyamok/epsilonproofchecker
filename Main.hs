@@ -16,6 +16,22 @@ printHelpMessage = do putStrLn "-d option to apply proof transformation due to d
                       putStrLn "Usage:"
                       putStrLn "% ./Main [options] filepath"
 
+parseProofScriptErrorLineIndex :: [[([String], String)]] -> [[((Int, [String]), String)]] -> [[((Int, [String]), String)]] -> [[(Step, String)]] -> Maybe Int
+parseProofScriptErrorLineIndex = parseProofScriptErrorLineIndexAux 0
+
+parseProofScriptErrorLineIndexAux :: Int -> [[([String], String)]] -> [[((Int, [String]), String)]] -> [[((Int, [String]), String)]] -> [[(Step, String)]] -> Maybe Int
+parseProofScriptErrorLineIndexAux lineNum (v:vs) (c:cs) (p:ps) (s:ss)
+ | null v && null c && null p && null s = Just lineNum
+ | otherwise = parseProofScriptErrorLineIndexAux (lineNum+1) vs cs ps ss
+parseProofScriptErrorLineIndexAux _ [] [] [] [] = Nothing
+parseProofScriptErrorLineIndexAux lineNum _ _ _ _ = Just lineNum
+
+-- parseVariableDeclarations :: [String] -> [String]
+-- parseVariableDeclarations strs = let a = map (parse variableDeclaration) strs
+--                                  in 
+-- parseProof :: [String] -> [Step]
+-- parseProof strs = let a = map (parse $ step defaultPredicates defaultVariables defaultConstants) strs
+
 -- it should be revised
 main :: IO ()
 main = do
@@ -28,18 +44,30 @@ main = do
                  dFlag = "-d" `elem` args
                  onceFlag = "-1" `elem` args
                  pFlag = "-p" `elem` args in
-             do ls <- fmap lines (readFile filename)
-                let parsedList = map (parse $ step defaultPredicates defaultVariables defaultConstants) ls
-                 in case elemIndex [] parsedList of
+             do lsWithComment <- fmap lines (readFile filename)
+                let ls = filter (\s -> null (parse commentLine s)) lsWithComment
+                    parsedVarDecs = map (parse variableDeclaration) ls
+                    varDeclarations = let info = concat $ map (fst . head) (filter (not . null) parsedVarDecs)
+                                           in if null info then defaultVariables else info
+                    parsedConstDecs = map (parse constantDeclaration) ls
+                    constDeclarations = let info = map (\(i, cs) -> [(c, i) | c <- cs]) (map (fst . head) (filter (not . null) parsedConstDecs))
+                                        in if null info then defaultConstants else concat info
+                    parsedPredDecs = map (parse predicateDeclaration) ls
+                    predDeclarations = let info = map (\(i, cs) -> [(c, i) | c <- cs]) (map (fst . head) (filter (not . null) parsedPredDecs))
+                                        in if null info then defaultPredicates else concat info
+                    parsedSteps = map (parse $ step predDeclarations varDeclarations constDeclarations) ls
+                    mi = parseProofScriptErrorLineIndex parsedVarDecs parsedConstDecs parsedPredDecs parsedSteps
+                 in case mi of
                     Just i -> do putStrLn ("parse error at line " ++ show (i+1))
                                  putStrLn (ls!!i)
                                  return ()
-                    Nothing -> case findIndex parseFailed (map head parsedList) of
+                    Nothing -> case findIndex (\elem -> if null elem then False else not (null $ snd $ head elem)) parsedSteps of
                         Just j -> do putStrLn ("parse error at line " ++ show (j+1))
                                      putStrLn (ls!!j)
                                      return ()
                         Nothing ->
-                            let p = map (\l -> fst (head  l)) parsedList
+                            let steps = filter (not . null) parsedSteps
+                                p = map (\l -> fst (head  l)) steps
                                 b = checkProof p
                                 asms = proofToAssumptionFormulas p
                                 (f, r, t) = last p
