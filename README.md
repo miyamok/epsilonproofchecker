@@ -1,6 +1,6 @@
 # epsilon - a proof assistant for Hilbert's epsilon calculus and predicate calculus
 Proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft Z3.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft z3.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -130,7 +130,7 @@ Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (f
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in V.
 ```
 t ::= x | c | f(t)
-F ::= ... | Q(t)
+F ::= A | bot | F -> F | F & F | (F | F) | Q(t)
 ```
 Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
 Its axioms and inference rule are same as propositional calculus.
@@ -139,8 +139,8 @@ Its axioms and inference rule are same as propositional calculus.
 Predicate caluclus is an extension of elementary calculus by quantifications.
 The language is enriched by the existential quantifier and the universal quantifier.  The syntax is given as follows.
 ```
-t ::= ...
-F ::= ... | ex x F | all x F
+t ::= x | c | f(t)
+F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
 ```
 Assume <code>E(x)</code> is a formula containing a free variable x.  One interpretation of this formula is that it states some property of <code>x</code>.
 By means of the quantifiers, it is possible to form the following quantified formulas.
@@ -186,8 +186,8 @@ Epsilon calculus extends elementary calculus by epsilon operator and so-called c
 Epsilon operator is denoted by <code>eps</code> and forming a term taking a variable and a formula.
 The language definition of epsilon calculus is as follows.
 ```
-t ::= ... | eps x F
-F ::= ... 
+t ::= x | c | f(t) | eps x F
+F ::= A | bot | F -> F | F & F | (F | F) | Q(t)
 ```
 A term of the form <code>eps x E(x)</code> is called epsilon term.  Intuitive meaning of an epsilon term <code>eps x E(x)</code> is the term which satisfies the property of <code>x</code> denoted by <code>E(x)</code>.  Therefore, epsilon operator is often explained as a choice operator.
 The definition of free variables is extended by the following clause to support epsilon terms.
@@ -199,7 +199,7 @@ This intuition is formulated by the following critical axiom.
 E(t) -> E(eps x E(x))
 ```
 where <code>t</code> is an arbitrary term in epsilon calculus.
-Epsilon operator is expressive enough to define the existential and universal quantifiers of predicate logic.
+Epsilon operator is expressive enough to define the existential and universal quantifiers of predicate calculus, hence epsilon calculus is more expressive than predicate calculus, although the existential and universal quantifiers are missing in epsilon calculus.
 Let <code>E(x)</code> be a formula, then the corresponding quantified formulas are defined as follows. 
 ```
 ex x E(x) := E(eps x E(x))
@@ -219,12 +219,12 @@ A proof to this formula is given in examples/ex01_independence_of_premise.proof 
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
 Notice that this formula is an instance of the critical axiom.
-Another examples is a so-called Drinker's paradox.
+Another example is a so-called Drinker's formula, which is often referred to as Drinker's paradox.
 ```
 ex x(P(x) -> all x P(x))
 ```
-The meaning of this provable formula is often explained through a story of a pub, that is, there is a guy in a pub such that if the guy is drinking then everybody in the pub is drinking.
-This claim may sound a bit confusing, and this is the reason why this formula is called a paradox.  If there is a guy in the pub who is not drinking, you pick this guy, then the premise of the implication goes false, hence the whole formula is true.  Otherwise everybody is drinking, hence you can pick an arbitrary guy.  In case of a real pub, it is decidable whether there is a guy who is not drinking.  This formula is true even in case the matter is undecidable.
+The meaning of this formula is often explained through a story of a pub, that is, in a pub there is such a guy that if the guy is drinking then everybody in the pub is drinking.
+This claim may sound a bit confusing, and this is the reason why this provable formula is called a paradox.  If there is a guy in the pub who is not drinking, you pick this guy, then the premise of the implication goes false, hence the whole formula is true.  Otherwise everybody is drinking, hence you can pick an arbitrary guy.  In case of a real pub, it is decidable whether there is a guy who is not drinking.  This formula is true even in case the matter is undecidable.
 The epsilon version of the above formula is
 ```
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
@@ -319,8 +319,8 @@ we see a proof of the inverse of the axiom <code>AllShift</code>.
 The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
 
 On the other hand, it is also possible to make use of an external automated theorem prover.
-For this moment, the epsilon proof assistant supports Microsoft's z3 (https://github.com/Z3Prover/z3).
-It should be properly installed and be avaialble from your command line via command z3.
+For this moment, the epsilon proof assistant supports automation for predicate calculus due to Microsoft's z3 (https://github.com/Z3Prover/z3).
+Microsoft's z3 is supposed to be installed and be avaialble from your command line via a command z3.
 ```
 % z3 -version
 Z3 version 4.12.3 - 64 bit
