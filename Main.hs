@@ -47,11 +47,13 @@ main = do
                                 in if not b
                                 then do putStrLn "The input is not a proof of"
                                         putStrLn stmt
-                                        putStrLn "from the following assumptions"
-                                        putStrLn fs
+                                        if null fs then return ()
+                                        else do putStrLn "from the following assumptions"
+                                                putStrLn fs
                                 else if dFlag
                                     then do putStrLn "The input is a correct proof of"
-                                            putStrLn (intercalate " " [fs, "⊢", stmt])
+                                            putStrLn (if null asms then intercalate " " ["⊢", stmt]
+                                                      else intercalate " " [fs, "⊢", stmt])
                                             let up = proofToUntaggedProof p
                                                 dp = if onceFlag then deductionOnce up else deduction up in
                                                 if checkProof dp

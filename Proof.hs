@@ -12,9 +12,6 @@ type Step = (Formula, Rule, Tag)
 type Proof = [(Formula, Rule, Tag)]
 type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
-data ErrorMsg = MPIllReference | MPWrongFormula | NotYetSupported
-             | KMismatch | KMalformed | SMismatch | SMalformed | CMalformed
-             | MPMismatch | MPMalformed | Malformed deriving (Eq, Show)
 
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
@@ -22,114 +19,95 @@ stepToFormula (f, _, _) = f
 checkAuto :: Formula -> Bool
 checkAuto f = True
 
-checkK :: Formula -> Maybe ErrorMsg
-checkK (ImpForm f1 (ImpForm f2 f3)) = if alphaEqFormula f1 f3 then Nothing else Just KMismatch
-checkK _ = Just KMalformed
+checkK :: Formula -> Bool
+checkK (ImpForm f (ImpForm _ f')) = alphaEqFormula f f'
+checkK _ = False
 
-checkS :: Formula -> Maybe ErrorMsg
+checkS :: Formula -> Bool
 checkS (ImpForm (ImpForm f1 (ImpForm f2 f3)) (ImpForm (ImpForm g1 g2) (ImpForm g3 g4)))
-      = if alphaEqFormula f1 g1 && alphaEqFormula f1 g3 && alphaEqFormula f2 g2 && alphaEqFormula f3 g4
-            then Nothing else Just SMismatch
-checkS _ = Just SMalformed
+      = alphaEqFormula f1 g1 && alphaEqFormula f1 g3 && alphaEqFormula f2 g2 && alphaEqFormula f3 g4
+checkS _ = False
 
-checkC :: Formula -> Maybe ErrorMsg
-checkC f = if isCriticalFormula f then Nothing else Just CMalformed
+checkC :: Formula -> Bool
+checkC f = isCriticalFormula f
 
-checkConjI :: Formula -> Maybe ErrorMsg
-checkConjI (ImpForm f (ImpForm f' (ConjForm g g'))) = if alphaEqFormula f g && alphaEqFormula f' g' then Nothing else Just Malformed
-checkConjI _ = Just Malformed
+checkConjI :: Formula -> Bool
+checkConjI (ImpForm f (ImpForm f' (ConjForm g g'))) = alphaEqFormula f g && alphaEqFormula f' g'
+checkConjI _ = False
 
-checkConjE1 :: Formula -> Maybe ErrorMsg
-checkConjE1 (ImpForm (ConjForm f _) g) = if alphaEqFormula f g then Nothing else Just Malformed
-checkConjE1 _ = Just Malformed
+checkConjE1 :: Formula -> Bool
+checkConjE1 (ImpForm (ConjForm f _) g) = alphaEqFormula f g
+checkConjE1 _ = False
 
-checkConjE2 :: Formula -> Maybe ErrorMsg
-checkConjE2 (ImpForm (ConjForm _ f) g) = if alphaEqFormula f g then Nothing else Just Malformed
-checkConjE2 _ = Just Malformed
+checkConjE2 :: Formula -> Bool
+checkConjE2 (ImpForm (ConjForm _ f) g) = alphaEqFormula f g
+checkConjE2 _ = False
 
-checkDisjI1 :: Formula -> Maybe ErrorMsg
-checkDisjI1 (ImpForm f (DisjForm g _)) = if alphaEqFormula f g then Nothing else Just Malformed
-checkDisjI1 _ = Just Malformed
+checkDisjI1 :: Formula -> Bool
+checkDisjI1 (ImpForm f (DisjForm g _)) = alphaEqFormula f g
+checkDisjI1 _ = False
 
-checkDisjI2 :: Formula -> Maybe ErrorMsg
-checkDisjI2 (ImpForm f (DisjForm _ g)) = if alphaEqFormula f g then Nothing else Just Malformed
-checkDisjI2 _ = Just Malformed
+checkDisjI2 :: Formula -> Bool
+checkDisjI2 (ImpForm f (DisjForm _ g)) = alphaEqFormula f g
+checkDisjI2 _ = False
 
-checkDisjE :: Formula -> Maybe ErrorMsg
+checkDisjE :: Formula -> Bool
 checkDisjE (ImpForm (DisjForm f f') (ImpForm (ImpForm f1 g1) (ImpForm (ImpForm f1' g1') f2))) =
-      if alphaEqFormula f f1 && alphaEqFormula f' f1' && alphaEqFormula g1 f2 && alphaEqFormula g1' f2
-            then Nothing
-            else Just Malformed
-checkDisjE _ = Just Malformed
+      alphaEqFormula f f1 && alphaEqFormula f' f1' && alphaEqFormula g1 f2 && alphaEqFormula g1' f2
+checkDisjE _ = False
 
-checkAllE :: Formula -> Maybe ErrorMsg
-checkAllE (ImpForm (ForallForm v f) g) = if length substs == 1 then Nothing else Just Malformed
+checkAllE :: Formula -> Bool
+checkAllE (ImpForm (ForallForm v f) g) = length substs == 1
       where
             vars = nub ([v] ++ formulaToVariables f ++ formulaToVariables g)
             freshvar = variablesToFreshVariable vars
             substs = simpleFormulaUnification f g
-checkAllE _ = Just Malformed
+checkAllE _ = False
 
-checkExI :: Formula -> Maybe ErrorMsg
-checkExI (ImpForm f (ExistsForm v g)) = if length substs == 1 then Nothing else Just Malformed
+checkExI :: Formula -> Bool
+checkExI (ImpForm f (ExistsForm v g)) = length substs == 1
       where
             substs = simpleFormulaUnification f g
-checkExI _ = Just Malformed
+checkExI _ = False
 
-checkAllShift :: Formula -> Maybe ErrorMsg
+checkAllShift :: Formula -> Bool
 checkAllShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm f' (ForallForm v' g'))) =
-      if alphaEqFormula f f' && not (v `elem` formulaToFreeVariables f) &&
+      alphaEqFormula f f' && not (v `elem` formulaToFreeVariables f) &&
             (v == v' || not (v' `elem` formulaToFreeVariables g)) &&
             alphaEqFormula g' (substFormula v (VarTerm v') g)
-            then Nothing
-            else Just Malformed
-checkAllShift _ = Just Malformed
+checkAllShift _ = False
 
-checkExShift :: Formula -> Maybe ErrorMsg
+checkExShift :: Formula -> Bool
 checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g')) =
-      if alphaEqFormula g g' && not (v `elem` formulaToFreeVariables g) &&
+      alphaEqFormula g g' && not (v `elem` formulaToFreeVariables g) &&
             (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
             alphaEqFormula f' (substFormula v (VarTerm v') f)
-            then Nothing
-            else Just Malformed
 
-proofInGenFormToPremiseIndices :: Proof -> [Int]
-proofInGenFormToPremiseIndices p
- | length p < 2 = []
- | otherwise = let (genFla, _, _) = last p
-                   genFlaKernel = case genFla of (ForallForm v f) -> f
-                   prems = map (\s -> let (f, _, _) = s in f) (init p)
-                   info = map (\prem -> alphaEqFormula prem genFlaKernel || (not $ null $ simpleFormulaUnification prem genFlaKernel)) prems
-                  in map snd (filter (\(x, i) -> x) (zip info [0..]))
-
-checkGen :: Proof -> Int -> Tag -> Maybe ErrorMsg
+checkGen :: Proof -> Int -> Tag -> Bool
 checkGen p i t =
       let pproof = take (i+1) p
           is = proofInGenFormToPremiseIndices pproof
           asms = proofToAssumptionFormulas p
           freeVars = concat $ map formulaToFreeVariables asms
           genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
-      in if genVar `elem` freeVars then Just Malformed
-         else case t of Nothing -> if null is then Just Malformed else Nothing
-                        Just s -> if any (`elem` is) (proofAndTagStringToIndices pproof s) then Nothing else Just Malformed
+      in if genVar `elem` freeVars then False
+         else case t of Nothing -> if null is then False else True
+                        Just s -> any (`elem` is) (proofAndTagStringToIndices pproof s)
 
-checkModusPonens :: Formula -> Formula -> Formula -> Maybe ErrorMsg
-checkModusPonens f g1 g2
- | checkModusPonensAux f g1 g2 = Nothing
- | checkModusPonensAux f g2 g1 = Nothing
- | otherwise = Just MPMalformed
+checkModusPonens :: Formula -> Formula -> Formula -> Bool
+checkModusPonens f g1 g2 = checkModusPonensAux f g1 g2 || checkModusPonensAux f g2 g1
 
 checkModusPonensAux :: Formula -> Formula -> Formula -> Bool
 checkModusPonensAux f (ImpForm g1 g2) g3 = alphaEqFormula g1 g3 && alphaEqFormula f g2
 checkModusPonensAux _ _ _ = False
 
-checkDNE :: Formula -> Maybe ErrorMsg
-checkDNE (ImpForm (ImpForm (ImpForm f (PredForm Falsum [])) (PredForm Falsum [])) g) = if alphaEqFormula f g then Nothing else Just Malformed
-checkDNE _ = Just Malformed
+checkDNE :: Formula -> Bool
+checkDNE (ImpForm (ImpForm (ImpForm f (PredForm Falsum [])) (PredForm Falsum [])) g) = alphaEqFormula f g
+checkDNE _ = False
 
-checkEFQ :: Formula -> Maybe ErrorMsg
-checkEFQ (ImpForm (PredForm Falsum ts) f) = Nothing
-checkEFQ _ = Just Malformed
+checkEFQ :: Formula -> Bool
+checkEFQ (ImpForm (PredForm Falsum ts) f) = True
+checkEFQ _ = False
 
 proofToAssumptionFormulas :: Proof -> [Formula]
 proofToAssumptionFormulas [] = []
@@ -208,10 +186,19 @@ proofInMPFormToMPPrinciplePremiseFormulas p = let (concl, _, _) = last p
                                                   is = proofAndMPConclusionToStepIndices p concl
                                                 in map (\i -> let (f, _, _) = p!!i in f) is
 
-checkClaims :: Proof -> [Maybe ErrorMsg]
+proofInGenFormToPremiseIndices :: Proof -> [Int]
+proofInGenFormToPremiseIndices p
+ | length p < 2 = []
+ | otherwise = let (genFla, _, _) = last p
+                   genFlaKernel = case genFla of (ForallForm v f) -> f
+                   prems = map (\s -> let (f, _, _) = s in f) (init p)
+                   info = map (\prem -> alphaEqFormula prem genFlaKernel || (not $ null $ simpleFormulaUnification prem genFlaKernel)) prems
+                  in map snd (filter (\(x, i) -> x) (zip info [0..]))
+
+checkClaims :: Proof -> [Bool]
 checkClaims p = checkClaimsAux p 0
 
-checkClaimsAux :: [(Formula, Rule, Tag)] -> Int -> [Maybe ErrorMsg]
+checkClaimsAux :: [(Formula, Rule, Tag)] -> Int -> [Bool]
 checkClaimsAux p offset = if length p <= offset
       then []
       else c:checkClaimsAux p (offset+1) where
@@ -238,22 +225,19 @@ checkClaimsAux p offset = if length p <= offset
                               let ml1 = proofAndTagStringToStep (take offset p) s1
                                   ml2 = proofAndTagStringToStep (take offset p) s2
                               in if isNothing ml1 || isNothing ml2
-                                    then Just MPIllReference
-                                    else do (f1, r1, t1) <- ml1
-                                            (f2, r2, t2) <- ml2
-                                            checkModusPonens f f1 f2
+                                    then False
+                                    else let Just(f1, r1, t1) = ml1
+                                             Just(f2, r2, t2) = ml2
+                                            in checkModusPonens f f1 f2
                         MP Nothing Nothing ->
                               let is = proofAndMPConclusionToStepIndices (take offset p) f -- Step indices with matching conclusion
                                   prems = map (\i -> let (f, r, t) = (p!!i) in case f of (ImpForm g _) -> g) is
-                              in if any (not . null) (map (\f -> proofAndFormulaToStepIndices p f offset) prems)
-                                     then Nothing
-                                     else Just MPMalformed
+                              in any (not . null) (map (\f -> proofAndFormulaToStepIndices p f offset) prems)
                         C -> checkC f
-                        Asm -> Nothing
-                        _ -> Just NotYetSupported
+                        Asm -> True
+                        _ -> False
 
 proofToDependency :: Proof -> [Int]
---proofToDependency p = proofToDependencyAux p (length p-1)
 proofToDependency p = [0..length p-1]
 
 proofToDependencyAux :: Proof -> Int -> [Int]
@@ -277,7 +261,7 @@ proofToUntaggedProof :: Proof -> Proof
 proofToUntaggedProof = map stepToUntaggedStep
 
 checkProof :: Proof -> Bool
-checkProof p = foldl (\ x i -> x && isNothing (cs!!i)) (isNothing (last cs)) deps
+checkProof p = foldl (\ x i -> x && cs!!i) (last cs) deps
       where cs = checkClaims p
             deps = proofToDependency p
 

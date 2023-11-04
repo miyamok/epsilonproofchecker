@@ -9,7 +9,7 @@ type Arity = Int
 data Variable = Var Name Index deriving (Eq, Show, Ord)
 data Constant = Const Name Index Arity deriving (Eq, Show)
 data Term = VarTerm Variable | AppTerm Constant [Term] | EpsTerm Variable Formula deriving (Eq, Show)
-data Predicate = Falsum | Pred Name Index Arity deriving (Eq, Show)
+data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
@@ -30,7 +30,8 @@ constToArity (Const n i a) = a
 
 predToArity :: Predicate -> Arity
 predToArity (Pred n i a) = a
-predToArity _ = 0
+predToArity Falsum = 0
+predToArity Equality = 2
 
 makeVar :: Name -> Variable
 makeVar n = Var n (-1)
@@ -71,7 +72,6 @@ formulaToFreeVariables :: Formula -> [Variable]
 formulaToFreeVariables (PredForm p ts) = nub (concatMap termToFreeVariables ts)
 formulaToFreeVariables (ForallForm v f) = delete v (formulaToFreeVariables f)
 formulaToFreeVariables (ExistsForm v f) = delete v (formulaToFreeVariables f)
---formulaToFreeVariables (NegForm f) = formulaToFreeVariables f
 formulaToFreeVariables (ImpForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
 formulaToFreeVariables (ConjForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
 formulaToFreeVariables (DisjForm f1 f2) = formulaToFreeVariables f1 `union` formulaToFreeVariables f2
@@ -80,7 +80,6 @@ formulaToVariables :: Formula -> [Variable]
 formulaToVariables (PredForm p ts) = nub (concatMap termToVariables ts)
 formulaToVariables (ForallForm v f) = nub (v:formulaToVariables f)
 formulaToVariables (ExistsForm v f) = nub (v:formulaToVariables f)
---formulaToVariables (NegForm f) = formulaToVariables f
 formulaToVariables (ImpForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
 formulaToVariables (ConjForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
 formulaToVariables (DisjForm f1 f2) = formulaToVariables f1 `union` formulaToVariables f2
@@ -91,6 +90,8 @@ variablesToFreshVariable (v:vs) = Var (variableToName v) (maximum (map variableT
 
 isPredicate :: Predicate -> Bool
 isPredicate (Pred n i a) = not (null n) && i >= -1 && a >= 0
+isPredicate Falsum = True
+isPredicate Equality = True
 
 makePred :: Name -> Arity -> Predicate
 makePred n a = Pred n (-1) a
@@ -103,14 +104,12 @@ isNegForm (ImpForm _ (PredForm Falsum [])) = True
 isNegForm _ = False
 
 isFormula :: Formula -> Bool
-isFormula (PredForm (Pred n i a) ts) = isPredicate (Pred n i a) && a == length ts && all isTerm ts
+isFormula (PredForm p ts) = isPredicate p && predToArity p == length ts && all isTerm ts
 isFormula (ForallForm v f) = isFormula f
 isFormula (ExistsForm v f) = isFormula f
---isFormula (NegForm f) = isFormula f
 isFormula (ImpForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (ConjForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (DisjForm f1 f2) = isFormula f1 && isFormula f2
-isFormula _ = False
 
 substTerm :: Variable -> Term -> Term -> Term
 substTerm v t (VarTerm v2) = if v==v2 then t else VarTerm v2
@@ -121,7 +120,6 @@ substFormula :: Variable -> Term -> Formula -> Formula
 substFormula v t (PredForm p ts) = PredForm p (map (substTerm v t) ts)
 substFormula v t (ForallForm v' f) = if v==v' then ForallForm v' f else ForallForm v' (substFormula v t f)
 substFormula v t (ExistsForm v' f) = if v==v' then ExistsForm v' f else ExistsForm v' (substFormula v t f)
---substFormula v t (NegForm f) = NegForm (substFormula v t f)
 substFormula v t (ImpForm f1 f2) = ImpForm (substFormula v t f1) (substFormula v t f2)
 substFormula v t (ConjForm f1 f2) = ConjForm (substFormula v t f1) (substFormula v t f2)
 substFormula v t (DisjForm f1 f2) = DisjForm (substFormula v t f1) (substFormula v t f2)
@@ -148,7 +146,6 @@ alphaEqFormula (ExistsForm v1 f1) (ExistsForm v2 f2) = alphaEqFormula g1 g2
                      u = variablesToFreshVariable vs
                      g1 = substFormula v1 (VarTerm u) f1
                      g2 = substFormula v2 (VarTerm u) f2
---alphaEqFormula (NegForm f1) (NegForm f2) = alphaEqFormula f1 f2
 alphaEqFormula (ImpForm f1 g1) (ImpForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (ConjForm f1 g1) (ConjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (DisjForm f1 g1) (DisjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
@@ -163,7 +160,6 @@ formulaToSubterms :: Formula -> [Term]
 formulaToSubterms (PredForm p ts) = foldr (union . termToSubterms) [] ts
 formulaToSubterms (ForallForm v f) = formulaToSubterms f
 formulaToSubterms (ExistsForm v f) = formulaToSubterms f
---formulaToSubterms (NegForm f) = formulaToSubterms f
 formulaToSubterms (ImpForm f g) = unionBy alphaEqTerm (formulaToSubterms f) (formulaToSubterms g)
 formulaToSubterms (ConjForm f g) = formulaToSubterms f `union` formulaToSubterms g
 formulaToSubterms (DisjForm f g) = formulaToSubterms f `union` formulaToSubterms g
@@ -177,7 +173,6 @@ falsity :: Formula
 falsity = PredForm Falsum []
 
 foldNegation :: Formula -> Formula
---foldNegation (ImpForm f falsity) = NegForm (foldNegation f)
 foldNegation (PredForm p ts) = PredForm p (map foldNegationAux ts)
 foldNegation (ConjForm f f') = ConjForm (foldNegation f) (foldNegation f')
 foldNegation (DisjForm f f') = DisjForm (foldNegation f) (foldNegation f')
@@ -190,7 +185,6 @@ foldNegationAux (AppTerm c ts) = AppTerm c (map foldNegationAux ts)
 foldNegationAux (EpsTerm v f) = EpsTerm v (foldNegation f)
 
 unfoldNegation :: Formula -> Formula
---unfoldNegation (NegForm f) = ImpForm f falsity
 unfoldNegation (PredForm p ts) = PredForm p (map unfoldNegationAux ts)
 unfoldNegation (ImpForm f f') = ImpForm (unfoldNegation f) (unfoldNegation f')
 unfoldNegation (ConjForm f f') = ConjForm (unfoldNegation f) (unfoldNegation f')
@@ -208,11 +202,9 @@ epsTranslation (ExistsForm v f) = substFormula v e f'
       where e = EpsTerm v f'
             f' = epsTranslation f
 epsTranslation (ForallForm v f) = substFormula v e f'
---      where e = EpsTerm v (NegForm f')
       where e = EpsTerm v (makeNegForm f')
             f' = epsTranslation f
 epsTranslation (PredForm p ts) = PredForm p ts
---epsTranslation (NegForm f) = NegForm (epsTranslation f)
 epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)
 epsTranslation (ConjForm f g) = ConjForm (epsTranslation f) (epsTranslation g)
 epsTranslation (DisjForm f g) = DisjForm (epsTranslation f) (epsTranslation g)
