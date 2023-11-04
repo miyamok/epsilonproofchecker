@@ -1,6 +1,6 @@
 # epsilon --- a proof assistant system for Hilbert's epsilon calculus
 Proof assistant system for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier.
+The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft Z3.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -32,7 +32,11 @@ A -> B
 % ./Main examples/ex08_assumption.proof 
 Correct proof of
 A ⊢ A
-% 
+% ./Main examples/ex14_prop_auto.proof ## assume z3 command is available
+Correct proof of
+ ⊢ A -> A
+% cat examples/ex14_prop_auto.proof 
+A -> A by Auto
 ```
 ## Logic
 Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional axiom so-called critical axiom is available.
@@ -314,7 +318,16 @@ at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllS
 we see a proof of the inverse of the axiom <code>AllShift</code>.
 The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
 
+On the other hand, it is possible to do automated theorem proving in case Microsoft's z3 (https://github.com/Z3Prover/z3) is installed and avaialble in your command line.
+```
+% ./Main -p examples/ex15_pred_auto.proof 
+Correct proof of
+ ⊢ (B -> all x P(x)) -> all y (B -> P(y))
+(B -> all x P(x)) -> all y (B -> P(y)) by Auto
+```
+
 The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
+It currently doen't support a proof with Auto.
 
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
