@@ -7,6 +7,7 @@ import System.Directory
 import Debug.Trace
 import Data.List
 import PrettyPrint
+import SMT
 
 printHelpMessage :: IO ()
 printHelpMessage = do putStrLn "-d option to apply proof transformation due to deduction theorem"
@@ -44,25 +45,40 @@ main = do
                                 (f, r, t) = last p
                                 stmt = prettyPrintFormula f
                                 fs = intercalate ", " (map prettyPrintFormula asms)
-                                in if not b
-                                then do putStrLn "The input is not a proof of"
-                                        putStrLn stmt
-                                        if null fs then return ()
-                                        else do putStrLn "from the following assumptions"
-                                                putStrLn fs
-                                else if dFlag
-                                    then do putStrLn "The input is a correct proof of"
-                                            putStrLn (if null asms then intercalate " " ["⊢", stmt]
-                                                      else intercalate " " [fs, "⊢", stmt])
-                                            let up = proofToUntaggedProof p
-                                                dp = if onceFlag then deductionOnce up else deduction up in
-                                                if checkProof dp
+                                autoFlas = proofToAutoStepFormulas p
+                                autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asms) autoFlas
+                                in if dFlag && not (null autoFlas)
+                                then do putStrLn "Deduction transformation doesn't support a proof with Auto"
+                                else if null autoFlas && b
+                                    then if dFlag
+                                        then do putStrLn "The input is a correct proof of"
+                                                putStrLn (if null asms then intercalate " " ["⊢", stmt]
+                                                          else intercalate " " [fs, "⊢", stmt])
+                                                let up = proofToUntaggedProof p
+                                                    dp = if onceFlag then deductionOnce up else deduction up in
+                                                 if checkProof dp
                                                     then do putStrLn "It generated a correct proof of"
                                                             let (f', _, _) = last dp in
                                                                     do putStrLn ("⊢ " ++ prettyPrintFormula f')
                                                                        if pFlag then putStrLn (prettyPrintProof dp) else return ()
                                                     else do putStrLn "Proof transformation doesn't support this proof yet."
                                                             if debugFlag then putStrLn (prettyPrintProof dp) else return ()
-                                else do putStrLn "Correct proof of"
-                                        putStrLn (intercalate " " [fs, "⊢", stmt])
-                                        if pFlag then putStrLn (prettyPrintProof p) else return ()
+                                        else do putStrLn "Correct proof of"
+                                                putStrLn (intercalate " " [fs, "⊢", stmt])
+                                                if pFlag then putStrLn (prettyPrintProof p) else return ()
+                                    else do bs <- sequence autoResults
+                                            if and bs && b then do putStrLn "Correct proof of"
+                                                                   putStrLn (intercalate " " [fs, "⊢", stmt])
+                                                                   if pFlag then putStrLn (prettyPrintProof p) else return ()
+                                                      else do putStrLn "The input is not a proof of"
+                                                              putStrLn stmt
+                                                              if null fs then return ()
+                                                              else do putStrLn "from the following assumptions"
+                                                                      putStrLn fs
+
+                                -- else if not b
+                                -- then do putStrLn "The input is not a proof of"
+                                --         putStrLn stmt
+                                --         if null fs then return ()
+                                --         else do putStrLn "from the following assumptions"
+                                --                 putStrLn fs

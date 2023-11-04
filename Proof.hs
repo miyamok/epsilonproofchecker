@@ -16,9 +16,6 @@ type Tag = Maybe String
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
 
-checkAuto :: Formula -> Bool
-checkAuto f = True
-
 checkK :: Formula -> Bool
 checkK (ImpForm f (ImpForm _ f')) = alphaEqFormula f f'
 checkK _ = False
@@ -108,6 +105,9 @@ checkDNE _ = False
 checkEFQ :: Formula -> Bool
 checkEFQ (ImpForm (PredForm Falsum ts) f) = True
 checkEFQ _ = False
+
+checkAuto :: Formula -> [Formula] -> Bool
+checkAuto f asms = undefined
 
 proofToAssumptionFormulas :: Proof -> [Formula]
 proofToAssumptionFormulas [] = []
@@ -206,6 +206,7 @@ checkClaimsAux p offset = if length p <= offset
                   (f, r, t) -> case r of
                         K -> checkK f
                         S -> checkS f
+                        Auto -> True -- automated prover will be applied later
                         ConjE1 -> checkConjE1 f
                         ConjE2 -> checkConjE2 f
                         ConjI -> checkConjI f
@@ -274,6 +275,14 @@ proofToAsms p = filter (\(f, r, t) -> r == Asm) p
 
 proofToNonAsms :: Proof -> Proof
 proofToNonAsms p = filter (\(f, r, t) -> r /= Asm) p
+
+isProofWithAuto :: Proof -> Bool
+isProofWithAuto p = not (null (proofToAutoStepFormulas p))
+
+proofToAutoStepFormulas :: Proof -> [Formula]
+proofToAutoStepFormulas [] = []
+proofToAutoStepFormulas ((f, Auto, _):p) = f:proofToAutoStepFormulas p
+proofToAutoStepFormulas (_:p) = proofToAutoStepFormulas p
 
 formulaToIdentityProof :: Formula -> Proof
 formulaToIdentityProof f =

@@ -16,8 +16,6 @@ prettyPrintFormula (PredForm p ts)
  | otherwise = ppPred ++ ppArgs
  where ppPred = prettyPrintPredicate p
        ppArgs = prettyPrintArgTerms ts
---prettyPrintFormula (NegForm f) = "~" ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
--- where ppFla = prettyPrintFormula f
 prettyPrintFormula (ExistsForm v f) = "ex " ++ prettyPrintVariable v ++ " " ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla
  where ppFla = prettyPrintFormula f
 prettyPrintFormula (ForallForm v f) = "all " ++ prettyPrintVariable v ++ " " ++ if isBiconForm f then "(" ++ ppFla ++ ")" else ppFla

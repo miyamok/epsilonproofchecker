@@ -13,7 +13,7 @@ data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
-data Binding = TermBinding Variable Term | FormulaBinding Predicate [Variable] Formula
+-- data Binding = TermBinding Variable Term | FormulaBinding Predicate [Variable] Formula
 
 type VariableDeclaration = Name
 type ConstantDeclaration = (Name, Int)
@@ -48,9 +48,6 @@ isTerm (AppTerm (Const n i a) ts) = isConstant (Const n i a) && (a == length ts)
 isTerm (EpsTerm v f) = isFormula f
 
 isEpsTerm :: Term -> Bool
--- isEpsTerm (VarTerm (Var name idx)) = False
--- isEpsTerm (AppTerm (Const n i a) ts) = False
--- isEpsTerm (EpsTerm v f) = True
 isEpsTerm (EpsTerm v f) = isVariable v && isFormula f
 isEpsTerm _ = False
 
@@ -163,6 +160,9 @@ formulaToSubterms (ExistsForm v f) = formulaToSubterms f
 formulaToSubterms (ImpForm f g) = unionBy alphaEqTerm (formulaToSubterms f) (formulaToSubterms g)
 formulaToSubterms (ConjForm f g) = formulaToSubterms f `union` formulaToSubterms g
 formulaToSubterms (DisjForm f g) = formulaToSubterms f `union` formulaToSubterms g
+
+-- formulaToPredicateVariables :: Formula -> [Constant]
+-- formulaToPredicateVariables (PredForm p ts) = 
 
 termToImmediateSubformula :: Term -> Maybe Formula
 termToImmediateSubformula (VarTerm v) = Nothing

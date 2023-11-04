@@ -9,7 +9,7 @@ isCriticalFormula (ImpForm premise conclusion) = any (alphaEqFormula conclusion)
     where
         epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
         substs = map (\kernel -> simpleFormulaUnification premise kernel) epsKernels
-        infos = filter (uncurry (\subst -> \epsKernel -> length subst == 1)) (zip substs epsKernels)
+        infos = filter (\(subst, epsKernel) -> length subst == 1) (zip substs epsKernels)
         concl' = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
 isCriticalFormula _ = False
 
@@ -22,7 +22,6 @@ simpleFormulaUnificationAux (PredForm p ts) (PredForm p' ts') =
 simpleFormulaUnificationAux (ImpForm f g) (ImpForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
 simpleFormulaUnificationAux (ConjForm f g) (ConjForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
 simpleFormulaUnificationAux (DisjForm f g) (DisjForm f' g') = simpleFormulaUnificationAux f f' ++ simpleFormulaUnificationAux g g'
---simpleFormulaUnificationAux (NegForm f) (NegForm f') = simpleFormulaUnificationAux f f'
 simpleFormulaUnificationAux (ForallForm v f) (ForallForm v' f') = simpleFormulaUnificationAux g g'
     where
         vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])

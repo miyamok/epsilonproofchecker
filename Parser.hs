@@ -71,11 +71,6 @@ string (x:xs) = do char x
 
 char x = sat (== x)
 
--- ident :: Parser String
--- ident = do x <- lower
---            xs <- many alphanum
---            return (x:xs)
-
 nat :: Parser Int
 nat = do xs <- some digit
          return (read xs)
@@ -203,11 +198,6 @@ conjformula pds vds cds = do f1 <- primitiveformula pds vds cds
                                 return (ConjForm f1 f2)
                               <|> return f1
 
--- negformula :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Formula
--- negformula pds vds cds = do symbol "~"
---                             f <- primitiveformula pds vds cds
---                             return (NegForm f)
-
 -- naming is wrong.  it should be improved
 primitiveformula :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Formula
 primitiveformula pds vds cds = do symbol "("
@@ -226,12 +216,6 @@ primitiveformula pds vds cds = do symbol "("
                                   f <- primitiveformula pds vds cds
                                   return (ExistsForm x f)
                            <|> do predformula pds vds cds
-
--- parensformula :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Formula
--- parensformula pds vds cds = do symbol "("
---                                f <- formula pds vds cds
---                                symbol ")"
---                                return f
 
 ------------------------------------
 -- parser for proof scripts
@@ -301,6 +285,8 @@ ruleAux = do symbol "K"
               return (MP Nothing Nothing)
        <|> do symbol "Asm"
               return Asm
+       <|> do symbol "Auto"
+              return Auto
 
 step :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser Step
 step pds vds cds = do f <- formula pds vds cds
