@@ -375,7 +375,7 @@ Axiom name | &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbs
 <code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> is right associative and has a higher priority than <code>-></code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
-<code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> is right associative and has a priority between <code>-></code> and <code>&</code>
+<code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> is right associative and has a priority<br /> between <code>-></code> and <code>&</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
 <code>AllE</code> | <code>all x E(x) -> E(t)</code>
@@ -383,7 +383,7 @@ Axiom name | &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbs
 <code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>EFQ</code> | <code>bot -> A</code>
-<code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>, <code>\|</code> and <code>&</code>
+<code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>,<br /> <code>\|</code> and <code>&</code>
 <code>Auto</code> | | Requires Microsoft's z3
 
 In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
