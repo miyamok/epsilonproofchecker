@@ -367,7 +367,7 @@ E(x) by R #myproofstep
 ```
 The proof assistant epsilon supports the following axioms.
 
-Axiom name | &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Scheme &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; | Note
+Axiom name | Scheme | Note
 --- | --- | ---
 <code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> is left associative
 <code>K</code> | <code>A -> B -> A</code>
