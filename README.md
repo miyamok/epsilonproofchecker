@@ -1,4 +1,4 @@
-# epsilon --- a proof assistant system for Hilbert's epsilon calculus
+# epsilon - a proof assistant for Hilbert's epsilon calculus
 Proof assistant system for Hilbert's epsilon calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
 The proof scripting language is simple, and there is a feature of proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft Z3.
 ##### Table of contents
@@ -367,7 +367,7 @@ E(x) by R #myproofstep
 ```
 The proof assistant epsilon supports the following axioms.
 
-Axiom name | Scheme | Note
+Axiom name | &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; Scheme &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; | Note
 --- | --- | ---
 <code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> is left associative
 <code>K</code> | <code>A -> B -> A</code>
