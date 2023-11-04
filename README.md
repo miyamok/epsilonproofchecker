@@ -329,8 +329,8 @@ Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
-Note that Auto does not supply a syntactic proof of the claimed formula in our calculi, but it totally relies on what the external prover said. 
-It implies that the correctness check for Auto relies on the correctness of the external prover, and the epsiolon proof checker does not guarantee anything.
+Note that the automation by Auto does not supply a syntactic proof of the claimed formula in our calculi.  The proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
+It implies that the correctness check of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof checker does not guarantee anything.
 
 The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
 The proof transformation currently doesn't support a proof involving Auto.
