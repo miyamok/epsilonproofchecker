@@ -13,7 +13,6 @@ data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
--- data Binding = TermBinding Variable Term | FormulaBinding Predicate [Variable] Formula
 
 type VariableDeclaration = Name
 type ConstantDeclaration = (Name, Int)
@@ -93,6 +92,20 @@ isPredicate Equality = True
 makePred :: Name -> Arity -> Predicate
 makePred n a = Pred n (-1) a
 
+formulaToConstants :: Formula -> [Constant]
+formulaToConstants (PredForm p ts) = nub $ concat $ map termToConstants ts
+formulaToConstants (ImpForm f g) = formulaToConstants f `union` formulaToConstants g
+formulaToConstants (ConjForm f g) = formulaToConstants f `union` formulaToConstants g
+formulaToConstants (DisjForm f g) = formulaToConstants f `union` formulaToConstants g
+formulaToConstants (ForallForm v f) = formulaToConstants f
+formulaToConstants (ExistsForm v f) = formulaToConstants f
+
+termToConstants :: Term -> [Constant]
+termToConstants (VarTerm _) = []
+termToConstants (AppTerm c ts) = c:concat (map termToConstants ts)
+termToCOnstants (EpsTerm v f) = formulaToConstants f
+
+
 makeNegForm :: Formula -> Formula
 makeNegForm f = ImpForm f falsity
 
@@ -154,15 +167,32 @@ termToSubterms (AppTerm c ts) = [AppTerm c ts] `union` foldr (union . termToSubt
 termToSubterms (EpsTerm v f) = [EpsTerm v f] `union` formulaToSubterms f
 
 formulaToSubterms :: Formula -> [Term]
-formulaToSubterms (PredForm p ts) = foldr (union . termToSubterms) [] ts
+formulaToSubterms (PredForm p ts) = nub $ foldr (union . termToSubterms) [] ts
 formulaToSubterms (ForallForm v f) = formulaToSubterms f
 formulaToSubterms (ExistsForm v f) = formulaToSubterms f
 formulaToSubterms (ImpForm f g) = unionBy alphaEqTerm (formulaToSubterms f) (formulaToSubterms g)
 formulaToSubterms (ConjForm f g) = formulaToSubterms f `union` formulaToSubterms g
 formulaToSubterms (DisjForm f g) = formulaToSubterms f `union` formulaToSubterms g
 
--- formulaToPredicateVariables :: Formula -> [Constant]
--- formulaToPredicateVariables (PredForm p ts) = 
+formulaToPredicates :: Formula -> [Predicate]
+formulaToPredicates (PredForm p ts) = nub (p:concat (map termToPredicates ts))
+formulaToPredicates (ImpForm f g) = formulaToPredicates f `union` formulaToPredicates g
+formulaToPredicates (ConjForm f g) = formulaToPredicates f `union` formulaToPredicates g
+formulaToPredicates (DisjForm f g) = formulaToPredicates f `union` formulaToPredicates g
+formulaToPredicates (ForallForm v f) = formulaToPredicates f
+formulaToPredicates (ExistsForm v f) = formulaToPredicates f
+
+termToPredicates :: Term -> [Predicate]
+termToPredicates (VarTerm _) = []
+termToPredicates (AppTerm c ts) = nub $ concat $ map termToPredicates ts
+termToPredicates (EpsTerm v f) = formulaToPredicates f
+
+isPredicateVariable :: Predicate -> Bool
+isPredicateVariable (Pred _ _ _) = True
+isPredicateVariable _ = False
+
+formulaToPredicateVariables :: Formula -> [Predicate]
+formulaToPredicateVariables f = filter isPredicateVariable (formulaToPredicates f)
 
 termToImmediateSubformula :: Term -> Maybe Formula
 termToImmediateSubformula (VarTerm v) = Nothing

@@ -7,7 +7,7 @@ import System.Directory
 import Debug.Trace
 import Data.List
 import PrettyPrint
-import SMT
+import SMTLib
 
 printHelpMessage :: IO ()
 printHelpMessage = do putStrLn "-d option to apply proof transformation due to deduction theorem"
@@ -75,10 +75,3 @@ main = do
                                                               if null fs then return ()
                                                               else do putStrLn "from the following assumptions"
                                                                       putStrLn fs
-
-                                -- else if not b
-                                -- then do putStrLn "The input is not a proof of"
-                                --         putStrLn stmt
-                                --         if null fs then return ()
-                                --         else do putStrLn "from the following assumptions"
-                                --                 putStrLn fs

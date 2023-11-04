@@ -1,1 +1,1 @@
-A -> A by Auto
+((A -> B) -> A) -> A by Auto
