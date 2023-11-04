@@ -364,13 +364,13 @@ Any of the above can be followed by an optional number as an index.  For example
 Binary and unary constants and predicate variables should have a suitable number of arguments, which is a comma separated list with outer parentheses.
 For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand, <code>P</code> is not; <code>P</code> is a unary predicate variable and one argument is required, but it is missing.
 
-Assume <code>E(x)</code> is a formula and R is some name of axiom or inference rule, the syntax of the proof step is given as follows
+Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
-E(x) by R
+E(x) by X
 ```
 and also one can give a tag to this proof step.
 ```
-E(x) by R #myproofstep
+E(x) by X #myproofstep
 ```
 The proof assistant epsilon supports the following axioms.
 
