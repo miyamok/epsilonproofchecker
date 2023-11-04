@@ -350,7 +350,7 @@ Formula is what we saw in the previous section of this documentation.
 A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
 A tag is a reference name, which is a string starting with <code>#</code>, given to the proof step, which can be used to point this proof step later on.
 
-The follwoing variable names, constant names, and predicate names are available.
+The follwoing variable names, constant names, and predicate names are available by default.
 
 Kind | Names
 --- | ---
@@ -365,6 +365,18 @@ Binary predicate variable | <code>R</code>
 Any of the above can be followed by an optional number as an index.  For example, <code>x</code>, <code>x1</code>, <code>x2</code> are all distinct variables.
 Binary and unary constants and predicate variables should have a suitable number of arguments, which is a comma separated list with outer parentheses.
 For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand, <code>P</code> is not; <code>P</code> is a unary predicate variable and one argument is required, but it is missing.
+
+In order to make custom decalarations for variable names, constant names, and predicate names, the following statements should be used in a proof script.
+```
+variables x y u v
+0ary-predicates A B
+1ary-predicates P Q
+0ary-constants c a
+1ary-constants f g
+2ary-predicate R
+```
+An arbitrary arity may be given to predicates and constants.
+A custom declaration makes the default names unavailable.  For example if one makes a custom declaration for variables, the default variable names are gone, while the default constant names and predicate names are still there, if one does not make custom declarations for constants names nor predicate names.
 
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
