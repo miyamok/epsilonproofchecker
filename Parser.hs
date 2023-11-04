@@ -91,7 +91,6 @@ token p = do space
              space
              return v
 
---identifier = token ident
 natural = token nat
 integer = token int
 

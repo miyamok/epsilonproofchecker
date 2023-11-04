@@ -16,6 +16,7 @@ printHelpMessage = do putStrLn "-d option to apply proof transformation due to d
                       putStrLn "Usage:"
                       putStrLn "% ./Main [options] filepath"
 
+-- it should be revised
 main :: IO ()
 main = do
     args <- getArgs
@@ -39,7 +40,6 @@ main = do
                                      return ()
                         Nothing ->
                             let p = map (\l -> fst (head  l)) parsedList
-                                -- here, there should be a check, so that it fails if there is the parser did not consume all characters.
                                 b = checkProof p
                                 asms = proofToAssumptionFormulas p
                                 (f, r, t) = last p

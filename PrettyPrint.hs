@@ -2,7 +2,6 @@ module PrettyPrint where
 import Syntax
 import Proof
 import Data.List
-import Distribution.Pretty (Pretty(pretty))
 
 prettyPrintPredicate :: Predicate -> String
 prettyPrintPredicate (Pred n i a)

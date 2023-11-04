@@ -1,6 +1,5 @@
 module Syntax where
 import Data.List(nub, delete, union, unionBy, intercalate)
-import Data.Binary (encode)
 
 type Name = String
 type Index = Int
