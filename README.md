@@ -268,10 +268,12 @@ Combinating with the oprion <code>-p</code>, it shows the transformed proof.
 ```
 % cat examples/ex08_assumption.proof  
 A by Asm
-B by Asm
+% ./Main examples/ex08_assumption.proof 
+Correct proof of
+A ⊢ A
 % ./Main -d examples/ex08_assumption.proof
 It generated a correct proof of
-⊢ A -> B -> B
+⊢ A -> A
 % ./Main -d -p examples/ex08_assumption.proof
 It generated a correct proof of
 ⊢ A -> A
@@ -280,6 +282,15 @@ A -> (A -> A) -> A by K
 (A -> A -> A) -> A -> A by MP
 A -> A -> A by K
 A -> A by MP
+```
+The option <code>-1</code> together with <code>-d</code> limites the application of deduction transformation, so that only the last assumption is handled.
+```
+% ./Main examples/ex16_peirce_first_preparation.proof 
+Correct proof of
+(A -> B) -> A, ~A, A ⊢ B
+miyamoto@station3179 epsilonproofchecker % ./Main -d -1 examples/ex16_peirce_first_preparation.proof
+It generated a correct proof of
+(A -> B) -> A, ~A ⊢ A -> B
 ```
 One example showing the power of this proof transformation is the proof of the inverse of <code>AllShift</code> formula.
 ```
