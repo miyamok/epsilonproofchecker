@@ -270,13 +270,9 @@ Combinating with the oprion <code>-p</code>, it shows the transformed proof.
 A by Asm
 B by Asm
 % ./Main -d examples/ex08_assumption.proof
-The input is a correct proof of
-A, B ⊢ B
 It generated a correct proof of
 ⊢ A -> B -> B
 % ./Main -d -p examples/ex08_assumption.proof
-The input is a correct proof of
-A ⊢ A
 It generated a correct proof of
 ⊢ A -> A
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
