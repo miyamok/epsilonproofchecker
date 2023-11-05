@@ -352,7 +352,7 @@ A tag is a reference name, which is a string starting with <code>#</code>, given
 
 The follwoing variable names, constant names, and predicate names are available by default.
 
-Kind | Names
+Kind | Default names
 --- | ---
 Variable | <code>x</code>, <code>y</code>, <code>z</code>, <code>u</code>, <code>v</code>
 Nullary constant | <code>a</code>, <code>b</code>, <code>c</code>
