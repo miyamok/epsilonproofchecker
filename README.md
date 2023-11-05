@@ -376,7 +376,7 @@ For any natural number _n_, a declarations starts with _n_<code>ary-predicates</
 ```
 0ary-predicates A B
 1ary-predicates P Q
-2ary-predicate R
+2ary-predicates R
 0ary-constants c a
 1ary-constants f g
 ```
