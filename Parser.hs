@@ -7,6 +7,8 @@ import Axiom
 
 newtype Parser a = P(String -> [(a, String)])
 type IdentDeclarations = ([VariableDeclaration], [ConstantDeclaration], [PredicateDeclaration])
+data ParsedLine = ProofLine Step | VarDeclareLine [VariableDeclaration] | ConstDeclareLine [ConstantDeclaration]
+ | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String deriving (Show)
 
 parse :: Parser a -> String -> [(a, String)]
 parse (P p) inp = p inp
@@ -326,27 +328,124 @@ variableDeclaration = do kind <- string "variables "
                             return (name:names)
 
 
-constantDeclaration :: Parser (Int, [String])
+constantDeclaration :: Parser [(String, Int)]
 constantDeclaration = do arity <- nat
                          kind <- string "ary-constants "
                          do name <- some letter
                             names <- many (do string " "
                                               some letter)
-                            return (arity, name:names)
+                            return [(n, arity) | n <- name:names]
 
-predicateDeclaration :: Parser (Int, [String])
+-- constantDeclaration :: Parser (Int, [String])
+-- constantDeclaration = do arity <- nat
+--                          kind <- string "ary-constants "
+--                          do name <- some letter
+--                             names <- many (do string " "
+--                                               some letter)
+--                             return (arity, name:names)
+predicateDeclaration :: Parser [(String, Int)]
 predicateDeclaration = do arity <- nat
                           kind <- string "ary-predicates "
                           do name <- some letter
                              names <- many (do string " "
                                                some letter)
-                             return (arity, name:names)
+                             return [(n, arity) | n <- name:names]
+-- predicateDeclaration :: Parser (Int, [String])
+-- predicateDeclaration = do arity <- nat
+--                           kind <- string "ary-predicates "
+--                           do name <- some letter
+--                              names <- many (do string " "
+--                                                some letter)
+--                              return (arity, name:names)
 
 --------------------------------
--- comment line
+-- comment line and empty line
 --------------------------------
 
 commentLine :: Parser ()
 commentLine = do string "--"
                  many (sat (\c -> True))
                  return ()
+
+emptyLine :: Parser ()
+emptyLine = do many (string " ")
+               return ()
+
+proofScriptLine :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser ParsedLine
+proofScriptLine pds vds cds =
+           do vd <- variableDeclaration
+              return (VarDeclareLine vd)
+       <|> do cd <- constantDeclaration
+              return (ConstDeclareLine cd)
+       <|> do pd <- predicateDeclaration
+              return (PredDeclareLine pd)
+       <|> do step <- step pds vds cds
+              return (ProofLine step)
+       <|> do commentLine
+              return EmptyLine
+       <|> do emptyLine
+              return EmptyLine
+
+parseLines :: [String] -> [ParsedLine]
+parseLines = parseLinesAux [] [] []
+
+parseLinesAux :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> [String] -> [ParsedLine]
+parseLinesAux pds vds cds [] = []
+parseLinesAux pds vds cds (l:ls) =
+       let mpl = parse (proofScriptLine (if null pds then defaultPredicates else pds)
+                                        (if null vds then defaultVariables else vds)
+                                        (if null cds then defaultConstants else cds)) l
+        in case mpl of [] -> [ErrorLine l]
+                       [(pl, str)] ->
+                            if null str
+                                   then case pl of (ProofLine step) -> ProofLine step:parseLinesAux pds vds cds ls
+                                                   (VarDeclareLine newds) -> VarDeclareLine newds:parseLinesAux pds (vds++newds) cds ls
+                                                   (PredDeclareLine newds) -> PredDeclareLine newds:parseLinesAux (pds++newds) vds cds ls
+                                                   (ConstDeclareLine newds) -> ConstDeclareLine newds:parseLinesAux pds vds (cds++newds) ls
+                                                   EmptyLine -> EmptyLine:parseLinesAux pds vds cds ls
+                            else [ErrorLine l]
+                       _ -> [ErrorLine l]
+
+parsedLinesToErrorMessage :: [ParsedLine] -> Maybe String
+parsedLinesToErrorMessage [] = Just "Empty input"
+parsedLinesToErrorMessage ls = if not $ or $ map (\pl -> case pl of ProofLine step -> True; _ -> False) ls
+        then Just "Input contains no proof, but only declaration"
+        else case last ls of ErrorLine s -> Just ("Error at line " ++ show (length ls) ++ ": " ++ s)
+                             _ -> Nothing
+
+parsedLinesToProof :: [ParsedLine] -> Proof
+parsedLinesToProof [] = []
+parsedLinesToProof (ProofLine x:ls) = x:parsedLinesToProof ls
+parsedLinesToProof (_:ls) = parsedLinesToProof ls
+
+------------------------------------
+-- parser for command line options
+------------------------------------
+
+-- debugFlag :: Parser Bool
+-- debugFlag = do symbol "--debug"
+--                return True
+
+-- deductionFlag :: Parser Bool
+-- deductionFlag = do symbol "-d"
+--                    return True
+
+-- onceFlag :: Parser Bool
+-- onceFlag = do symbol "-1"
+--               return True
+
+-- printFlag :: Parser Bool
+-- printFlag = do symbol "-p"
+--                return True
+
+-- argsToDebugFlag :: [String] -> Bool
+-- argsToDebugFlag args = or $ map (\b -> if null b then False else let [(_, s)]=b in null s) (map (parse debugFlag) args)
+
+-- argsToDeductionFlag :: [String] -> Bool
+-- argsToDeductionFlag args = or $ map (\b -> if null b then False else let [(_, s)]=b in null s) (map (parse deductionFlag) args)
+
+-- argsToOnceFlag :: [String] -> Bool
+-- argsToOnceFlag args = or $ map (\b -> if null b then False else let [(_, s)]=b in null s) (map (parse onceFlag) args)
+
+-- argsToPrintFlag :: [String] -> Bool
+-- argsToPrintFlag args = or $ map (\b -> if null b then False else let [(_, s)]=b in null s) (map (parse printFlag) args)
