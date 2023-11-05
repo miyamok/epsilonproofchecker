@@ -78,7 +78,7 @@ If we supply (redundant) parentheses, it should look as
 ```
 ~A -> (~B -> (B -> A))
 ```
-Implication in the right hand side has higher priority than the left, and we say that implication is right associative.
+Implication in the right hand side has higher priority than the left, and we say that implication associates to the right.
 In order to mean that if not <code>A</code> implies not <code>B</code>, then <code>B</code> implies <code>A</code>, the use of parentheses is inevitable.
 ```
 (~A -> ~B) -> B -> A
