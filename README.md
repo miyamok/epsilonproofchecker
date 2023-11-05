@@ -350,9 +350,9 @@ Formula is what we saw in the previous section of this documentation.
 A reason is either a name of an axiom, an assumption, or an inference rule which may come with an additional parameters.
 A tag is a reference name, which is a string starting with <code>#</code>, given to the proof step, which can be used to point this proof step later on.
 
-The follwoing variable names, constant names, and predicate names are available.
+The follwoing variable names, constant names, and predicate names are available by default.
 
-Kind | Names
+Kind | Default names
 --- | ---
 Variable | <code>x</code>, <code>y</code>, <code>z</code>, <code>u</code>, <code>v</code>
 Nullary constant | <code>a</code>, <code>b</code>, <code>c</code>
@@ -365,6 +365,22 @@ Binary predicate variable | <code>R</code>
 Any of the above can be followed by an optional number as an index.  For example, <code>x</code>, <code>x1</code>, <code>x2</code> are all distinct variables.
 Binary and unary constants and predicate variables should have a suitable number of arguments, which is a comma separated list with outer parentheses.
 For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand, <code>P</code> is not; <code>P</code> is a unary predicate variable and one argument is required, but it is missing.
+
+Custom decalarations for variable names, constant names, and predicate names are available.
+A declaration for variable names is done by a keyword <code>variables</code> followed by a space separated list of variable names, eg.
+```
+variables x y u v
+```
+For predicates and constants, one has to specify the arity in addition to the names.
+For any natural number _n_, a declarations starts with _n_<code>ary-predicates</code> or _n_<code>ary-constants</code> and followed by a space separated list of names, eg.
+```
+0ary-predicates A B
+1ary-predicates P Q
+2ary-predicates R
+0ary-constants c a
+1ary-constants f g
+```
+A custom declaration makes the default names unavailable.  For example, assume one made a custom declaration for variables and didn't make any custom declarations for constants names nor predicate names.  In this case, the default variable names are gone, while the default constant names and predicate names are still there.
 
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
@@ -407,7 +423,9 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
+- Lemma feature
+- Deduction transformation should be able to be indicated in proof scripts
 - Epsilon equality axiom to implement
-- Feature to do custom declaration for variable names, constant names, and predicate names
+- Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
 - Writing a brief history of Hilbert's logic
