@@ -401,13 +401,13 @@ The proof assistant epsilon supports the following axioms.
 
 Axiom name | Scheme | Note
 --- | --- | ---
-<code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> is left associative
+<code>S</code> | <code>(A -> B -> C) -> (A -> B) -> A -> C</code> | <code>-></code> associates to the right
 <code>K</code> | <code>A -> B -> A</code>
 <code>C</code> | <code>E(t) -> E(eps x E(x))</code> | <code>t</code> is an arbitrary term in this whole table
-<code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> is right associative and has a higher<br /> priority than <code>-></code>
+<code>ConjI</code> | <code>A -> B -> A & B</code> | <code>&</code> associates to the left and has a higher<br /> priority than <code>-></code>
 <code>ConjE1</code> | <code>A & B -> A</code>
 <code>ConjE2</code> | <code>A & B -> B</code>
-<code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> is right associative and has a priority<br /> between <code>-></code> and <code>&</code>
+<code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> associates to the left and has a priority<br /> between <code>-></code> and <code>&</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
 <code>AllE</code> | <code>all x E(x) -> E(t)</code>
