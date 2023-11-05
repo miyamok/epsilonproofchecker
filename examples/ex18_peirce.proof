@@ -1,0 +1,70 @@
+(A -> B) -> A by Asm
+((A -> B) -> A) -> ~A -> (A -> B) -> A by K
+~A -> (A -> B) -> A by MP
+(~A -> (~A -> ~A) -> ~A) -> (~A -> ~A -> ~A) -> ~A -> ~A by S
+~A -> (~A -> ~A) -> ~A by K
+(~A -> ~A -> ~A) -> ~A -> ~A by MP
+~A -> ~A -> ~A by K
+~A -> ~A by MP
+((A -> B) -> A) -> A -> (A -> B) -> A by K
+(((A -> B) -> A) -> A -> (A -> B) -> A) -> ~A -> ((A -> B) -> A) -> A -> (A -> B) -> A by K
+~A -> ((A -> B) -> A) -> A -> (A -> B) -> A by MP
+(~A -> ((A -> B) -> A) -> A -> (A -> B) -> A) -> (~A -> (A -> B) -> A) -> ~A -> A -> (A -> B) -> A by S
+(~A -> (A -> B) -> A) -> ~A -> A -> (A -> B) -> A by MP
+~A -> A -> (A -> B) -> A by MP
+~A -> A -> ~A by K
+(~A -> A -> ~A) -> ~A -> ~A -> A -> ~A by K
+~A -> ~A -> A -> ~A by MP
+(~A -> ~A -> A -> ~A) -> (~A -> ~A) -> ~A -> A -> ~A by S
+(~A -> ~A) -> ~A -> A -> ~A by MP
+~A -> A -> ~A by MP
+(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
+((A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A) -> ~A -> (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by K
+~A -> (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by MP
+A -> (A -> A) -> A by K
+(A -> (A -> A) -> A) -> ~A -> A -> (A -> A) -> A by K
+~A -> A -> (A -> A) -> A by MP
+(~A -> (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A) -> (~A -> A -> (A -> A) -> A) -> ~A -> (A -> A -> A) -> A -> A by S
+(~A -> A -> (A -> A) -> A) -> ~A -> (A -> A -> A) -> A -> A by MP
+~A -> (A -> A -> A) -> A -> A by MP
+A -> A -> A by K
+(A -> A -> A) -> ~A -> A -> A -> A by K
+~A -> A -> A -> A by MP
+(~A -> (A -> A -> A) -> A -> A) -> (~A -> A -> A -> A) -> ~A -> A -> A by S
+(~A -> A -> A -> A) -> ~A -> A -> A by MP
+~A -> A -> A by MP
+(A -> ~A) -> (A -> A) -> ~A by S
+((A -> ~A) -> (A -> A) -> ~A) -> ~A -> (A -> ~A) -> (A -> A) -> ~A by K
+~A -> (A -> ~A) -> (A -> A) -> ~A by MP
+(~A -> (A -> ~A) -> (A -> A) -> ~A) -> (~A -> A -> ~A) -> ~A -> (A -> A) -> ~A by S
+(~A -> A -> ~A) -> ~A -> (A -> A) -> ~A by MP
+~A -> (A -> A) -> ~A by MP
+(~A -> (A -> A) -> ~A) -> (~A -> A -> A) -> ~A -> ~A by S
+(~A -> A -> A) -> ~A -> ~A by MP
+~A -> ~A by MP
+bot -> B by EFQ
+(bot -> B) -> ~A -> bot -> B by K
+~A -> bot -> B by MP
+(bot -> B) -> A -> bot -> B by K
+((bot -> B) -> A -> bot -> B) -> ~A -> (bot -> B) -> A -> bot -> B by K
+~A -> (bot -> B) -> A -> bot -> B by MP
+(~A -> (bot -> B) -> A -> bot -> B) -> (~A -> bot -> B) -> ~A -> A -> bot -> B by S
+(~A -> bot -> B) -> ~A -> A -> bot -> B by MP
+~A -> A -> bot -> B by MP
+(A -> bot -> B) -> ~A -> A -> B by S
+((A -> bot -> B) -> ~A -> A -> B) -> ~A -> (A -> bot -> B) -> ~A -> A -> B by K
+~A -> (A -> bot -> B) -> ~A -> A -> B by MP
+(~A -> (A -> bot -> B) -> ~A -> A -> B) -> (~A -> A -> bot -> B) -> ~A -> ~A -> A -> B by S
+(~A -> A -> bot -> B) -> ~A -> ~A -> A -> B by MP
+~A -> ~A -> A -> B by MP
+(~A -> ~A -> A -> B) -> (~A -> ~A) -> ~A -> A -> B by S
+(~A -> ~A) -> ~A -> A -> B by MP
+~A -> A -> B by MP
+(~A -> (A -> B) -> A) -> (~A -> A -> B) -> ~A -> A by S
+(~A -> A -> B) -> ~A -> A by MP
+~A -> A by MP
+(~A -> ~A) -> (~A -> A) -> ~~A by S
+(~A -> A) -> ~~A by MP
+~~A by MP
+~~A -> A by DNE
+A by MP
