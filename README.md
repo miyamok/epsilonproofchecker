@@ -423,7 +423,9 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
+- Lemma feature
+- Deduction transformation should be able to be indicated in proof scripts
 - Epsilon equality axiom to implement
-- Feature to do custom declaration for variable names, constant names, and predicate names
+- Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
 - Writing a brief history of Hilbert's logic
