@@ -366,17 +366,21 @@ Any of the above can be followed by an optional number as an index.  For example
 Binary and unary constants and predicate variables should have a suitable number of arguments, which is a comma separated list with outer parentheses.
 For example, <code>R(f(x), c)</code> is a well-formed formula, and on the other hand, <code>P</code> is not; <code>P</code> is a unary predicate variable and one argument is required, but it is missing.
 
-In order to make custom decalarations for variable names, constant names, and predicate names, the following statements should be used in a proof script.
+Custom decalarations for variable names, constant names, and predicate names are available.
+A declaration for variable names is done by a keyword <code>variables</code> followed by a space separated list of variable names, eg.
 ```
 variables x y u v
+```
+For predicates and constants, one has to specify the arity in addition to the names.
+For any natural number _n_, a declarations starts with _n_<code>ary-predicates</code> or _n_<code>ary-constants</code> and followed by a space separated list of names, eg.
+```
 0ary-predicates A B
 1ary-predicates P Q
+2ary-predicate R
 0ary-constants c a
 1ary-constants f g
-2ary-predicate R
 ```
-An arbitrary arity may be given to predicates and constants.
-A custom declaration makes the default names unavailable.  For example if one makes a custom declaration for variables, the default variable names are gone, while the default constant names and predicate names are still there, if one does not make custom declarations for constants names nor predicate names.
+A custom declaration makes the default names unavailable.  For example, assume one made a custom declaration for variables and didn't make any custom declarations for constants names nor predicate names.  In this case, the default variable names are gone, while the default constant names and predicate names are still there.
 
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
