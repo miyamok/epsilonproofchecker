@@ -49,11 +49,13 @@ proofAndFlagsToOutput p dFlag onceFlag pFlag debugFlag =
         else if null autoFlas && b
                 then if dFlag
                 then do let up = proofToUntaggedProof p
-                            dp = if onceFlag then deductionOnce up else deduction up in
+                            dp = if onceFlag then deductionOnce up else deduction up
+                            fs' = intercalate ", " (map prettyPrintFormula (proofToAssumptionFormulas dp))
+                             in
                             if checkProof dp
                             then do putStrLn "It generated a correct proof of"
                                     let (f', _, _) = last dp in
-                                        do putStrLn ("⊢ " ++ prettyPrintFormula f')
+                                        do putStrLn (fs' ++ " ⊢ " ++ prettyPrintFormula f')
                                            if pFlag then putStrLn (prettyPrintProof dp) else return ()
                             else do putStrLn "Proof transformation doesn't support this proof yet."
                                     if debugFlag then putStrLn (prettyPrintProof dp) else return ()
