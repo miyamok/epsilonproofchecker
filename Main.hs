@@ -16,6 +16,10 @@ printHelpMessage = do putStrLn "-d option to apply proof transformation due to d
                       putStrLn "Usage:"
                       putStrLn "% ./Main [options] filepath"
 
+-------------------------------------------------
+-- handling command line options and arguments
+-------------------------------------------------
+
 argsToDebugFlag :: [String] -> Bool
 argsToDebugFlag = elem "--debug"
 
@@ -34,9 +38,12 @@ argsToFilename args = [ s | s <- args, notElem s ["--debug", "-1", "-d", "-p"] ]
 argsToFlagsAndFilename :: [String] -> (Bool, Bool, Bool, Bool, [String])
 argsToFlagsAndFilename args = (elem "--debug" args, elem "-d" args, elem "-1" args, elem "-p" args, argsToFilename args)
 
+--------------------------------------------------
+-- Output
+--------------------------------------------------
+
 printProofCorrect :: Proof -> Bool -> IO()
-printProofCorrect p pFlag = do putStrLn "Correct proof of"
-                               putStrLn (prettyPrintJudgment asms f)
+printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJudgment asms f))
                                if pFlag then putStrLn (prettyPrintProof p) else return ()
                                where
                                 asms = proofToAssumptionFormulas p
@@ -82,7 +89,7 @@ main = do args <- getArgs
                                        else proofAndFlagsToOutput proof' pFlag debugFlag
                               where proof = parsedLinesToProof parsedLines
                                     deductible = isDeductionApplicable proof
-                                    proof' = if not dFlag || deductible
+                                    proof' = if dFlag && deductible
                                              then if onceFlag then deductionOnce $ proofToUntaggedProof proof
                                                               else deduction $ proofToUntaggedProof proof
                                              else proof

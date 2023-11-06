@@ -104,12 +104,18 @@ termToConstants (VarTerm _) = []
 termToConstants (AppTerm c ts) = c:concat (map termToConstants ts)
 termToCOnstants (EpsTerm v f) = formulaToConstants f
 
-makeNegForm :: Formula -> Formula
-makeNegForm f = ImpForm f falsity
+makeNegFormula :: Formula -> Formula
+makeNegFormula f = ImpForm f falsity
 
-isNegForm :: Formula -> Bool
-isNegForm (ImpForm _ (PredForm Falsum [])) = True
-isNegForm _ = False
+isNegFormula :: Formula -> Bool
+isNegFormula (ImpForm _ (PredForm Falsum [])) = True
+isNegFormula _ = False
+
+isImpFormula :: Formula -> Bool
+isImpFormula (ImpForm _ (PredForm Falsum [])) = False
+isImpFormula (ImpForm _ _) = True
+isImpFormula _ = False
+
 
 isFormula :: Formula -> Bool
 isFormula (PredForm p ts) = isPredicate p && predToArity p == length ts && all isTerm ts
@@ -230,7 +236,7 @@ epsTranslation (ExistsForm v f) = substFormula v e f'
       where e = EpsTerm v f'
             f' = epsTranslation f
 epsTranslation (ForallForm v f) = substFormula v e f'
-      where e = EpsTerm v (makeNegForm f')
+      where e = EpsTerm v (makeNegFormula f')
             f' = epsTranslation f
 epsTranslation (PredForm p ts) = PredForm p ts
 epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)

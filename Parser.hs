@@ -207,7 +207,7 @@ primitiveformula pds vds cds = do symbol "("
                                   return f
                            <|> do symbol "~"
                                   f <- primitiveformula pds vds cds
-                                  return (makeNegForm f)
+                                  return (makeNegFormula f)
                            <|> do symbol "all"
                                   x <- variable vds
                                   f <- primitiveformula pds vds cds
