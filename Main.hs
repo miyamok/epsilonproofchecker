@@ -52,7 +52,7 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
 printProofWrong :: Proof -> Maybe Int -> IO ()
 printProofWrong p mLinenum = do case mLinenum of Nothing -> return ()
                                                  Just lineNum -> putStrLn ("Error at line " ++ show lineNum ++ ": "
-                                                  ++ prettyPrintProofStep (p!!lineNum))
+                                                  ++ prettyPrintProofStep (p!!(lineNum-1)))
                                 putStrLn "The input is not a proof of"
                                 putStrLn (prettyPrintFormula f)
                                 if null asms then return ()
