@@ -1,0 +1,20 @@
+~(A | ~A) by Asm
+~(A | ~A) -> A -> ~(A | ~A) by K
+A -> ~(A | ~A) by MP
+(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
+A -> (A -> A) -> A by K
+(A -> A -> A) -> A -> A by MP
+A -> A -> A by K
+A -> A by MP
+A -> A | ~A by DisjI1
+(A -> A | ~A) -> A -> A -> A | ~A by K
+A -> A -> A | ~A by MP
+(A -> A -> A | ~A) -> (A -> A) -> A -> A | ~A by S
+(A -> A) -> A -> A | ~A by MP
+A -> A | ~A by MP
+(A -> ~(A | ~A)) -> (A -> A | ~A) -> ~A by S
+(A -> A | ~A) -> ~A by MP
+~A by MP
+~A -> A | ~A by DisjI2
+A | ~A by MP
+bot by MP

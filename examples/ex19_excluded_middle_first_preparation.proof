@@ -1,0 +1,5 @@
+A | ~A -> bot by Asm
+A by Asm
+A -> A | ~A by DisjI1
+A | ~A by MP
+bot by MP
