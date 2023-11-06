@@ -221,15 +221,12 @@ checkClaimsAux p offset = if length p <= offset
                         ExShift -> checkExShift f
                         Gen t -> checkGen p offset t
                         MP (Just s1) (Just s2) ->
-                              -- Should be improved.  Brief coding possible.
-                              -- simple do construction does not work; even if ml1 or ml2 is Nothing, the final outcome is not always Nothing.
-                              let ml1 = proofAndTagStringToStep (take offset p) s1
-                                  ml2 = proofAndTagStringToStep (take offset p) s2
-                              in if isNothing ml1 || isNothing ml2
-                                    then False
-                                    else let Just(f1, r1, t1) = ml1
-                                             Just(f2, r2, t2) = ml2
-                                            in checkModusPonens f f1 f2
+                              let mb = (do l1 <- proofAndTagStringToStep (take offset p) s1
+                                           l2 <- proofAndTagStringToStep (take offset p) s2
+                                           let (f1, r1, t1) = l1
+                                               (f2, r2, t2) = l2
+                                           return (checkModusPonens f f1 f2))
+                              in fromMaybe False mb
                         MP Nothing Nothing ->
                               let is = proofAndMPConclusionToStepIndices (take offset p) f -- Step indices with matching conclusion
                                   prems = map (\i -> let (f, r, t) = (p!!i) in case f of (ImpForm g _) -> g) is
