@@ -390,15 +390,24 @@ parseLinesAux pds vds cds (l:ls) =
 
 parsedLinesToErrorMessage :: [ParsedLine] -> Maybe String
 parsedLinesToErrorMessage [] = Just "Empty input"
-parsedLinesToErrorMessage ls = if not $ or $ map (\pl -> case pl of ProofLine step -> True; _ -> False) ls
-        then Just "Input contains no proof, but only declaration"
-        else case last ls of ErrorLine s -> Just ("Error at line " ++ show (length ls) ++ ": " ++ s)
-                             _ -> Nothing
+parsedLinesToErrorMessage ls =
+       case last ls of ErrorLine s -> Just ("Error at line " ++ show (length ls) ++ ": " ++ s)
+                       _ -> if not $ or $ map (\pl -> case pl of ProofLine step -> True; _ -> False) ls
+                            then Just "Input contains no proof, but only declaration"
+                            else Nothing
 
 parsedLinesToProof :: [ParsedLine] -> Proof
 parsedLinesToProof [] = []
 parsedLinesToProof (ProofLine x:ls) = x:parsedLinesToProof ls
 parsedLinesToProof (_:ls) = parsedLinesToProof ls
+
+parsedLinesToLineNumbers :: [ParsedLine] -> [Int]
+parsedLinesToLineNumbers ls = parsedLinesToLineNumbersAux ls 1
+
+parsedLinesToLineNumbersAux :: [ParsedLine] -> Int -> [Int]
+parsedLinesToLineNumbersAux [] ln = []
+parsedLinesToLineNumbersAux (ProofLine x:ls) ln = ln:parsedLinesToLineNumbersAux ls (ln+1)
+parsedLinesToLineNumbersAux (_:ls) ln = parsedLinesToLineNumbersAux ls (ln+1)
 
 ------------------------------------
 -- parser for command line options

@@ -49,26 +49,36 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
                                 asms = proofToAssumptionFormulas p
                                 f = proofToConclusion p
 
-printProofWrong :: Proof -> IO ()
-printProofWrong p = do putStrLn "The input is not a proof of"
-                       putStrLn (prettyPrintFormula f)
-                       if null asms then return ()
-                                    else do putStrLn "from the following assumptions"
-                                            putStrLn (prettyPrintAssumptions asms)
+printProofWrong :: Proof -> Maybe Int -> IO ()
+printProofWrong p mLinenum = do case mLinenum of Nothing -> return ()
+                                                 Just lineNum -> putStrLn ("Error at line " ++ show lineNum ++ ": "
+                                                  ++ prettyPrintProofStep (p!!lineNum))
+                                putStrLn "The input is not a proof of"
+                                putStrLn (prettyPrintFormula f)
+                                if null asms then return ()
+                                             else do putStrLn "from the following assumptions"
+                                                     putStrLn (prettyPrintAssumptions asms)
                 where
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
-proofAndFlagsToOutput :: Proof -> Bool -> Bool -> IO()
-proofAndFlagsToOutput p pFlag debugFlag
- | not $ checkProof p = printProofWrong p
+proofAndFlagsToOutput :: Proof -> Maybe [Int] -> Bool -> Bool -> IO ()
+proofAndFlagsToOutput p mlinenums pFlag debugFlag
+ | not $ and bs = printProofWrong p mln
  | null autoFlas = printProofCorrect p pFlag
  | otherwise = do ex <- findExecutable "z3"
-                  bs <- sequence autoResults
+                  autobs <- sequence autoResults
                   case ex of Nothing -> putStrLn "Proof by Auto requires Microsoft's z3"
-                             Just _ -> if and bs then printProofCorrect p pFlag
-                                       else do printProofWrong p
+                             Just _ -> if and autobs then printProofCorrect p pFlag
+                                       else let mi = do j <- findIndex not autobs
+                                                        linenums <- mlinenums
+                                                        return (linenums!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+                                             in printProofWrong p mi
  where
+        bs = checkClaims p
+        mln = do linenums <- mlinenums
+                 i <- findIndex not bs
+                 return (linenums!!i)
         autoSteps = proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
         autoFlas = proofToAutoStepFormulas p
@@ -84,10 +94,11 @@ main = do args <- getArgs
                       mErrorMsg = parsedLinesToErrorMessage parsedLines
                       in case mErrorMsg of
                             Just msg -> do putStrLn msg; return ()
-                            Nothing -> if dFlag && not (isDeductionApplicable proof)
+                            Nothing -> if dFlag && not deductible
                                        then putStrLn "Deduction transformation doesn't support a proof with Auto"
-                                       else proofAndFlagsToOutput proof' pFlag debugFlag
+                                       else proofAndFlagsToOutput proof' (if dFlag then Nothing else Just linenums) pFlag debugFlag
                               where proof = parsedLinesToProof parsedLines
+                                    linenums = parsedLinesToLineNumbers parsedLines
                                     deductible = isDeductionApplicable proof
                                     proof' = if dFlag && deductible
                                              then if onceFlag then deductionOnce $ proofToUntaggedProof proof
