@@ -227,10 +227,6 @@ tag = do symbol "#"
          t <- some alphanum
          return (Just t)
        <|> return Nothing
--- tag = do symbol "#"
---          do t <- some alphanum
---             return (Just t)
---        <|> empty
 
 rule :: Parser Rule
 rule = do symbol "by"
@@ -336,13 +332,6 @@ constantDeclaration = do arity <- nat
                                               some letter)
                             return [(n, arity) | n <- name:names]
 
--- constantDeclaration :: Parser (Int, [String])
--- constantDeclaration = do arity <- nat
---                          kind <- string "ary-constants "
---                          do name <- some letter
---                             names <- many (do string " "
---                                               some letter)
---                             return (arity, name:names)
 predicateDeclaration :: Parser [(String, Int)]
 predicateDeclaration = do arity <- nat
                           kind <- string "ary-predicates "
@@ -350,13 +339,6 @@ predicateDeclaration = do arity <- nat
                              names <- many (do string " "
                                                some letter)
                              return [(n, arity) | n <- name:names]
--- predicateDeclaration :: Parser (Int, [String])
--- predicateDeclaration = do arity <- nat
---                           kind <- string "ary-predicates "
---                           do name <- some letter
---                              names <- many (do string " "
---                                                some letter)
---                              return (arity, name:names)
 
 --------------------------------
 -- comment line and empty line

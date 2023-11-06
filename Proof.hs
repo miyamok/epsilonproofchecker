@@ -9,7 +9,7 @@ data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
              | Gen Tag | EFQ | DNE | LEM | Asm deriving (Show, Eq)
 type Step = (Formula, Rule, Tag)
-type Proof = [(Formula, Rule, Tag)]
+type Proof = [Step]
 type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
 
@@ -238,6 +238,7 @@ checkClaimsAux p offset = if length p <= offset
                         Asm -> True
                         _ -> False
 
+--- this is a stub.  to remove it?
 proofToDependency :: Proof -> [Int]
 proofToDependency p = [0..length p-1]
 
@@ -269,6 +270,9 @@ checkProof p = foldl (\ x i -> x && cs!!i) (last cs) deps
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)
                         return ls
+
+proofToConclusion :: Proof -> Formula
+proofToConclusion (s:p) = let (f, _, _) = last (s:p) in f
 
 proofToAsms :: Proof -> Proof
 proofToAsms p = filter (\(f, r, t) -> r == Asm) p
@@ -361,3 +365,6 @@ deductionAux asmProof nonAsmProof =
                             (newConcl, MP Nothing Nothing, Nothing)]
                       Gen _ -> undefined
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
+
+isDeductionApplicable :: Proof -> Bool
+isDeductionApplicable p = null (proofToAutoStepFormulas p)

@@ -104,7 +104,6 @@ termToConstants (VarTerm _) = []
 termToConstants (AppTerm c ts) = c:concat (map termToConstants ts)
 termToCOnstants (EpsTerm v f) = formulaToConstants f
 
-
 makeNegForm :: Formula -> Formula
 makeNegForm f = ImpForm f falsity
 

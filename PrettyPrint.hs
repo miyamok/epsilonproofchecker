@@ -79,3 +79,10 @@ prettyPrintTag (Just s) = " #" ++ s
 
 prettyPrintProof :: Proof -> String
 prettyPrintProof p = intercalate "\n" (map prettyPrintProofStep p)
+
+prettyPrintJudgment :: [Formula] -> Formula -> String
+prettyPrintJudgment [] concl = "⊢ " ++ prettyPrintFormula concl
+prettyPrintJudgment asms concl = prettyPrintAssumptions asms ++ " ⊢ " ++ prettyPrintFormula concl
+
+prettyPrintAssumptions :: [Formula] -> String
+prettyPrintAssumptions fs = intercalate ", " (map prettyPrintFormula fs)
