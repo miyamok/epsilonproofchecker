@@ -37,17 +37,22 @@ Correct proof of ⊢ A -> A
 A -> A by Auto
 ```
 ## Logic
-Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional axiom so-called critical axiom is available.
-Elementary calculus is propositional logic with predicates and terms in its language, maintaining the same principles for logical reasoning.
-
 This section describes propositional calculus first, and then extends this calculus step-by-step to arrive at more powerful calculi such as predicate calculus and epsilon calculus.
+
+Propositional calculus is a simple logic whose language consists of atomic propositions and logical connectives such as implication, negation, conjunction and disjunction which all appear even in our daily life.
+Elementary calculus is an extension of propositional calculus.  It is obtained by extending propositional calculus by predicates and term constants.
+Elementary calculus is a common basis of richer calculi such as predicate calculus and epsilon calculus.
+Predicate calculus, first-order logic in other words, is elementary calculus with term variables, quantifiers, and additional logical reasoning methods concerning the quantifiers.
+An example statement involving quantification is "there exists a white pigeon." where there is a quantification over pigeons.
+Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional reasoning method is available.
+Epsilon operator is a term forms a term from a formula.  For example, assume we have a formula claiming that "x is a white pegion," then epsilon operator allows to make a term meaning "an object which is a white pegion," namely, a white pegion.
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
 Propositional formula <code>F</code> is defined as follows, where P<sub>0</sub> is ranging over propositional variables and <code>A</code> is an element of P<sub>0</sub>.
 ```
 F ::= A | bot | F -> F
 ```
-The arrow denotes logical implication, and bot is a special constant denoting falsum, which means the condtradiction.
+The arrow denotes logical implication, and <code>bot</code> is a special constant denoting falsum, which means the condtradiction.
 The following formula means that if <code>A</code> then it contradicts.
 ```
 A -> bot
@@ -124,10 +129,10 @@ A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Let V be a set of variables.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
-Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows, assuming <code>x</code> a variable in V.
+Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
+Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows.
 ```
-t ::= x | c | f(t)
+t ::= c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t)
 ```
 Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
@@ -135,7 +140,9 @@ Its axioms and inference rule are same as propositional calculus.
 <a name="pred"/>
 ### Predicate calculus
 Predicate caluclus is an extension of elementary calculus by quantifications.
-The language is enriched by the existential quantifier and the universal quantifier.  The syntax is given as follows.
+The language is enriched by the existential quantifier and the universal quantifier.
+Let V be a set of variables.  
+The syntax is given as follows, assuming <code>x</code> is a variable in V.
 ```
 t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
