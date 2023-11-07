@@ -6,9 +6,9 @@ import Proof
 import Axiom
 
 newtype Parser a = P(String -> [(a, String)])
-type IdentDeclarations = ([VariableDeclaration], [ConstantDeclaration], [PredicateDeclaration])
 data ParsedLine = ProofLine Step | VarDeclareLine [VariableDeclaration] | ConstDeclareLine [ConstantDeclaration]
- | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String deriving (Show)
+ | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String | EndProofLine (Maybe String)
+ | DeductionTransformationLine (Maybe Int) (Maybe String) deriving (Show)
 
 parse :: Parser a -> String -> [(a, String)]
 parse (P p) inp = p inp
@@ -353,6 +353,24 @@ emptyLine :: Parser ()
 emptyLine = do many (string " ")
                return ()
 
+endProofLine :: Parser ParsedLine
+endProofLine = do symbol "end-proof"
+                  name <- many alphanum
+                  if null name then return (EndProofLine Nothing)
+                               else return (EndProofLine (Just name))
+
+deductionTransformationLine :: Parser ParsedLine
+deductionTransformationLine = do symbol "deduction-transformation"
+                                 name <- many alphanum
+                                 if null name then return (DeductionTransformationLine Nothing Nothing)
+                                 else return (DeductionTransformationLine Nothing (Just name))
+                            <|> do symbol "bounded-deduction-transformation"
+                                   i <- nat
+                                   space
+                                   name <- many alphanum
+                                   if null name then return (DeductionTransformationLine (Just i) Nothing)
+                                   else return (DeductionTransformationLine (Just i) (Just name))
+
 proofScriptLine :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> Parser ParsedLine
 proofScriptLine pds vds cds =
            do vd <- variableDeclaration
@@ -363,28 +381,38 @@ proofScriptLine pds vds cds =
               return (PredDeclareLine pd)
        <|> do step <- step pds vds cds
               return (ProofLine step)
+       <|> do mn <- endProofLine
+              return mn
+       <|> do mn <- deductionTransformationLine
+              return mn
        <|> do commentLine
               return EmptyLine
        <|> do emptyLine
               return EmptyLine
 
 parseLines :: [String] -> [ParsedLine]
-parseLines = parseLinesAux [] [] []
+parseLines ls = parseLinesAux ls [] [] []
 
-parseLinesAux :: [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> [String] -> [ParsedLine]
-parseLinesAux pds vds cds [] = []
-parseLinesAux pds vds cds (l:ls) =
+parseLinesAux :: [String] -> [PredicateDeclaration] -> [VariableDeclaration] -> [ConstantDeclaration] -> [ParsedLine]
+parseLinesAux [] pds vds cds = []
+parseLinesAux (l:ls) pds vds cds =
        let mpl = parse (proofScriptLine (if null pds then defaultPredicates else pds)
                                         (if null vds then defaultVariables else vds)
                                         (if null cds then defaultConstants else cds)) l
+           aux = parseLinesAux ls
         in case mpl of [] -> [ErrorLine l]
                        [(pl, str)] ->
                             if null str
-                                   then case pl of (ProofLine step) -> ProofLine step:parseLinesAux pds vds cds ls
-                                                   (VarDeclareLine newds) -> VarDeclareLine newds:parseLinesAux pds (vds++newds) cds ls
-                                                   (PredDeclareLine newds) -> PredDeclareLine newds:parseLinesAux (pds++newds) vds cds ls
-                                                   (ConstDeclareLine newds) -> ConstDeclareLine newds:parseLinesAux pds vds (cds++newds) ls
-                                                   EmptyLine -> EmptyLine:parseLinesAux pds vds cds ls
+                            then case pl of (ProofLine step) -> ProofLine step:aux pds vds cds
+                                            (VarDeclareLine newds) -> VarDeclareLine newds:aux pds (vds++newds) cds
+                                            (PredDeclareLine newds) -> PredDeclareLine newds:aux (pds++newds) vds cds
+                                            (ConstDeclareLine newds) -> ConstDeclareLine newds:aux pds vds (cds++newds)
+                                            EndProofLine ms -> EndProofLine ms:aux pds vds cds
+                                            DeductionTransformationLine mi ms ->
+                                                 DeductionTransformationLine mi ms:aux pds vds cds
+                                          --   BoundedDeductionTransformationLine i ms ->
+                                          --        BoundedDeductionTransformationLine i ms:aux pds vds cds
+                                            EmptyLine -> EmptyLine:aux pds vds cds
                             else [ErrorLine l]
                        _ -> [ErrorLine l]
 
@@ -400,6 +428,45 @@ parsedLinesToProof :: [ParsedLine] -> Proof
 parsedLinesToProof [] = []
 parsedLinesToProof (ProofLine x:ls) = x:parsedLinesToProof ls
 parsedLinesToProof (_:ls) = parsedLinesToProof ls
+
+parsedLinesToParsedLinesBlocks :: [ParsedLine] -> [([ParsedLine], Int)]
+parsedLinesToParsedLinesBlocks ls = parsedLinesToParsedLinesBlocksAux ls [] 0
+
+parsedLinesToParsedLinesBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [([ParsedLine], Int)]
+parsedLinesToParsedLinesBlocksAux [] [] i = []
+parsedLinesToParsedLinesBlocksAux [] ls' i = [(ls', i)]
+parsedLinesToParsedLinesBlocksAux (l:ls) [] i = parsedLinesToParsedLinesBlocksAux ls [l] i
+parsedLinesToParsedLinesBlocksAux (ProofLine x:ls) ls' i = parsedLinesToParsedLinesBlocksAux ls (ls'++[ProofLine x]) i
+parsedLinesToParsedLinesBlocksAux (VarDeclareLine vds:ls) ls' i =
+       (ls', i):([VarDeclareLine vds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (PredDeclareLine pds:ls) ls' i =
+       (ls', i):([PredDeclareLine pds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (ConstDeclareLine cds:ls) ls' i =
+       (ls', i):([ConstDeclareLine cds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (EndProofLine mn:ls) ls' i =
+       (ls', i):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (DeductionTransformationLine mi mstr:ls) ls' i =
+       (ls',i):([DeductionTransformationLine mi mstr], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+-- parsedLinesToParsedLinesBlocksAux (BoundedDeductionTransformationLine n mstr:ls) ls' i =
+--        (ls', i):([BoundedDeductionTransformationLine n mstr], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (EmptyLine:ls) ls' i = parsedLinesToParsedLinesBlocksAux ls ls' (i+1)
+parsedLinesToParsedLinesBlocksAux (ErrorLine str:ls) ls' i = ([ErrorLine str], i):parsedLinesToParsedLinesBlocksAux ls ls' (i+1)
+
+-- parsedLinesToProofBlocks :: [ParsedLine] -> [ProofBlock]
+-- parsedLinesToProofBlocks [] = []
+-- parsedLinesToProofBlocks (ProofLine x:ls) = x:parsedLinesToProofBlocks ls
+-- parsedLinesToProofBlocks (_:ls) = parsedLinesToProofBlocks ls
+
+-- parsedLinesToProofBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [ParsedLine]
+-- parsedLinesToProofBlocksAux [] [] offset = []
+-- parsedLinesToProofBlocksAux [] stack offset = stack
+-- parsedLinesToProofBlocksAux (ProofLine x:ls) stack offset = (stack++[ProofLine x]):parsedLinesToProofBlocksAux ls [] offset
+-- parsedLinesToProofBlocksAux (EndProofLine mn:ls) stack offset = []
+
+-- parsedLinesToProofBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [ProofBlock]
+-- parsedLinesToProofBlocksAux [] [] offset = []
+-- parsedLinesToProofBlocksAux [] stack offset = [(Nothing, parsedLinesToProof stack, offset)]
+-- parsedLinesToProofBlocksAux (l:ls) [] offset = []
 
 parsedLinesToLineNumbers :: [ParsedLine] -> [Int]
 parsedLinesToLineNumbers ls = parsedLinesToLineNumbersAux ls 1

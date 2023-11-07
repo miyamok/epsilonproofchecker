@@ -116,7 +116,6 @@ isImpFormula (ImpForm _ (PredForm Falsum [])) = False
 isImpFormula (ImpForm _ _) = True
 isImpFormula _ = False
 
-
 isFormula :: Formula -> Bool
 isFormula (PredForm p ts) = isPredicate p && predToArity p == length ts && all isTerm ts
 isFormula (ForallForm v f) = isFormula f

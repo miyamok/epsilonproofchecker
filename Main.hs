@@ -49,35 +49,33 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
                                 asms = proofToAssumptionFormulas p
                                 f = proofToConclusion p
 
-printProofWrong :: Proof -> Maybe Int -> IO ()
-printProofWrong p mLinenum = do case mLinenum of Nothing -> return ()
-                                                 Just lineNum -> putStrLn ("Error at line " ++ show lineNum ++ ": "
-                                                  ++ prettyPrintProofStep (p!!(lineNum-1)))
-                                putStrLn "The input is not a proof of"
-                                putStrLn (prettyPrintFormula f)
-                                if null asms then return ()
-                                             else do putStrLn "from the following assumptions"
-                                                     putStrLn (prettyPrintAssumptions asms)
+printProofWrong :: Proof -> Maybe Int -> [Int] -> IO ()
+printProofWrong p mi lns =
+        case mi of Nothing -> do putStrLn "The input is not a proof of"
+                                 putStrLn (prettyPrintFormula f)
+                                 if null asms then return ()
+                                              else do putStrLn "from the following assumptions"
+                                                      putStrLn (prettyPrintAssumptions asms)
+                   Just i -> putStrLn ("Error at line " ++ show (lns!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
                 where
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
-proofAndFlagsToOutput :: Proof -> Maybe [Int] -> Bool -> Bool -> IO ()
-proofAndFlagsToOutput p mlinenums pFlag debugFlag
- | not $ and bs = printProofWrong p mln
+proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO ()
+proofAndFlagsToOutput p linenums pFlag debugFlag
+ | not $ and bs = printProofWrong p mi linenums
  | null autoFlas = printProofCorrect p pFlag
  | otherwise = do ex <- findExecutable "z3"
                   autobs <- sequence autoResults
                   case ex of Nothing -> putStrLn "Proof by Auto requires Microsoft's z3"
                              Just _ -> if and autobs then printProofCorrect p pFlag
-                                       else let mi = do j <- findIndex not autobs
-                                                        linenums <- mlinenums
-                                                        return (linenums!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
-                                             in printProofWrong p mi
+                                       else let mi' = do j <- findIndex not autobs
+                                                         return (linenums!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+                                             in printProofWrong p mi' linenums
  where
         bs = checkClaims p
-        mln = do linenums <- mlinenums
-                 i <- findIndex not bs
+        mi = findIndex not bs
+        mln = do i <- mi
                  return (linenums!!i)
         autoSteps = proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
@@ -96,8 +94,10 @@ main = do args <- getArgs
                             Just msg -> do putStrLn msg; return ()
                             Nothing -> if dFlag && not deductible
                                        then putStrLn "Deduction transformation doesn't support a proof with Auto"
-                                       else proofAndFlagsToOutput proof' (if dFlag then Nothing else Just linenums) pFlag debugFlag
-                              where proof = parsedLinesToProof parsedLines
+                                       else proofAndFlagsToOutput proof' linenums pFlag debugFlag
+                              where --proof = parsedLinesToProof parsedLines
+                                    pblocks = parsedLinesToParsedLinesBlocks parsedLines
+                                    proof = parsedLinesToProof $ concat (map fst pblocks)
                                     linenums = parsedLinesToLineNumbers parsedLines
                                     deductible = isDeductionApplicable proof
                                     proof' = if dFlag && deductible

@@ -7,10 +7,11 @@ import Debug.Trace
 
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
-             | Gen Tag | EFQ | DNE | LEM | Asm deriving (Show, Eq)
+             | Gen Tag | EFQ | DNE | LEM | Asm | Use String deriving (Show, Eq)
 type Step = (Formula, Rule, Tag)
 type Proof = [Step]
 type Tag = Maybe String
+type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
 -- type Tag = NoTag | Expl String | Impl String
 
 stepToFormula :: Step -> Formula
