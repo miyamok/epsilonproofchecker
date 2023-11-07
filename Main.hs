@@ -61,6 +61,9 @@ printProofWrong p mi lns =
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
+printIllStructuredProofBlockError :: [([ParsedLine], Int, Maybe String)] -> IO ()
+printIllStructuredProofBlockError pbs = undefined
+
 proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO ()
 proofAndFlagsToOutput p linenums pFlag debugFlag
  | not $ and bs = printProofWrong p mi linenums
@@ -90,17 +93,19 @@ main = do args <- getArgs
           else do ls <- fmap lines (readFile (head filenames))
                   let parsedLines = parseLines ls
                       mErrorMsg = parsedLinesToErrorMessage parsedLines
-                      in case mErrorMsg of
+                      pblocks = parsedLinesToParsedLinesBlocks parsedLines
+                      proof = parsedLinesToProof $ concat (map (\(l, _, _) -> l) pblocks)
+                      linenums = parsedLinesToLineNumbers parsedLines
+                      deductible = isDeductionApplicable proof
+                      proof' = if dFlag && deductible
+                               then if onceFlag then deductionOnce $ proofToUntaggedProof proof
+                                                else deduction $ proofToUntaggedProof proof
+                               else proof
+                      in case parsedLinesBlocksToIllegalDeclarationIndex pblocks of
+                         Just i -> do putStrLn ("Error at line " ++ show (i+1))
+                                      putStrLn "Declaration may appear as the leading part of a proof script"
+                         Nothing -> case mErrorMsg of
                             Just msg -> do putStrLn msg; return ()
                             Nothing -> if dFlag && not deductible
                                        then putStrLn "Deduction transformation doesn't support a proof with Auto"
                                        else proofAndFlagsToOutput proof' linenums pFlag debugFlag
-                              where --proof = parsedLinesToProof parsedLines
-                                    pblocks = parsedLinesToParsedLinesBlocks parsedLines
-                                    proof = parsedLinesToProof $ concat (map fst pblocks)
-                                    linenums = parsedLinesToLineNumbers parsedLines
-                                    deductible = isDeductionApplicable proof
-                                    proof' = if dFlag && deductible
-                                             then if onceFlag then deductionOnce $ proofToUntaggedProof proof
-                                                              else deduction $ proofToUntaggedProof proof
-                                             else proof

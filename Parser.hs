@@ -9,7 +9,8 @@ newtype Parser a = P(String -> [(a, String)])
 data ParsedLine = ProofLine Step | VarDeclareLine [VariableDeclaration] | ConstDeclareLine [ConstantDeclaration]
  | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String | EndProofLine (Maybe String)
  | DeductionTransformationLine (Maybe Int) (Maybe String) deriving (Show)
-
+--type ParsedLinesBlock = ([ParsedLine], Int, Maybe String)
+--data ParsedLinesBlock = ProofBlock [(ParsedLine, Int)] (Maybe String) | DeclarationBlock [(ParsedLine, Int)]
 parse :: Parser a -> String -> [(a, String)]
 parse (P p) inp = p inp
 
@@ -410,8 +411,6 @@ parseLinesAux (l:ls) pds vds cds =
                                             EndProofLine ms -> EndProofLine ms:aux pds vds cds
                                             DeductionTransformationLine mi ms ->
                                                  DeductionTransformationLine mi ms:aux pds vds cds
-                                          --   BoundedDeductionTransformationLine i ms ->
-                                          --        BoundedDeductionTransformationLine i ms:aux pds vds cds
                                             EmptyLine -> EmptyLine:aux pds vds cds
                             else [ErrorLine l]
                        _ -> [ErrorLine l]
@@ -429,28 +428,74 @@ parsedLinesToProof [] = []
 parsedLinesToProof (ProofLine x:ls) = x:parsedLinesToProof ls
 parsedLinesToProof (_:ls) = parsedLinesToProof ls
 
-parsedLinesToParsedLinesBlocks :: [ParsedLine] -> [([ParsedLine], Int)]
+-- parsedLinesToParsedLinesBlocks :: [ParsedLine] -> [ParsedLinesBlock]
+-- parsedLinesToParsedLinesBlocks ls = parsedLinesToParsedLinesBlocksAux ls [] 0
+
+-- parsedLinesToParsedLinesBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [ParsedLinesBlock]
+-- parsedLinesToParsedLinesBlocksAux [] [] ln = []
+-- parsedLinesToParsedLinesBlocksAux ((VarDeclareLine ds):ls) [] ln = undefined
+
+parsedLinesToParsedLinesBlocks :: [ParsedLine] -> [([ParsedLine], Int, Maybe String)]
 parsedLinesToParsedLinesBlocks ls = parsedLinesToParsedLinesBlocksAux ls [] 0
 
-parsedLinesToParsedLinesBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [([ParsedLine], Int)]
+parsedLinesToParsedLinesBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [([ParsedLine], Int, Maybe String)]
 parsedLinesToParsedLinesBlocksAux [] [] i = []
-parsedLinesToParsedLinesBlocksAux [] ls' i = [(ls', i)]
-parsedLinesToParsedLinesBlocksAux (l:ls) [] i = parsedLinesToParsedLinesBlocksAux ls [l] i
+parsedLinesToParsedLinesBlocksAux [] ls' i = [(ls', i, Nothing)]
 parsedLinesToParsedLinesBlocksAux (ProofLine x:ls) ls' i = parsedLinesToParsedLinesBlocksAux ls (ls'++[ProofLine x]) i
+parsedLinesToParsedLinesBlocksAux (VarDeclareLine vds:ls) [] i =
+       ([VarDeclareLine vds], i, Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+1)
 parsedLinesToParsedLinesBlocksAux (VarDeclareLine vds:ls) ls' i =
-       (ls', i):([VarDeclareLine vds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+       (ls', i, Nothing):([VarDeclareLine vds], i+length ls', Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (PredDeclareLine pds:ls) [] i =
+       ([PredDeclareLine pds], i, Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+1)
 parsedLinesToParsedLinesBlocksAux (PredDeclareLine pds:ls) ls' i =
-       (ls', i):([PredDeclareLine pds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+       (ls', i, Nothing):([PredDeclareLine pds], i+length ls', Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+parsedLinesToParsedLinesBlocksAux (ConstDeclareLine cds:ls) [] i =
+       ([ConstDeclareLine cds], i, Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+1)
 parsedLinesToParsedLinesBlocksAux (ConstDeclareLine cds:ls) ls' i =
-       (ls', i):([ConstDeclareLine cds], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+       (ls', i, Nothing):([ConstDeclareLine cds], i+length ls', Nothing):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
 parsedLinesToParsedLinesBlocksAux (EndProofLine mn:ls) ls' i =
-       (ls', i):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+       (ls', i, mn):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
 parsedLinesToParsedLinesBlocksAux (DeductionTransformationLine mi mstr:ls) ls' i =
-       (ls',i):([DeductionTransformationLine mi mstr], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
--- parsedLinesToParsedLinesBlocksAux (BoundedDeductionTransformationLine n mstr:ls) ls' i =
---        (ls', i):([BoundedDeductionTransformationLine n mstr], i+length ls'):parsedLinesToParsedLinesBlocksAux ls [] (i+length ls'+1)
+       parsedLinesToParsedLinesBlocksAux ls (ls'++[DeductionTransformationLine mi mstr]) i
 parsedLinesToParsedLinesBlocksAux (EmptyLine:ls) ls' i = parsedLinesToParsedLinesBlocksAux ls ls' (i+1)
-parsedLinesToParsedLinesBlocksAux (ErrorLine str:ls) ls' i = ([ErrorLine str], i):parsedLinesToParsedLinesBlocksAux ls ls' (i+1)
+parsedLinesToParsedLinesBlocksAux (ErrorLine str:ls) ls' i = ([ErrorLine str], i, Nothing):parsedLinesToParsedLinesBlocksAux ls ls' (i+1)
+
+isCorrectlyStructuredBlocks :: [([ParsedLine], Int, Maybe String)] -> Bool
+isCorrectlyStructuredBlocks = isCorrectlyStructuredBlocksAux False
+
+isCorrectlyStructuredBlocksAux :: Bool -> [([ParsedLine], Int, Maybe String)] -> Bool
+isCorrectlyStructuredBlocksAux _ [] = True
+isCorrectlyStructuredBlocksAux True (([VarDeclareLine _], _, _):ls) = False
+isCorrectlyStructuredBlocksAux False (([VarDeclareLine _], _, _):ls) = isCorrectlyStructuredBlocksAux False ls
+isCorrectlyStructuredBlocksAux True (([ConstDeclareLine _], _, _):ls) = False
+isCorrectlyStructuredBlocksAux False (([ConstDeclareLine _], _, _):ls) = isCorrectlyStructuredBlocksAux False ls
+isCorrectlyStructuredBlocksAux True (([PredDeclareLine _], _, _):ls) = False
+isCorrectlyStructuredBlocksAux False (([PredDeclareLine _], _, _):ls) = isCorrectlyStructuredBlocksAux False ls
+isCorrectlyStructuredBlocksAux isMainMatter (([EmptyLine], _, _):ls) = isCorrectlyStructuredBlocksAux isMainMatter ls
+isCorrectlyStructuredBlocksAux isMainMatter (([ErrorLine _], _, _):ls) = isCorrectlyStructuredBlocksAux isMainMatter ls
+isCorrectlyStructuredBlocksAux _ (([ProofLine _], _, _):ls) = isCorrectlyStructuredBlocksAux True ls
+isCorrectlyStructuredBlocksAux _ (([EndProofLine _], _, _):ls) = isCorrectlyStructuredBlocksAux True ls
+isCorrectlyStructuredBlocksAux _ (([DeductionTransformationLine _ _], _, _):ls) = isCorrectlyStructuredBlocksAux True ls
+isCorrectlyStructuredBlocksAux _ _ = True
+
+parsedLinesBlocksToIllegalDeclarationIndex :: [([ParsedLine], Int, Maybe String)] -> Maybe Int
+parsedLinesBlocksToIllegalDeclarationIndex = parsedLinesBlocksToIllegalDeclarationIndexAux False
+
+parsedLinesBlocksToIllegalDeclarationIndexAux :: Bool -> [([ParsedLine], Int, Maybe String)] -> Maybe Int
+parsedLinesBlocksToIllegalDeclarationIndexAux _ [] = Nothing
+parsedLinesBlocksToIllegalDeclarationIndexAux True (([VarDeclareLine _], i, _):ls) = Just i
+parsedLinesBlocksToIllegalDeclarationIndexAux False (([VarDeclareLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux False ls
+parsedLinesBlocksToIllegalDeclarationIndexAux True (([ConstDeclareLine _], i, _):ls) = Just i
+parsedLinesBlocksToIllegalDeclarationIndexAux False (([ConstDeclareLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux False ls
+parsedLinesBlocksToIllegalDeclarationIndexAux True (([PredDeclareLine _], i, _):ls) = Just i
+parsedLinesBlocksToIllegalDeclarationIndexAux False (([PredDeclareLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux False ls
+parsedLinesBlocksToIllegalDeclarationIndexAux isMainMatter (([EmptyLine], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux isMainMatter ls
+parsedLinesBlocksToIllegalDeclarationIndexAux isMainMatter (([ErrorLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux isMainMatter ls
+parsedLinesBlocksToIllegalDeclarationIndexAux _ (([ProofLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux True ls
+parsedLinesBlocksToIllegalDeclarationIndexAux _ (([EndProofLine _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux True ls
+parsedLinesBlocksToIllegalDeclarationIndexAux _ (([DeductionTransformationLine _ _], _, _):ls) = parsedLinesBlocksToIllegalDeclarationIndexAux True ls
+parsedLinesBlocksToIllegalDeclarationIndexAux _ _ = Nothing
 
 -- parsedLinesToProofBlocks :: [ParsedLine] -> [ProofBlock]
 -- parsedLinesToProofBlocks [] = []
