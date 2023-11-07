@@ -47,7 +47,7 @@ Propositional formula <code>F</code> is defined as follows, where P<sub>0</sub> 
 ```
 F ::= A | bot | F -> F
 ```
-The arrow denotes logical implication, and bot is a special constant denoting falsum, which means the condtradiction.
+The arrow denotes logical implication, and <code>bot</code> is a special constant denoting falsum, which means the condtradiction.
 The following formula means that if <code>A</code> then it contradicts.
 ```
 A -> bot
