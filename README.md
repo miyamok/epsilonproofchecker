@@ -237,6 +237,8 @@ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP
 Deduction theorem claims that if <code>Γ, A ⊢ B</code> then <code>Γ ⊢ A -> B</code>.
 An interesting aspect of the proof of this theorem is that it actually tells us how to get a proof of <code>Γ ⊢ A -> B</code> from a proof of <code>Γ, A ⊢ B</code>.
 The epsilon proof assitant has a feature of proof transformation, which implements the algorithm in the proof of deduction theorem.
+
+Deduction theorem holds for all the calculi supported by the proof assistant epsilon.
 ## Usage of the epsilon proof assistant
 The Glasgow Haskell Compiler is prerequisite.
 Get the source code and compile the code in the following way.
