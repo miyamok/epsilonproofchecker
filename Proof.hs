@@ -11,8 +11,8 @@ data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
 type Step = (Formula, Rule, Tag)
 type Proof = [Step]
 type Tag = Maybe String
-type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
 -- type Tag = NoTag | Expl String | Impl String
+type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
 
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
@@ -196,10 +196,18 @@ proofInGenFormToPremiseIndices p
                    info = map (\prem -> alphaEqFormula prem genFlaKernel || (not $ null $ simpleFormulaUnification prem genFlaKernel)) prems
                   in map snd (filter (\(x, i) -> x) (zip info [0..]))
 
+-- Note that this function doesn't check Auto, simply saying it is correct.
+checkProof :: Proof -> Bool
+checkProof p = foldl (\ x i -> x && cs!!i) (last cs) deps
+      where cs = checkClaims p
+            deps = proofToDependency p
+
+-- Note that this function doesn't check Auto, simply saying it is correct.
 checkClaims :: Proof -> [Bool]
 checkClaims p = checkClaimsAux p 0
 
-checkClaimsAux :: [(Formula, Rule, Tag)] -> Int -> [Bool]
+-- Note that this function doesn't check Auto, simply saying it is correct.
+checkClaimsAux :: Proof -> Int -> [Bool]
 checkClaimsAux p offset = if length p <= offset
       then []
       else c:checkClaimsAux p (offset+1) where
@@ -259,11 +267,6 @@ stepToUntaggedStep (f, r, _) = (f, r, Nothing)
 
 proofToUntaggedProof :: Proof -> Proof
 proofToUntaggedProof = map stepToUntaggedStep
-
-checkProof :: Proof -> Bool
-checkProof p = foldl (\ x i -> x && cs!!i) (last cs) deps
-      where cs = checkClaims p
-            deps = proofToDependency p
 
 readProof :: String -> IO [String]
 readProof filename = do ls <- fmap lines (readFile filename)

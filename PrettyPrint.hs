@@ -67,15 +67,14 @@ prettyPrintReason r = case r of (MP Nothing Nothing) -> "MP"
                                 r -> show r
 
 prettyPrintProofStep :: Step -> String
-prettyPrintProofStep (f, r, t) =
-    prettyPrintFormula f ++
-    " by " ++ 
-    prettyPrintReason r ++
-    prettyPrintTag t
+prettyPrintProofStep (f, r, t) = intercalate " " ([prettyPrintFormula f, "by", prettyPrintReason r] ++ l)
+    where
+        l = case t of Nothing -> []
+                      Just s -> [prettyPrintTag t]
 
 prettyPrintTag :: Tag -> String
 prettyPrintTag Nothing = ""
-prettyPrintTag (Just s) = " #" ++ s
+prettyPrintTag (Just s) = "#" ++ s
 
 prettyPrintProof :: Proof -> String
 prettyPrintProof p = intercalate "\n" (map prettyPrintProofStep p)

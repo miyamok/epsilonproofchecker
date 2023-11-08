@@ -1,5 +1,6 @@
 import Syntax
 import Proof
+import Script
 import Axiom
 import Parser
 import PrettyPrint
@@ -42,7 +43,7 @@ argsToFlagsAndFilename args = (elem "--debug" args, elem "-d" args, elem "-1" ar
 -- Output
 --------------------------------------------------
 
-printProofCorrect :: Proof -> Bool -> IO()
+printProofCorrect :: Proof -> Bool -> IO ()
 printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJudgment asms f))
                                if pFlag then putStrLn (prettyPrintProof p) else return ()
                                where
@@ -61,7 +62,7 @@ printProofWrong p mi lns =
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
-printIllStructuredProofBlockError :: [([ParsedLine], Int, Maybe String)] -> IO ()
+printIllStructuredProofBlockError :: [(Script, Int, Maybe String)] -> IO ()
 printIllStructuredProofBlockError pbs = undefined
 
 proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO ()
@@ -91,17 +92,18 @@ main = do args <- getArgs
           if length filenames /= 1
           then putStrLn "Wrong option given, otherwise not exactly one filename given"
           else do ls <- fmap lines (readFile (head filenames))
-                  let parsedLines = parseLines ls
-                      mErrorMsg = parsedLinesToErrorMessage parsedLines
-                      pblocks = parsedLinesToParsedLinesBlocks parsedLines
-                      proof = parsedLinesToProof $ concat (map (\(l, _, _) -> l) pblocks)
-                      linenums = parsedLinesToLineNumbers parsedLines
+                  let script = parseLines ls
+                      mErrorMsg = scriptToErrorMessage script
+                      declarations = scriptToDeclarations script
+                      pblocks = scriptToParsedLinesBlocks script
+                      proof = scriptToProof $ concat (map (\(l, _, _) -> l) pblocks)
+                      linenums = scriptToLineNumbers script
                       deductible = isDeductionApplicable proof
                       proof' = if dFlag && deductible
                                then if onceFlag then deductionOnce $ proofToUntaggedProof proof
                                                 else deduction $ proofToUntaggedProof proof
                                else proof
-                      in case parsedLinesBlocksToIllegalDeclarationIndex pblocks of
+                      in case scriptBlocksToIllegalDeclarationIndex pblocks of
                          Just i -> do putStrLn ("Error at line " ++ show (i+1))
                                       putStrLn "Declaration may appear as the leading part of a proof script"
                          Nothing -> case mErrorMsg of
