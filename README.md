@@ -1,6 +1,6 @@
 # epsilon - a proof assistant for Hilbert's epsilon calculus and predicate calculus
 Proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and also proof automation relying on an external tool Microsoft z3 (https://github.com/Z3Prover/z3).
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -129,10 +129,10 @@ A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
+Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.  Let V be a set of variables, and assume <code>x</code> is a variable in V
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows.
 ```
-t ::= c | f(t)
+t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t)
 ```
 Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
@@ -141,8 +141,7 @@ Its axioms and inference rule are same as propositional calculus.
 ### Predicate calculus
 Predicate caluclus is an extension of elementary calculus by quantifications.
 The language is enriched by the existential quantifier and the universal quantifier.
-Let V be a set of variables.  
-The syntax is given as follows, assuming <code>x</code> is a variable in V.
+The syntax is given as follows.
 ```
 t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
