@@ -129,10 +129,10 @@ A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
 Elementary calculus extends propositional calculus by terms and predicates for its language.
-Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.
+Let C<sub>0</sub> be a set of nullary constants, C<sub>1</sub> a set of unary (function) constants, and so, and let <code>c</code> and <code>f</code> be nullary and unary constants, respectively.  Also, let <code>Q</code> be an element of P<sub>1</sub>, a set of unary atomic predicates.  Let V be a set of variables, and assume <code>x</code> is a variable in V
 Then the terms <code>t</code> and formulas <code>F</code> of elementary calculus is given as follows.
 ```
-t ::= c | f(t)
+t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t)
 ```
 Generally a formula <code>E</code> may contain a variable <code>x</code>.  In such a case, it is convenient to allow writing <code>E(x)</code> instead of <code>E</code>, and also allow writing <code>E(t)</code> for the formula obtained by replacing all occurrences of <code>x</code> in <code>E</code> by <code>t</code>.
@@ -141,8 +141,7 @@ Its axioms and inference rule are same as propositional calculus.
 ### Predicate calculus
 Predicate caluclus is an extension of elementary calculus by quantifications.
 The language is enriched by the existential quantifier and the universal quantifier.
-Let V be a set of variables.  
-The syntax is given as follows, assuming <code>x</code> is a variable in V.
+The syntax is given as follows.
 ```
 t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
