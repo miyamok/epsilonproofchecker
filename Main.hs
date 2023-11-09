@@ -57,8 +57,8 @@ printProofWrong p mi is =
                                  if null asms then return ()
                                               else do putStrLn "from the following assumptions"
                                                       putStrLn (prettyPrintAssumptions asms)
-                   Just i -> if i < traceShowId (length is) && i < length p -- temporarily a line number of the erroneous proof step may be missing
-                             then putStrLn ("Error at line " ++ show (is!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
+                   Just i -> if i < length is && i < length p -- temporarily a line number of the erroneous proof step may be missing
+                             then putStrLn ("Error at line " ++ show (is!!i+1) ++ ": " ++ prettyPrintProofStep (p!!i))
                              else putStrLn "Error found (possibly some lines after deduction-transformation??)"
                 where
                         f = proofToConclusion p
@@ -80,10 +80,10 @@ proofAndFlagsToOutput p is pFlag debugFlag
                                              in printProofWrong p mi' is
  where
         bs = checkClaims p
-        mi = traceShowId $ findIndex not bs
+        mi = findIndex not bs
         mln = do i <- mi -- temporarily the line number of the erroneous proof step may be missing
-                 if i < length (traceShowId is) then return (is!!i) else Nothing
-        autoSteps = traceShowId $ proofToAutoStepFormulas p
+                 if i < length is then return (is!!i) else Nothing
+        autoSteps = proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
