@@ -15,7 +15,7 @@ The proof scripting language is simple, and there are useful features such as pr
 ## ghc-9.2.8 used
 % ghc Main
 % ./Main examples/ex04_identity.proof
-Correct proof of ⊢ A -> A
+-- Correct proof of ⊢ A -> A
 % cat examples/ex04_identity.proof 
 A -> (A -> A) -> A by K
 A -> A -> A by K
@@ -23,7 +23,7 @@ A -> A -> A by K
 (A -> A -> A) -> A -> A by MP
 A -> A by MP
 % ./Main examples/ex05_drinkers_paradox.proof
-Correct proof of ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
+-- Correct proof of ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 % ./Main examples/ex06_wrong.proof
 Error at line 1: A -> B by K
 % cat examples/ex06_wrong.proof
