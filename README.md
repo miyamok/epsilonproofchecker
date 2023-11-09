@@ -30,13 +30,13 @@ Error at line 1: A -> B by K
 A -> B by K
 % ./Main examples/ex08_assumption.proof 
 -- Correct proof of ⊢ A -> A
+% cat examples/ex08_assumption.proof 
+A by Asm
+deduction-transformation
 % z3 -version ## assume Microsoft's z3 is installed
 Z3 version 4.12.3 - 64 bit
 % ./Main examples/ex14_prop_auto.proof
 Correct proof of ⊢ A -> A
-% cat examples/ex08_assumption.proof 
-A by Asm
-deduction-transformation
 % cat examples/ex14_prop_auto.proof 
 A -> A by Auto
 ```
