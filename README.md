@@ -296,6 +296,8 @@ miyamoto@station3179 epsilonproofchecker % ./Main -d -1 examples/ex16_peirce_fir
 It generated a correct proof of
 (A -> B) -> A, ~A ⊢ A -> B
 ```
+Note that the command line options <code>-d</code> as well as <code>-1</code> is deprecated.  The deduction transformation is now available through proof scripting, as described below.
+
 One example showing the power of this proof transformation is the proof of the inverse of <code>AllShift</code> formula.
 ```
 (B -> all x P(x)) -> all y (B -> P(y))
