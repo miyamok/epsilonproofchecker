@@ -298,40 +298,40 @@ It generated a correct proof of
 ```
 Note that the command line options <code>-d</code> as well as <code>-1</code> is deprecated.  The deduction transformation is now available through proof scripting, as described below.
 
-One example showing the power of this proof transformation is the proof of the inverse of <code>AllShift</code> formula.
+One example showing the power of this proof transformation is the proof of the excluded middle, whose proof is available as <code>examples/ex17_excluded_middle.proof</code>.
 ```
-(B -> all x P(x)) -> all y (B -> P(y))
+A | ~A
 ```
-First step is to prove the formula <code>B -> all x P(x), B ⊢ all x P(x)</code> which is done in <code>ex12_inverse_AllShift_preparation.proof</code>.
+First step is to prove that <code>A | ~A -> bot, A ⊢ bot</code> which is done in the lines 1 to 5 in <code>ex17_excluded_middle.proof</code>.
 ```
-% cat examples/ex12_inverse_AllShift_preparation.proof 
-B -> all x P(x) by Asm
-B by Asm
-all x P(x) by MP
-all x P(x) -> P(y) by AllE
-P(y) by MP
+% cat examples/examples/ex17_excluded_middle.proof 
+A | ~A -> bot by Asm
+A by Asm
+A -> A | ~A by DisjI1
+A | ~A by MP
+bot by MP
+deduction-transformation
+~A -> A | ~A by DisjI2
+A | ~A by MP
+bot by MP
+deduction-transformation
+~~(A | ~A) -> A | ~A by DNE
+A | ~A by MP
 ```
-Issueing the following command,
+By the <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is translated into a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
+The proof scripts from the line 6 to 8 are added to the end of the new proof proof, and this forms another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
+Another deduction transformation is applied to generate a proof of <code>⊢ ~~(A | ~A)</code>, which yields the goal <code>⊢ A | ~A</code> by DNE and MP.
+
+By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
-% ./Main -p -d examples/ex12_inverse_AllShift_preparation.proof 
+% ./Main examples/ex17_excluded_middle.proof
+-- Correct proof of ⊢ A | ~A
 ```
-it generates a proof of <code>⊢ (B -> all x P(x)) -> B -> P(y)</code>, which consists of 53 lines.
-We now make a short modification to this output proof.
-Manually adding the assumption
+It is also possible to print out the final proof by the option <code>-p</code>.
 ```
-B -> all x P(x) by Asm
+% ./Main -p examples/ex17_excluded_middle.proof
 ```
-at the begining of the proof, and also manually adding the following 2 lines
-```
-B -> P(y) by MP
-all y(B -> P(y)) by Gen
-```
-at the end of the proof, then it is exactly the proof in <code>ex13_inverse_AllShift.proof</code>.  By issueing the following command
-```
-% ./Main -p -d examples/ex13_inverse_AllShift.proof
-```
-we see a proof of the inverse of the axiom <code>AllShift</code>.
-The outcome consists of 170 lines, and would be hard without relying on the proof transformation, although there can be a clever way to make a shorter proof.
+The outcome consists of 64 lines, and would be hard without relying on the proof transformation, although there can be a clever idea for a shorter proof.
 
 On the other hand, it is also possible to make use of an external automated theorem prover.
 For this moment, the epsilon proof assistant supports automation for predicate calculus due to Microsoft's z3 (https://github.com/Z3Prover/z3).
