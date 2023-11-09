@@ -25,14 +25,18 @@ A -> A by MP
 % ./Main examples/ex05_drinkers_paradox.proof
 Correct proof of ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 % ./Main examples/ex06_wrong.proof
-Not a proof of
-A -> B
+Error at line 1: A -> B by K
+% cat examples/ex06_wrong.proof
+A -> B by K
 % ./Main examples/ex08_assumption.proof 
-Correct proof of A ⊢ A
+-- Correct proof of ⊢ A -> A
 % z3 -version ## assume Microsoft's z3 is installed
 Z3 version 4.12.3 - 64 bit
 % ./Main examples/ex14_prop_auto.proof
 Correct proof of ⊢ A -> A
+% cat examples/ex08_assumption.proof 
+A by Asm
+deduction-transformation
 % cat examples/ex14_prop_auto.proof 
 A -> A by Auto
 ```
