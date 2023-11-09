@@ -10,6 +10,7 @@ data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | Gen Tag | EFQ | DNE | LEM | Asm | Use String deriving (Show, Eq)
 type Step = (Formula, Rule, Tag)
 type Proof = [Step]
+type ProofWithLineNumbers = (Proof, [Int])
 type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
 type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset

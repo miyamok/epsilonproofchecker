@@ -1,0 +1,16 @@
+~((A -> B) | (B -> A)) by Asm
+A by Asm
+A -> B -> A by K
+B -> A by MP
+(B -> A) -> (A -> B) | (B -> A) by DisjI2
+(A -> B) | (B -> A) by MP
+bot by MP
+bot -> B by EFQ
+B by MP
+deduction-transformation
+(A -> B) -> (A -> B) | (B -> A) by DisjI1
+(A -> B) | (B -> A) by MP
+bot by MP
+deduction-transformation
+~~((A -> B) | (B -> A)) -> ((A -> B) | (B -> A)) by DNE
+(A -> B) | (B -> A) by MP

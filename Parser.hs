@@ -355,16 +355,14 @@ endProofLine = do symbol "end-proof"
                                else return (EndProofLine (Just name))
 
 deductionTransformationLine :: Parser ScriptLine
-deductionTransformationLine = do symbol "deduction-transformation"
+deductionTransformationLine = do symbol "deduction-transformation-repeatedly"
                                  name <- many alphanum
                                  if null name then return (DeductionTransformationLine Nothing Nothing)
                                  else return (DeductionTransformationLine Nothing (Just name))
-                            <|> do symbol "bounded-deduction-transformation"
-                                   i <- nat
-                                   space
+                            <|> do symbol "deduction-transformation"
                                    name <- many alphanum
-                                   if null name then return (DeductionTransformationLine (Just i) Nothing)
-                                   else return (DeductionTransformationLine (Just i) (Just name))
+                                   if null name then return (DeductionTransformationLine (Just 1) Nothing)
+                                   else return (DeductionTransformationLine (Just 1) (Just name))
 
 proofScriptLine :: Declarations -> Parser ScriptLine
 proofScriptLine (vds, cds, pds) =
@@ -408,3 +406,36 @@ parseLinesAux (l:ls) (vds, cds, pds) =
                                             EmptyLine -> EmptyLine:aux (vds, cds, pds)
                             else [ErrorLine l]
                        _ -> [ErrorLine l]
+
+-- parseLinesAux :: [String] -> Declarations -> Script
+-- parseLinesAux [] (vds, cds, pds) = []
+-- parseLinesAux (l:ls) (vds, cds, pds) =
+--        let mpl = parse (proofScriptLine (if null vds then defaultVariables else vds,
+--                                          if null cds then defaultConstants else cds,
+--                                          if null pds then defaultPredicates else pds)) l
+--            aux = parseLinesAux ls
+--         in case mpl of [] -> [ErrorLine l]
+--                        [(pl, str)] ->
+--                             if null str
+--                             then case pl of (ProofLine step) -> ProofLine step:aux (vds, cds, pds)
+--                                             (VarDeclareLine ds) -> let newds = vds ++ ds
+--                                                                        rest = aux (newds, cds, pds)
+--                                                                    in if areConsistentVariableDeclarations newds
+--                                                                       then VarDeclareLine ds:rest
+--                                                                       else ErrorLine "Multiple declarations for the same variable name":rest
+--                                             (PredDeclareLine ds) -> let newds = pds++ds
+--                                                                         rest = aux (vds, cds, newds)
+--                                                                     in if areConsistentPredicateDeclarations newds
+--                                                                        then PredDeclareLine ds:rest
+--                                                                        else ErrorLine "Multiple declarations for the same predicate name":rest
+--                                             (ConstDeclareLine ds) -> let newds = cds++ds
+--                                                                          rest = aux (vds, newds, pds)
+--                                                                      in if areConsistentConstantDeclarations newds
+--                                                                         then ConstDeclareLine ds:rest
+--                                                                         else ErrorLine "Multiple declarations for the same predicate name":rest
+--                                             EndProofLine ms -> EndProofLine ms:aux (vds, cds, pds)
+--                                             DeductionTransformationLine mi ms ->
+--                                                  DeductionTransformationLine mi ms:aux (vds, cds, pds)
+--                                             EmptyLine -> EmptyLine:aux (vds, cds, pds)
+--                             else [ErrorLine l]
+--                        _ -> [ErrorLine l]

@@ -57,7 +57,9 @@ printProofWrong p mi lns =
                                  if null asms then return ()
                                               else do putStrLn "from the following assumptions"
                                                       putStrLn (prettyPrintAssumptions asms)
-                   Just i -> putStrLn ("Error at line " ++ show (lns!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
+                   Just i -> if i < length lns && i < length p -- temporarily a line number of the erroneous proof step may be missing
+                             then putStrLn ("Error at line " ++ show (lns!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
+                             else putStrLn "Error found (possibly some lines after deduction-transformation??)"
                 where
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
@@ -79,9 +81,9 @@ proofAndFlagsToOutput p linenums pFlag debugFlag
  where
         bs = checkClaims p
         mi = findIndex not bs
-        mln = do i <- mi
-                 return (linenums!!i)
-        autoSteps = proofToAutoStepFormulas p
+        mln = do i <- mi -- temporarily the line number of the erroneous proof step may be missing
+                 if i < length linenums then return (linenums!!i) else Nothing
+        autoSteps = traceShowId $ proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
@@ -95,19 +97,29 @@ main = do args <- getArgs
                   let script = parseLines ls
                       mErrorMsg = scriptToErrorMessage script
                       declarations = scriptToDeclarations script
-                      pblocks = scriptToParsedLinesBlocks script
-                      proof = scriptToProof $ concat (map (\(l, _, _) -> l) pblocks)
+                      mIllDeclInd = scriptToIllegalDeclarationIndex script
+                      --proof = scriptToProof script
+                      scriptBlocks = scriptToScriptBlocks script
+                      proofBlocks = scriptToProofBlocks script
+                      proof = let (p, _, _) = last proofBlocks in p
+                      ---proof = scriptToProof $ concat (map (\(l, _, _) -> l) scriptBlocks)
+                      --proofScripts = scriptToProofScripts script
+                      --proofBlocks = proofScriptToProofBlocks proofScripts
+                      --proofs = proofBlocksToProofs proofBlocks
+                      --proof = proofs!!0
                       linenums = scriptToLineNumbers script
                       deductible = isDeductionApplicable proof
                       proof' = if dFlag && deductible
                                then if onceFlag then deductionOnce $ proofToUntaggedProof proof
                                                 else deduction $ proofToUntaggedProof proof
                                else proof
-                      in case scriptBlocksToIllegalDeclarationIndex pblocks of
-                         Just i -> do putStrLn ("Error at line " ++ show (i+1))
-                                      putStrLn "Declaration may appear as the leading part of a proof script"
-                         Nothing -> case mErrorMsg of
-                            Just msg -> do putStrLn msg; return ()
-                            Nothing -> if dFlag && not deductible
-                                       then putStrLn "Deduction transformation doesn't support a proof with Auto"
-                                       else proofAndFlagsToOutput proof' linenums pFlag debugFlag
+                --       in case scriptBlocksToIllegalDeclarationIndex scriptBlocks of
+                --          Just i -> do putStrLn ("Error at line " ++ show (i+1))
+                --                       putStrLn "Declarations may appear only before a proof starts"
+                --          Nothing -> 
+                      in case mErrorMsg of
+                              Just msg -> do putStrLn msg; return ()
+                              Nothing -> if dFlag && not deductible
+                                         then putStrLn "Deduction transformation doesn't support a proof with Auto"
+                                         else case mIllDeclInd of Nothing -> proofAndFlagsToOutput proof' linenums pFlag debugFlag
+                                                                  Just i -> putStrLn ("Error at line " ++ show (i+1) ++ ": Declaration may not occur after a proof started.")

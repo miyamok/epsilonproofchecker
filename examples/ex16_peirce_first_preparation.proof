@@ -1,6 +1,0 @@
-(A -> B) -> A by Asm
-~A by Asm
-A by Asm
-bot by MP
-bot -> B by EFQ
-B by MP

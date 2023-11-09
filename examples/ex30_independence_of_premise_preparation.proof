@@ -1,0 +1,3 @@
+~all x ~P(x) by Asm
+~all x ~P(x) -> ex x P(x) by Auto
+ex x P(x) by MP

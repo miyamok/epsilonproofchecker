@@ -1,5 +1,6 @@
 module Script where
-import Data.List(nub)
+import Data.List(nub, findIndex, findIndices)
+import Data.Maybe(listToMaybe)
 import Syntax
 import Proof
 
@@ -12,6 +13,8 @@ data ScriptLine = ProofLine Step | VarDeclareLine [VariableDeclaration] | ConstD
  | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String | EndProofLine (Maybe String)
  | DeductionTransformationLine (Maybe Int) (Maybe String) deriving (Show)
 type Script = [ScriptLine]
+type ScriptBlock = (Script, Int, Maybe String)
+type ProofBlock = (Proof, [Int], Maybe String)
 
 defaultVariables :: [VariableDeclaration]
 defaultVariables = ["x", "y", "z", "u", "v"]
@@ -31,10 +34,10 @@ defaultDeclarations = (defaultVariables, defaultConstants, defaultPredicates)
 scriptToErrorMessage :: Script -> Maybe String
 scriptToErrorMessage [] = Just "Empty input"
 scriptToErrorMessage ls =
-       case last ls of ErrorLine s -> Just ("Error at line " ++ show (length ls) ++ ": " ++ s)
-                       _ -> if not $ or $ map (\pl -> case pl of ProofLine step -> True; _ -> False) ls
-                            then Just "Input contains no proof, but only declaration"
-                            else Nothing
+    do i <- findIndex (\l -> case l of ErrorLine s -> True; _ -> False) ls
+       l <- listToMaybe [e | e@(ErrorLine _) <- ls]
+       s <- case l of ErrorLine s -> Just s ; _ -> Nothing
+       return ("Error at line " ++ show (i+1) ++ ": " ++ s)
 
 scriptToProof :: Script -> Proof
 scriptToProof [] = []
@@ -45,20 +48,29 @@ scriptToDeclarations :: Script -> Declarations
 scriptToDeclarations [] = (defaultVariables, defaultConstants, defaultPredicates)
 scriptToDeclarations _ = undefined
 
-scriptToVariableDeclarations :: Script -> [VariableDeclaration]
-scriptToVariableDeclarations [] = defaultVariables
-scriptToVariableDeclarations (VarDeclareLine ds:ls) = ds ++ scriptToVariableDeclarations ls
-scriptToVariableDeclarations (_:ls) = scriptToVariableDeclarations ls
+scriptToVariableDeclarationsWithLineNumbers :: Script -> [([VariableDeclaration], Int)]
+scriptToVariableDeclarationsWithLineNumbers = scriptToVariableDeclarationsWithLineNumbersAux 0
 
-scriptToConstantDeclarations :: Script -> [ConstantDeclaration]
-scriptToConstantDeclarations [] = defaultConstants
-scriptToConstantDeclarations (ConstDeclareLine ds:ls) = ds ++ scriptToConstantDeclarations ls
-scriptToConstantDeclarations (_:ls) = scriptToConstantDeclarations ls
+scriptToVariableDeclarationsWithLineNumbersAux :: Int -> Script -> [([VariableDeclaration], Int)]
+scriptToVariableDeclarationsWithLineNumbersAux _ [] = []
+scriptToVariableDeclarationsWithLineNumbersAux i (VarDeclareLine ds:ls) = (ds, i):scriptToVariableDeclarationsWithLineNumbersAux (i+1) ls
+scriptToVariableDeclarationsWithLineNumbersAux i (_:ls) = scriptToVariableDeclarationsWithLineNumbersAux (i+1) ls
 
-scriptToPredicateDeclarations :: Script -> [PredicateDeclaration]
-scriptToPredicateDeclarations [] = defaultPredicates
-scriptToPredicateDeclarations (PredDeclareLine ds:ls) = ds ++ scriptToPredicateDeclarations ls
-scriptToPredicateDeclarations (_:ls) = scriptToPredicateDeclarations ls
+scriptToConstantDeclarationsWithLineNumbers :: Script -> [([ConstantDeclaration], Int)]
+scriptToConstantDeclarationsWithLineNumbers = scriptToConstantDeclarationsWithLineNumbersAux 0
+
+scriptToConstantDeclarationsWithLineNumbersAux :: Int -> Script -> [([ConstantDeclaration], Int)]
+scriptToConstantDeclarationsWithLineNumbersAux _ [] = []
+scriptToConstantDeclarationsWithLineNumbersAux i (ConstDeclareLine ds:ls) = (ds, i):scriptToConstantDeclarationsWithLineNumbersAux (i+1) ls
+scriptToConstantDeclarationsWithLineNumbersAux i (_:ls) = scriptToConstantDeclarationsWithLineNumbersAux (i+1) ls
+
+scriptToPredicateDeclarationsWithLineNumbers :: Script -> [([PredicateDeclaration], Int)]
+scriptToPredicateDeclarationsWithLineNumbers = scriptToPredicateDeclarationsWithLineNumbersAux 0
+
+scriptToPredicateDeclarationsWithLineNumbersAux :: Int -> Script -> [([PredicateDeclaration], Int)]
+scriptToPredicateDeclarationsWithLineNumbersAux _ [] = []
+scriptToPredicateDeclarationsWithLineNumbersAux i (PredDeclareLine ds:ls) = (ds, i):scriptToPredicateDeclarationsWithLineNumbersAux (i+1) ls
+scriptToPredicateDeclarationsWithLineNumbersAux i (_:ls) = scriptToPredicateDeclarationsWithLineNumbersAux (i+1) ls
 
 areConsistentVariableDeclarations :: [VariableDeclaration] -> Bool
 areConsistentVariableDeclarations ds = length ds == length (nub ds)
@@ -73,38 +85,127 @@ areConsistentPredicateDeclarations ds = let names = map fst ds
                                             arities = map snd ds
                                         in length ds == length (nub ds) && all (>= 0) arities
 
--- scriptToParsedLinesBlocks :: [ParsedLine] -> [ParsedLinesBlock]
+scriptToFirstProofAndLineNumbers :: Script -> (Proof, [Int])
+scriptToFirstProofAndLineNumbers [] = ([], [])
+scriptToFirstProofAndLineNumbers (ProofLine x:ls) = undefined
+
+scriptToProofScripts :: Script -> [Script]
+scriptToProofScripts = scriptToProofScriptsAux []
+
+scriptToProofScriptsAux :: Script -> Script -> [Script]
+scriptToProofScriptsAux [] (ProofLine x:ls) = scriptToProofScriptsAux [ProofLine x] ls
+scriptToProofScriptsAux s (ProofLine x:ls) = scriptToProofScriptsAux (s++[ProofLine x]) ls
+scriptToProofScriptsAux [] (EndProofLine mn:ls) = [EndProofLine mn]:scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux s (EndProofLine mn:ls) = (s++[EndProofLine mn]):scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux [] (DeductionTransformationLine mi ml:ls) = [DeductionTransformationLine mi ml]:scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux s (DeductionTransformationLine mi ml:ls) = s:scriptToProofScriptsAux [DeductionTransformationLine mi ml] ls
+scriptToProofScriptsAux [] (VarDeclareLine _:ls) = [EmptyLine]:scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux s (VarDeclareLine _:ls) = scriptToProofScriptsAux (s++[EmptyLine]) ls
+scriptToProofScriptsAux [] (ConstDeclareLine _:ls) = [EmptyLine]:scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux s (ConstDeclareLine _:ls) = scriptToProofScriptsAux (s++[EmptyLine]) ls
+scriptToProofScriptsAux [] (PredDeclareLine _:ls) = [EmptyLine]:scriptToProofScriptsAux [] ls
+scriptToProofScriptsAux s (PredDeclareLine _:ls) = scriptToProofScriptsAux (s++[EmptyLine]) ls
+scriptToProofScriptsAux s (ErrorLine x:ls) = s:[ErrorLine x]:scriptToProofScriptsAux [] ls
+
+-- -- proof script contains either ProofLine, EndProofLine, DeductionTransformation, EmptyLine, or ErrorLine
+
+-- proofScriptsToProofBlocks :: [Script] -> [(Proof, [Maybe Int], Maybe String)]
+-- proofScriptsToProofBlocks = proofScriptsToProofBlocksAux 0 [] []
+
+-- -- to define a type of proofscript
+-- proofScriptsToProofBlocksAux :: Int -> Proof -> [Maybe Int] -> [Script] -> [(Proof, [Maybe Int], Maybe String)]
+-- proofScriptsToProofBlocksAux _ p lineNums [] = [(p, lineNums, Nothing)]
+-- proofScriptsToProofBlocksAux i p lineNums ((ProofLine x:s):ss) = proofScriptsToProofBlocksAux (i+1) (p++[x]) (lineNums ++ [Just i]) s
+-- proofScriptsToProofBlocksAux i p lineNums (EndProofLine mn:s) = (p, lineNums, mn):proofScriptsToProofBlocksAux (i+1) [] [] s
+-- proofScriptsToProofBlocksAux i p lineNums (DeductionTransformationLine mi mn:s) = (p, lineNums, Nothing):proofScriptsToProofBlocksAux (i+1) genProof nothings s
+--     where genProof = case mi of Nothing -> deduction p
+--                                 Just i -> iterate deductionOnce p !! i
+--           nothings = replicate (length genProof) Nothing
+-- proofScriptsToProofBlocksAux i p lineNums (EmptyLine:s) = proofScriptsToProofBlocksAux (i+1) p lineNums s
+-- proofScriptsToProofBlocksAux i p lineNums (ErrorLine x:s) = (p, lineNums, Nothing):proofScriptsToProofBlocksAux (i+1) [] [] s
+
+
+
+
+
+-- scriptToScriptWithOffsetListAux _ s i [] = [(s, i)]
+-- scriptToScriptWithOffsetListAux offset s i (ProofLine x:ls) = scriptToScriptWithOffsetListAux (offset + 1) (s++[ProofLine x]) i ls
+-- scriptToScriptWithOffsetListAux offset s i (VarDeclareLine _:ls) = scriptToScriptWithOffsetListAux (offset + 1) (s++[EmptyLine]) i ls
+-- scriptToScriptWithOffsetListAux offset s i (ConstDeclareLine _:ls) = scriptToScriptWithOffsetListAux (offset + 1) (s++[EmptyLine]) i ls
+-- scriptToScriptWithOffsetListAux offset s i (PredDeclareLine _:ls) = scriptToScriptWithOffsetListAux (offset + 1) (s++[EmptyLine]) i ls
+-- scriptToScriptWithOffsetListAux offset s i (EndProofLine x:ls) = (s, i):scriptToScriptWithOffsetListAux (offset + 1) [] i ls
+
+-- scriptToProofAndLineNumbersList :: Script -> [(Proof, [Int] ,Maybe String)]
+-- scriptToProofAndLineNumbersList = scriptToProofAndLineNumbersListAux 0 [] []
+
+-- scriptToProofAndLineNumbersListAux :: Int -> Proof -> [Int] -> Script -> [(Proof, [Int], Maybe String)]
+-- scriptToProofAndLineNumbersListAux _ p lineNums [] = [(p, lineNums, Nothing)]
+-- scriptToProofAndLineNumbersListAux i p lineNums (ProofLine x:ls) = scriptToProofAndLineNumbersListAux (i+1) (p++[x]) (lineNums++[i]) ls
+-- scriptToProofAndLineNumbersListAux i p lineNums (DeductionTransformationLine mi Nothing:ls) =
+--     [(p, lineNums, Nothing), (deduction p, [], Nothing)] ++ scriptToProofAndLineNumbersListAux (i+1) (p++[x]) (lineNums++[i]) ls
+
+-- scriptToScriptBlocks :: [ParsedLine] -> [ParsedLinesBlock]
 -- scriptToParsedLinesBlocks ls = scriptToParsedLinesBlocksAux ls [] 0
 
 -- scriptToParsedLinesBlocksAux :: [ParsedLine] -> [ParsedLine] -> Int -> [ParsedLinesBlock]
 -- scriptToParsedLinesBlocksAux [] [] ln = []
 -- scriptToParsedLinesBlocksAux ((VarDeclareLine ds):ls) [] ln = undefined
 
-scriptToParsedLinesBlocks :: Script -> [(Script, Int, Maybe String)]
-scriptToParsedLinesBlocks ls = scriptToParsedLinesBlocksAux ls [] 0
+-- scriptToParagraphs :: Script -> [Paragraph]
+-- scriptToParagraphs ls = scriptToParagraphsAux ls ([], 0, Nothing) 0
 
-scriptToParsedLinesBlocksAux :: Script -> Script -> Int -> [(Script, Int, Maybe String)]
-scriptToParsedLinesBlocksAux [] [] i = []
-scriptToParsedLinesBlocksAux [] ls' i = [(ls', i, Nothing)]
-scriptToParsedLinesBlocksAux (ProofLine x:ls) ls' i = scriptToParsedLinesBlocksAux ls (ls'++[ProofLine x]) i
-scriptToParsedLinesBlocksAux (VarDeclareLine vds:ls) [] i =
-       ([VarDeclareLine vds], i, Nothing):scriptToParsedLinesBlocksAux ls [] (i+1)
-scriptToParsedLinesBlocksAux (VarDeclareLine vds:ls) ls' i =
-       (ls', i, Nothing):([VarDeclareLine vds], i+length ls', Nothing):scriptToParsedLinesBlocksAux ls [] (i+length ls'+1)
-scriptToParsedLinesBlocksAux (PredDeclareLine pds:ls) [] i =
-       ([PredDeclareLine pds], i, Nothing):scriptToParsedLinesBlocksAux ls [] (i+1)
-scriptToParsedLinesBlocksAux (PredDeclareLine pds:ls) ls' i =
-       (ls', i, Nothing):([PredDeclareLine pds], i+length ls', Nothing):scriptToParsedLinesBlocksAux ls [] (i+length ls'+1)
-scriptToParsedLinesBlocksAux (ConstDeclareLine cds:ls) [] i =
-       ([ConstDeclareLine cds], i, Nothing):scriptToParsedLinesBlocksAux ls [] (i+1)
-scriptToParsedLinesBlocksAux (ConstDeclareLine cds:ls) ls' i =
-       (ls', i, Nothing):([ConstDeclareLine cds], i+length ls', Nothing):scriptToParsedLinesBlocksAux ls [] (i+length ls'+1)
-scriptToParsedLinesBlocksAux (EndProofLine mn:ls) ls' i =
-       (ls', i, mn):scriptToParsedLinesBlocksAux ls [] (i+length ls'+1)
-scriptToParsedLinesBlocksAux (DeductionTransformationLine mi mstr:ls) ls' i =
-       scriptToParsedLinesBlocksAux ls (ls'++[DeductionTransformationLine mi mstr]) i
-scriptToParsedLinesBlocksAux (EmptyLine:ls) ls' i = scriptToParsedLinesBlocksAux ls ls' (i+1)
-scriptToParsedLinesBlocksAux (ErrorLine str:ls) ls' i = ([ErrorLine str], i, Nothing):scriptToParsedLinesBlocksAux ls ls' (i+1)
+-- scriptToParagraphsAux :: Script -> Script -> Int -> [Paragraph]
+-- -- scriptToParagraphsAux scriptToProcess  offset
+-- scriptToParagraphsAux [] [] _ = []
+-- scriptToParagraphsAux [] ls i = [(ls, i, Nothing)]
+-- scriptToParagraphsAux [VarDeclareLine x:ls] ls' _ = undefined
+
+scriptToScriptBlocks :: Script -> [(Script, Maybe Int)]
+scriptToScriptBlocks = scriptToScriptBlocksAux [] (Just 0)
+
+scriptToScriptBlocksAux :: Script -> Maybe Int -> Script -> [(Script, Maybe Int)]
+scriptToScriptBlocksAux [] _ [] = []
+scriptToScriptBlocksAux ls' mi [] = [(ls', mi)]
+scriptToScriptBlocksAux ls' mi (ProofLine x:ls) = scriptToScriptBlocksAux (ls'++[ProofLine x]) mi ls
+scriptToScriptBlocksAux ls' mi (EndProofLine mn:ls) =
+       (ls'++[EndProofLine mn], mi):scriptToScriptBlocksAux [] (fmap (length ls'+1+) mi) ls
+scriptToScriptBlocksAux ls' mi' (DeductionTransformationLine mi mstr:ls) =
+       scriptToScriptBlocksAux (ls'++[DeductionTransformationLine mi mstr]) mi' ls
+scriptToScriptBlocksAux ls' mi (EmptyLine:ls) = scriptToScriptBlocksAux (ls'++[EmptyLine]) mi ls
+scriptToScriptBlocksAux ls' mi (ErrorLine str:ls) =
+       ([ErrorLine str], mi):scriptToScriptBlocksAux ls' (fmap (1+) mi) ls
+scriptToScriptBlocksAux [] mi (VarDeclareLine vds:ls) =
+       ([VarDeclareLine vds], mi):scriptToScriptBlocksAux [] (mi >>= \i -> Just (i+1)) ls
+scriptToScriptBlocksAux ls' mi (VarDeclareLine vds:ls) =
+       (ls', mi):([VarDeclareLine vds], fmap (length ls'+) mi):scriptToScriptBlocksAux [] (fmap (length ls'+1+) mi) ls
+scriptToScriptBlocksAux [] mi (PredDeclareLine pds:ls) =
+       ([PredDeclareLine pds], mi):scriptToScriptBlocksAux [] (fmap (1+) mi) ls
+scriptToScriptBlocksAux ls' mi (PredDeclareLine pds:ls) =
+       (ls', mi):([PredDeclareLine pds], fmap (length ls'+) mi):scriptToScriptBlocksAux [] (fmap (length ls'+1+) mi) ls
+scriptToScriptBlocksAux [] mi (ConstDeclareLine cds:ls) =
+       ([ConstDeclareLine cds], mi):scriptToScriptBlocksAux [] (fmap (1+) mi) ls
+scriptToScriptBlocksAux ls' mi (ConstDeclareLine cds:ls) =
+       (ls', mi):([ConstDeclareLine cds], fmap (length ls'+) mi):scriptToScriptBlocksAux [] (fmap (length ls'+1+) mi) ls
+
+scriptToProofBlocks :: Script -> [(Proof, [Int], Maybe String)]
+scriptToProofBlocks = scriptToProofBlocksAux 0 [] [] Nothing
+
+scriptToProofBlocksAux :: Int -> Proof -> [Int] -> Maybe String -> Script -> [(Proof, [Int], Maybe String)]
+scriptToProofBlocksAux _ [] [] _ [] = []
+scriptToProofBlocksAux _ p is ms [] = [(p, is, ms)]
+scriptToProofBlocksAux i p is _ (ProofLine x:s) = scriptToProofBlocksAux (i+1) (p++[x]) (is++[i]) Nothing s
+scriptToProofBlocksAux i p is _ (EndProofLine mn:s) = (p, is, mn):scriptToProofBlocksAux (i+1) [] [] Nothing s
+scriptToProofBlocksAux i p is _ (DeductionTransformationLine mi Nothing:s) = (p, is, Nothing):scriptToProofBlocksAux (i+1) dp [] Nothing s
+    where
+        p' = proofToUntaggedProof p
+        dp = case mi of Nothing -> deduction p'; Just i -> iterate deductionOnce p'!!i
+scriptToProofBlocksAux i p is _ (ErrorLine x:s) = [(p, is, Nothing)]
+scriptToProofBlocksAux i p is _ (_:s) = scriptToProofBlocksAux (i+1) p is Nothing s
+
+scriptBlockToLineNumbers :: (Script, Maybe Int, Maybe String) -> [Maybe Int]
+--scriptBlockToLineNumbers (s, Nothing, _) = replicate (length s) Nothing
+scriptBlockToLineNumbers ([], _, _) = []
+scriptBlockToLineNumbers ((ProofLine x):ls, mi, _) = undefined
 
 isCorrectlyStructuredBlocks :: [(Script, Int, Maybe String)] -> Bool
 isCorrectlyStructuredBlocks = isCorrectlyStructuredBlocksAux False
@@ -124,24 +225,55 @@ isCorrectlyStructuredBlocksAux _ (([EndProofLine _], _, _):ls) = isCorrectlyStru
 isCorrectlyStructuredBlocksAux _ (([DeductionTransformationLine _ _], _, _):ls) = isCorrectlyStructuredBlocksAux True ls
 isCorrectlyStructuredBlocksAux _ _ = True
 
-scriptBlocksToIllegalDeclarationIndex :: [(Script, Int, Maybe String)] -> Maybe Int
-scriptBlocksToIllegalDeclarationIndex = scriptBlocksToIllegalDeclarationIndexAux False
+-- scriptBlocksToIllegalDeclarationIndex :: [(Script, Int, Maybe String)] -> Maybe Int
+-- scriptBlocksToIllegalDeclarationIndex = scriptBlocksToIllegalDeclarationIndexAux False
 
-scriptBlocksToIllegalDeclarationIndexAux :: Bool -> [(Script, Int, Maybe String)] -> Maybe Int
-scriptBlocksToIllegalDeclarationIndexAux _ [] = Nothing
-scriptBlocksToIllegalDeclarationIndexAux True (([VarDeclareLine _], i, _):ls) = Just i
-scriptBlocksToIllegalDeclarationIndexAux False (([VarDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
-scriptBlocksToIllegalDeclarationIndexAux True (([ConstDeclareLine _], i, _):ls) = Just i
-scriptBlocksToIllegalDeclarationIndexAux False (([ConstDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
-scriptBlocksToIllegalDeclarationIndexAux True (([PredDeclareLine _], i, _):ls) = Just i
-scriptBlocksToIllegalDeclarationIndexAux False (([PredDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
-scriptBlocksToIllegalDeclarationIndexAux isMainMatter (([EmptyLine], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux isMainMatter ls
-scriptBlocksToIllegalDeclarationIndexAux isMainMatter (([ErrorLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux isMainMatter ls
-scriptBlocksToIllegalDeclarationIndexAux _ (([ProofLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
-scriptBlocksToIllegalDeclarationIndexAux _ (([EndProofLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
-scriptBlocksToIllegalDeclarationIndexAux _ (([DeductionTransformationLine _ _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
-scriptBlocksToIllegalDeclarationIndexAux _ _ = Nothing
+-- scriptBlocksToIllegalDeclarationIndexAux :: Bool -> [(Script, Int, Maybe String)] -> Maybe Int
+-- scriptBlocksToIllegalDeclarationIndexAux _ [] = Nothing
+-- scriptBlocksToIllegalDeclarationIndexAux True (([VarDeclareLine _], i, _):ls) = Just i
+-- scriptBlocksToIllegalDeclarationIndexAux False (([VarDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
+-- scriptBlocksToIllegalDeclarationIndexAux True (([ConstDeclareLine _], i, _):ls) = Just i
+-- scriptBlocksToIllegalDeclarationIndexAux False (([ConstDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
+-- scriptBlocksToIllegalDeclarationIndexAux True (([PredDeclareLine _], i, _):ls) = Just i
+-- scriptBlocksToIllegalDeclarationIndexAux False (([PredDeclareLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux False ls
+-- scriptBlocksToIllegalDeclarationIndexAux isMainMatter (([EmptyLine], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux isMainMatter ls
+-- scriptBlocksToIllegalDeclarationIndexAux isMainMatter (([ErrorLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux isMainMatter ls
+-- scriptBlocksToIllegalDeclarationIndexAux _ (([ProofLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
+-- scriptBlocksToIllegalDeclarationIndexAux _ (([EndProofLine _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
+-- scriptBlocksToIllegalDeclarationIndexAux _ (([DeductionTransformationLine _ _], _, _):ls) = scriptBlocksToIllegalDeclarationIndexAux True ls
+-- scriptBlocksToIllegalDeclarationIndexAux _ _ = Nothing
 
+isProofScriptLine :: ScriptLine -> Bool
+isProofScriptLine (ProofLine _) = True
+isProofScriptLine (EndProofLine _) = True
+isProofScriptLine (DeductionTransformationLine _ _) = True
+isProofScriptLine _ = False
+
+isDeclarationScriptLine :: ScriptLine -> Bool
+isDeclarationScriptLine (VarDeclareLine _) = True
+isDeclarationScriptLine (ConstDeclareLine _) = True
+isDeclarationScriptLine (PredDeclareLine _) = True
+isDeclarationScriptLine _ = False
+
+scriptToIllegalDeclarationIndex :: Script -> Maybe Int
+scriptToIllegalDeclarationIndex s = do fpi <- findIndex isProofScriptLine s
+                                       let dis = findIndices isDeclarationScriptLine s
+                                           illIs = filter (>fpi) dis
+                                        in if null illIs then Nothing else Just (head illIs)
+
+scriptToIllegalDeclarationIndices :: Script -> [Int]
+scriptToIllegalDeclarationIndices s = let mfpi = findIndex isProofScriptLine s
+                                          dis = findIndices isDeclarationScriptLine s
+                                        in case mfpi of Nothing -> []
+                                                        Just fpi -> filter (>fpi) dis
+
+
+-- scriptToProofBlocks :: Script -> [(Proof, [Int], Maybe String)]
+-- scriptToProofBlocks = scriptToProofBlocksAux 0 []
+
+-- scriptToProofBlocksAux :: Int -> Script -> Script -> [(Proof, [Int], Maybe String)]
+-- -- scriptToProofBlocksAux i curr orig = 
+-- scriptToProofBlocksAux i curr [] = undefined
 -- scriptToProofBlocks :: [ParsedLine] -> [ProofBlock]
 -- scriptToProofBlocks [] = []
 -- scriptToProofBlocks (ProofLine x:ls) = x:scriptToProofBlocks ls
@@ -164,4 +296,5 @@ scriptToLineNumbers ls = scriptToLineNumbersAux ls 1
 scriptToLineNumbersAux :: Script -> Int -> [Int]
 scriptToLineNumbersAux [] ln = []
 scriptToLineNumbersAux (ProofLine x:ls) ln = ln:scriptToLineNumbersAux ls (ln+1)
+scriptToLineNumbersAux (DeductionTransformationLine mi mn:ls) ln = ln:scriptToLineNumbersAux ls (ln+1)
 scriptToLineNumbersAux (_:ls) ln = scriptToLineNumbersAux ls (ln+1)
