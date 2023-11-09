@@ -298,7 +298,7 @@ It generated a correct proof of
 ```
 Note that the command line options <code>-d</code> as well as <code>-1</code> is deprecated.  The deduction transformation is now available through proof scripting, as described below.
 
-One example showing the power of this proof transformation is the proof of the excluded middle, whose proof is available as <code>examples/ex17_excluded_middle.proof</code>.
+One example showing the power of this proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex17_excluded_middle.proof</code>.
 ```
 A | ~A
 ```
@@ -318,9 +318,11 @@ deduction-transformation
 ~~(A | ~A) -> A | ~A by DNE
 A | ~A by MP
 ```
-By the <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is translated into a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
-The proof scripts from the line 6 to 8 are added to the end of the new proof proof, and this forms another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
+By <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is translated into a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
+The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
 Another deduction transformation is applied to generate a proof of <code>⊢ ~~(A | ~A)</code>, which yields the goal <code>⊢ A | ~A</code> by DNE and MP.
+
+Note that in lines after <code>deduction-transformation</code>, the original proof and tags are not accessible.  It is a natural consequence, because <code>deduction-transformation</code> is a proof transformation, and no infrerence rule, definitely, and each conclusion formula of the original proof is modified by getting a new premise originated from the assumption formula to eliminate.  The command line option <code>-p</code> may be helpful to get to know how the generated proof looks.
 
 By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
