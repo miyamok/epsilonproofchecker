@@ -195,10 +195,11 @@ scriptToProofBlocksAux _ [] [] _ [] = []
 scriptToProofBlocksAux _ p is ms [] = [(p, is, ms)]
 scriptToProofBlocksAux i p is _ (ProofLine x:s) = scriptToProofBlocksAux (i+1) (p++[x]) (is++[i]) Nothing s
 scriptToProofBlocksAux i p is _ (EndProofLine mn:s) = (p, is, mn):scriptToProofBlocksAux (i+1) [] [] Nothing s
-scriptToProofBlocksAux i p is _ (DeductionTransformationLine mi Nothing:s) = (p, is, Nothing):scriptToProofBlocksAux (i+1) dp [] Nothing s
+scriptToProofBlocksAux i p is _ (DeductionTransformationLine mi Nothing:s) = (p, is, Nothing):scriptToProofBlocksAux (i+1) dp is' Nothing s
     where
         p' = proofToUntaggedProof p
         dp = case mi of Nothing -> deduction p'; Just i -> iterate deductionOnce p'!!i
+        is' = replicate (length dp) (-1)
 scriptToProofBlocksAux i p is _ (ErrorLine x:s) = [(p, is, Nothing)]
 scriptToProofBlocksAux i p is _ (_:s) = scriptToProofBlocksAux (i+1) p is Nothing s
 
@@ -266,7 +267,6 @@ scriptToIllegalDeclarationIndices s = let mfpi = findIndex isProofScriptLine s
                                           dis = findIndices isDeclarationScriptLine s
                                         in case mfpi of Nothing -> []
                                                         Just fpi -> filter (>fpi) dis
-
 
 -- scriptToProofBlocks :: Script -> [(Proof, [Int], Maybe String)]
 -- scriptToProofBlocks = scriptToProofBlocksAux 0 []

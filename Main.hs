@@ -51,14 +51,14 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
                                 f = proofToConclusion p
 
 printProofWrong :: Proof -> Maybe Int -> [Int] -> IO ()
-printProofWrong p mi lns =
+printProofWrong p mi is =
         case mi of Nothing -> do putStrLn "The input is not a proof of"
                                  putStrLn (prettyPrintFormula f)
                                  if null asms then return ()
                                               else do putStrLn "from the following assumptions"
                                                       putStrLn (prettyPrintAssumptions asms)
-                   Just i -> if i < length lns && i < length p -- temporarily a line number of the erroneous proof step may be missing
-                             then putStrLn ("Error at line " ++ show (lns!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
+                   Just i -> if i < traceShowId (length is) && i < length p -- temporarily a line number of the erroneous proof step may be missing
+                             then putStrLn ("Error at line " ++ show (is!!i) ++ ": " ++ prettyPrintProofStep (p!!i))
                              else putStrLn "Error found (possibly some lines after deduction-transformation??)"
                 where
                         f = proofToConclusion p
@@ -68,21 +68,21 @@ printIllStructuredProofBlockError :: [(Script, Int, Maybe String)] -> IO ()
 printIllStructuredProofBlockError pbs = undefined
 
 proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO ()
-proofAndFlagsToOutput p linenums pFlag debugFlag
- | not $ and bs = printProofWrong p mi linenums
+proofAndFlagsToOutput p is pFlag debugFlag
+ | not $ and bs = printProofWrong p mi is
  | null autoFlas = printProofCorrect p pFlag
  | otherwise = do ex <- findExecutable "z3"
                   autobs <- sequence autoResults
                   case ex of Nothing -> putStrLn "Proof by Auto requires Microsoft's z3"
                              Just _ -> if and autobs then printProofCorrect p pFlag
                                        else let mi' = do j <- findIndex not autobs
-                                                         return (linenums!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
-                                             in printProofWrong p mi' linenums
+                                                         return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+                                             in printProofWrong p mi' is
  where
         bs = checkClaims p
-        mi = findIndex not bs
+        mi = traceShowId $ findIndex not bs
         mln = do i <- mi -- temporarily the line number of the erroneous proof step may be missing
-                 if i < length linenums then return (linenums!!i) else Nothing
+                 if i < length (traceShowId is) then return (is!!i) else Nothing
         autoSteps = traceShowId $ proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
         autoFlas = proofToAutoStepFormulas p
@@ -101,13 +101,13 @@ main = do args <- getArgs
                       --proof = scriptToProof script
                       scriptBlocks = scriptToScriptBlocks script
                       proofBlocks = scriptToProofBlocks script
-                      proof = let (p, _, _) = last proofBlocks in p
-                      ---proof = scriptToProof $ concat (map (\(l, _, _) -> l) scriptBlocks)
+                      (proof, is, _) = last proofBlocks
+                      --proof = scriptToProof $ concat (map (\(l, _, _) -> l) scriptBlocks)
                       --proofScripts = scriptToProofScripts script
                       --proofBlocks = proofScriptToProofBlocks proofScripts
                       --proofs = proofBlocksToProofs proofBlocks
                       --proof = proofs!!0
-                      linenums = scriptToLineNumbers script
+                      --linenums = scriptToLineNumbers script
                       deductible = isDeductionApplicable proof
                       proof' = if dFlag && deductible
                                then if onceFlag then deductionOnce $ proofToUntaggedProof proof
@@ -121,5 +121,5 @@ main = do args <- getArgs
                               Just msg -> do putStrLn msg; return ()
                               Nothing -> if dFlag && not deductible
                                          then putStrLn "Deduction transformation doesn't support a proof with Auto"
-                                         else case mIllDeclInd of Nothing -> proofAndFlagsToOutput proof' linenums pFlag debugFlag
+                                         else case mIllDeclInd of Nothing -> proofAndFlagsToOutput proof' is pFlag debugFlag
                                                                   Just i -> putStrLn ("Error at line " ++ show (i+1) ++ ": Declaration may not occur after a proof started.")
