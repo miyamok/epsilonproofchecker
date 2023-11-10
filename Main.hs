@@ -11,11 +11,11 @@ import Debug.Trace
 import Data.List
 
 printHelpMessage :: IO ()
-printHelpMessage = do putStrLn "-d option to apply proof transformation due to deduction theorem"
+printHelpMessage = do putStrLn "-d option to apply deduction transformation"
                       putStrLn "-p option to print out the proof"
-                      putStrLn "-1 option to limit the application of deduction theorem only once"
+                      putStrLn "-1 option to limit the application of deduction transformation only for one assumption"
                       putStrLn "Usage:"
-                      putStrLn "% ./Main [options] filepath"
+                      putStrLn "./Main [options] filepath"
 
 -------------------------------------------------
 -- handling command line options and arguments
@@ -60,13 +60,16 @@ printProofWrong p mi is =
                                  if null asms then return ()
                                               else do putStrLn "from the following assumptions"
                                                       putStrLn (prettyPrintAssumptions asms)
-                   Just i -> printErrorMessage (i+1) (prettyPrintProofStep (p!!i))
+                   Just i -> printErrorMessage (i+1) "formula mismatching"
                 where
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
-printIllStructuredProofBlockError :: [(Script, Int, Maybe String)] -> IO ()
-printIllStructuredProofBlockError pbs = undefined
+-- printProofBlockWrong :: (Proof, [Int], Maybe String) -> IO ()
+-- printProofBlockWrong (p, lns, mn) =
+
+proofBlockAndFlagsToOutput :: (Proof, [Int], Maybe String) -> Bool -> Bool -> IO Bool
+proofBlockAndFlagsToOutput (p, lns, _) = proofAndFlagsToOutput p lns
 
 proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
 proofAndFlagsToOutput p is pFlag debugFlag
@@ -76,7 +79,7 @@ proofAndFlagsToOutput p is pFlag debugFlag
                       return True
  | otherwise = do ex <- findExecutable "z3"
                   autobs <- sequence autoResults
-                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3"
+                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3 (github.com/Z3Prover/z3)"
                                            return False
                              Just _ -> if and autobs then do printProofCorrect p pFlag
                                                              return True
@@ -94,12 +97,88 @@ proofAndFlagsToOutput p is pFlag debugFlag
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
+proofBlockWithAutoToWrongLineIndex :: (Proof, [Int], Maybe String) -> IO (Maybe Int)
+proofBlockWithAutoToWrongLineIndex (p, lns, mn)
+ | not $ and bs = do return mln
+ | null autoFlas = do return Nothing
+ | otherwise = do ex <- findExecutable "z3"
+                  autobs <- sequence autoResults
+                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3 (github.com/Z3Prover/z3)"
+                                           case findIndex (\(_, r, _) -> r == Auto) p of
+                                                Nothing -> return Nothing
+                                                Just i -> return (Just (lns!!i))
+                             Just _ -> if and autobs then return Nothing
+                                       else let mi' = do j <- findIndex not autobs
+                                                         return (lns!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+                                             in case mi' of Nothing -> return Nothing; Just i' -> return (Just (lns!!i'))
+ where
+        bs = checkClaims p
+        mi = findIndex not bs
+        mln = do i <- mi
+                 return (lns!!i)
+        autoSteps = proofToAutoStepFormulas p
+        asmFlas = proofToAssumptionFormulas p
+        autoFlas = proofToAutoStepFormulas p
+        autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
+checkProofBlocksWithAuto :: [(Proof, [Int], Maybe String)] -> IO Bool
+checkProofBlocksWithAuto [] = return True
+checkProofBlocksWithAuto ((p, lns, ms):pbs) =
+        do b <- checkProofWithAuto p
+           if b then checkProofBlocksWithAuto pbs
+                else return False
+
+checkProofWithAuto :: Proof -> IO Bool
+checkProofWithAuto p
+ | not $ and $ checkClaims p = return False
+ | null autoFlas = return True
+ | otherwise = do ex <- findExecutable "z3"
+                  autobs <- sequence autoResults
+                  case ex of Nothing -> return False
+                             Just _ -> if and autobs then return True
+                                       else return False
+ where
+        asmFlas = proofToAssumptionFormulas p
+        autoFlas = proofToAutoStepFormulas p
+        autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
+-- checkProofWithAuto :: Proof -> IO Bool
+-- checkProofWithAuto p
+--  | not $ and $ checkClaims p = return False
+--  | null autoFlas = return True
+--  | otherwise = do ex <- findExecutable "z3"
+--                   autobs <- sequence autoResults
+--                   case ex of Nothing -> return False
+--                              Just _ -> if and autobs then return True
+--                                        else return False
+--  where
+--         asmFlas = proofToAssumptionFormulas p
+--         autoFlas = proofToAutoStepFormulas p
+--         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
+-- checkProofBlockWithAuto :: (Proof, [Int], Maybe String) -> IO Bool
+-- checkProofBlockWithAuto (p, lns, ms) = checkProofWithAuto p
+
+-- proofBlockToErrorMessageAndLineIndex :: (Proof, [Int], Maybe String) -> IO (Maybe (String, Int))
+-- proofBlockToErrorMessageAndLineIndex (p, lns, mn) =
+--         let bs = checkClaims p
+--             autobs = 
+
 proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
 proofBlocksAndFlagsToOutput [] _ _ = return ()
-proofBlocksAndFlagsToOutput ((p, lns, ms):pbs) pFlag debugFlag =
-        do b <- proofAndFlagsToOutput p lns pFlag debugFlag
-           if b then proofBlocksAndFlagsToOutput pbs pFlag debugFlag
-                else return ()
+proofBlocksAndFlagsToOutput ((p,lns,mn):pbs) pFlag debugFlag =
+        do b <- checkProofWithAuto p
+           if b then do if null pbs then printProofCorrect p pFlag
+                                    else proofBlocksAndFlagsToOutput pbs pFlag debugFlag
+                else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn)
+                        printProofWrong p mi lns
+
+-- proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
+-- proofBlocksAndFlagsToOutput [] _ _ = return ()
+-- proofBlocksAndFlagsToOutput ((p, lns, ms):pbs) pFlag debugFlag =
+--         do b <- proofAndFlagsToOutput p lns pFlag debugFlag
+--            if b then proofBlocksAndFlagsToOutput pbs pFlag debugFlag
+--                 else return ()
 
 -- This function is needed only for a deprecated feature of the "-d" command line option
 proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
@@ -111,27 +190,18 @@ proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
 proofBlocksAndFlagsToDeductionOutput _ _ _ _
         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
 
--- proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
--- proofBlocksAndFlagsToDeductionOutput [(proof, ln, ms)] onceFlag pFlag debugFlag
---  | isDeductionApplicable proof = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
---                                                           else deduction $ proofToUntaggedProof proof
---                                      in do b <- proofAndFlagsToOutput proof' ln pFlag debugFlag
---                                            return ()
---  | otherwise = putStrLn "Deduction transformation doesn't support a proof with Auto"
--- proofBlocksAndFlagsToDeductionOutput _ _ _ _
---         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
-
 main :: IO ()
 main = do args <- getArgs
           let (debugFlag, dFlag, onceFlag, pFlag, filenames) = argsToFlagsAndFilename args
           if length filenames /= 1
-          then putStrLn "Wrong option given, otherwise not exactly one filename given"
+          then do putStrLn "Wrong option given, otherwise not exactly one filename given"
+                  printHelpMessage
           else do ls <- fmap lines (readFile (head filenames))
                   let script = parseLines ls
                       mErrorMsg = scriptToErrorMessage script
-                      declarations = scriptToDeclarations script
+                      --declarations = scriptToDeclarations script
                       mIllDeclInd = scriptToIllegalDeclarationIndex script
-                      scriptBlocks = scriptToScriptBlocks script
+                      --scriptBlocks = scriptToScriptBlocks script
                       proofBlocks = scriptToProofBlocks script
                       in case mErrorMsg of
                               Just msg -> putStrLn msg
