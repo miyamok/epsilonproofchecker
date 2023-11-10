@@ -355,7 +355,6 @@ There is no means for the proof assistant epsilon to verify the response from su
 It implies that the correctness of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof assistant does not guarantee anything.
 
 The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
-The proof transformation currently doesn't support a proof involving Auto.
 
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
