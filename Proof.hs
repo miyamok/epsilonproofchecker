@@ -56,7 +56,7 @@ checkDisjE (ImpForm (DisjForm f f') (ImpForm (ImpForm f1 g1) (ImpForm (ImpForm f
 checkDisjE _ = False
 
 checkAllE :: Formula -> Bool
-checkAllE (ImpForm (ForallForm v f) g) = length substs == 1
+checkAllE (ImpForm (ForallForm v f) g) = alphaEqFormula f g || length substs == 1
       where
             vars = nub ([v] ++ formulaToVariables f ++ formulaToVariables g)
             freshvar = variablesToFreshVariable vars
@@ -64,7 +64,7 @@ checkAllE (ImpForm (ForallForm v f) g) = length substs == 1
 checkAllE _ = False
 
 checkExI :: Formula -> Bool
-checkExI (ImpForm f (ExistsForm v g)) = length substs == 1
+checkExI (ImpForm f (ExistsForm v g)) = alphaEqFormula f g || length substs == 1
       where
             substs = simpleFormulaUnification f g
 checkExI _ = False
@@ -82,16 +82,30 @@ checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g
             (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
             alphaEqFormula f' (substFormula v (VarTerm v') f)
 
-checkGen :: Proof -> Int -> Tag -> Bool
-checkGen p i t =
-      let pproof = take (i+1) p
-          is = proofInGenFormToPremiseIndices pproof
-          asms = proofToAssumptionFormulas p
-          freeVars = concat $ map formulaToFreeVariables asms
-          genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
-      in if genVar `elem` freeVars then False
-         else case t of Nothing -> if null is then False else True
-                        Just s -> any (`elem` is) (proofAndTagStringToIndices pproof s)
+-- checkGen :: Proof -> Int -> Tag -> Bool
+-- checkGen p i t =
+--       let pproof = take (i+1) p
+--           is = proofInGenFormToPremiseIndices pproof
+--           asms = proofToAssumptionFormulas p
+--           freeVars = concat $ map formulaToFreeVariables asms
+--           genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
+--       in if genVar `elem` freeVars then False
+--          else case t of Nothing -> if null is then False else True
+--                         Just s -> any (`elem` is) (proofAndTagStringToIndices pproof s)
+
+checkGen :: Proof -> Bool
+checkGen p = let (ForallForm genVar genFlaKernel, _, _) = last p
+                 asmFlas = proofToAssumptionFormulas p
+                 asmFreeVars = concat $ map formulaToFreeVariables asmFlas
+                 is = proofInGenFormToPremiseIndices p
+             in if null is then False
+                  else let (preFla, _, _) = p!!last is
+                           substs = filter (\(x,y) -> case y of VarTerm v -> True; _ -> False) (simpleFormulaUnification genFlaKernel preFla)
+                        in if null substs && alphaEqFormula genFlaKernel (preFla)
+                              then not (genVar `elem` asmFreeVars)
+                              else if length substs == 1
+                                    then let (VarTerm x) = fst (head substs) in not (x `elem` asmFreeVars)
+                                    else False
 
 checkModusPonens :: Formula -> Formula -> Formula -> Bool
 checkModusPonens f g1 g2 = checkModusPonensAux f g1 g2 || checkModusPonensAux f g2 g1
@@ -229,7 +243,8 @@ checkClaimsAux p offset = if length p <= offset
                         ExI -> checkExI f
                         AllShift -> checkAllShift f
                         ExShift -> checkExShift f
-                        Gen t -> checkGen p offset t
+                        --Gen Nothing -> checkGen p offset Nothing
+                        Gen Nothing -> checkGen (take (offset+1) p)
                         MP (Just s1) (Just s2) ->
                               let mb = (do l1 <- proofAndTagStringToStep (take offset p) s1
                                            l2 <- proofAndTagStringToStep (take offset p) s2
