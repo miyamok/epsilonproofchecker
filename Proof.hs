@@ -322,15 +322,6 @@ deduction p
  where
       asmProof = proofToAsms p
 
--- deduction :: Proof -> Proof
--- deduction p
---  | null asmProof = p -- nothing to do
---  | null nonAsmProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
---  | otherwise = deduction $ deductionAux asmProof nonAsmProof
---  where
---       asmProof = proofToAsms p
---       nonAsmProof = proofToNonAsms p
-
 deductionOnce :: Proof -> Proof
 deductionOnce [] = []
 deductionOnce p
@@ -375,6 +366,3 @@ deductionAux asmProof nonAsmProof =
                             (newConcl, MP Nothing Nothing, Nothing)]
                       Gen _ -> undefined
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
-
-isDeductionApplicable :: Proof -> Bool
-isDeductionApplicable p = null (proofToAutoStepFormulas p)
