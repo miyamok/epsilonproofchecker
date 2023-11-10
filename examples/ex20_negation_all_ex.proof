@@ -1,0 +1,13 @@
+~all x ~P(x) by Asm
+~ex x P(x) by Asm
+P(x) by Asm
+P(x) -> ex x P(x) by ExI
+ex x P(x) by MP
+bot by MP
+deduction-transformation
+all x ~P(x) by Gen
+bot by MP
+deduction-transformation
+~~ex x P(x) -> ex x P(x) by DNE
+ex x P(x) by MP
+deduction-transformation
