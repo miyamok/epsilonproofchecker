@@ -350,7 +350,7 @@ Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
-Note that the external tool z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
+Microsoft z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
 There is no means for the proof assistant epsilon to verify the response from such an external prover, and the proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
 It implies that the correctness of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof assistant does not guarantee anything.
 
