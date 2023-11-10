@@ -300,7 +300,7 @@ miyamoto@station3179 epsilonproofchecker % ./Main -d -1 examples/ex16_peirce_fir
 It generated a correct proof of
 (A -> B) -> A, ~A ⊢ A -> B
 ```
-Note that the command line options <code>-d</code> as well as <code>-1</code> is deprecated.  The deduction transformation is now available through proof scripting, as described below.
+The command line options <code>-d</code> as well as <code>-1</code> are deprecated.  The deduction transformation is now available through proof scripting, as described below.
 
 One example showing the power of this proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex17_excluded_middle.proof</code>.
 ```
