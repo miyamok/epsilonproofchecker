@@ -443,7 +443,6 @@ Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
 - Lemma feature
-- Deduction transformation should be able to be indicated in proof scripts
 - Epsilon equality axiom to implement
 - Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
