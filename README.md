@@ -326,7 +326,8 @@ By <code>deduction-transformation</code>, the first five lines, the proof of <co
 The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
 Another deduction transformation is applied to generate a proof of <code>⊢ ~~(A | ~A)</code>, which yields the goal <code>⊢ A | ~A</code> by DNE and MP.
 
-Note that in lines after <code>deduction-transformation</code>, the original proof and tags are not accessible.  It is a natural consequence, because <code>deduction-transformation</code> is a proof transformation, and no infrerence rule, definitely, and each conclusion formula of the original proof is modified by getting a new premise originated from the assumption formula to eliminate.  The command line option <code>-p</code> may be helpful to get to know how the generated proof looks.
+In lines after <code>deduction-transformation</code>, the original proof and tags there are not accessible.
+The command line option <code>-p</code> may be helpful to get to know how the generated proof looks.
 
 By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
