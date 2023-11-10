@@ -1,0 +1,8 @@
+ex x P(x) -> A by Asm
+P(x) by Asm
+P(x) -> ex x P(x) by ExI
+ex x P(x) by MP
+A by MP
+deduction-transformation
+all x(P(x) -> A) by Gen
+deduction-transformation
