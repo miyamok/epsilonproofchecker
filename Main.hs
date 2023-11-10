@@ -103,14 +103,23 @@ proofBlocksAndFlagsToOutput ((p, lns, ms):pbs) pFlag debugFlag =
 
 -- This function is needed only for a deprecated feature of the "-d" command line option
 proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
-proofBlocksAndFlagsToDeductionOutput [(proof, ln, ms)] onceFlag pFlag debugFlag
- | isDeductionApplicable proof = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
-                                                          else deduction $ proofToUntaggedProof proof
-                                     in do b <- proofAndFlagsToOutput proof' ln pFlag debugFlag
-                                           return ()
- | otherwise = putStrLn "Deduction transformation doesn't support a proof with Auto"
+proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
+ = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
+                                 else deduction $ proofToUntaggedProof proof
+    in do proofAndFlagsToOutput proof' lns pFlag debugFlag
+          return ()
 proofBlocksAndFlagsToDeductionOutput _ _ _ _
         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
+
+-- proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
+-- proofBlocksAndFlagsToDeductionOutput [(proof, ln, ms)] onceFlag pFlag debugFlag
+--  | isDeductionApplicable proof = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
+--                                                           else deduction $ proofToUntaggedProof proof
+--                                      in do b <- proofAndFlagsToOutput proof' ln pFlag debugFlag
+--                                            return ()
+--  | otherwise = putStrLn "Deduction transformation doesn't support a proof with Auto"
+-- proofBlocksAndFlagsToDeductionOutput _ _ _ _
+--         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
 
 main :: IO ()
 main = do args <- getArgs

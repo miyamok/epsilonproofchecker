@@ -317,18 +317,26 @@ deductionBase p = let asmSteps = proofToAsms p
 
 deduction :: Proof -> Proof
 deduction p
- | null asmProof = p -- nothing to do
- | null nonAsmProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
- | otherwise = deduction $ deductionAux asmProof nonAsmProof
+ | null asmProof = p
+ | otherwise = deduction $ deductionOnce p
  where
       asmProof = proofToAsms p
-      nonAsmProof = proofToNonAsms p
+
+-- deduction :: Proof -> Proof
+-- deduction p
+--  | null asmProof = p -- nothing to do
+--  | null nonAsmProof = deduction $ deductionBase p -- Asm reference is the conclusion of the proof
+--  | otherwise = deduction $ deductionAux asmProof nonAsmProof
+--  where
+--       asmProof = proofToAsms p
+--       nonAsmProof = proofToNonAsms p
 
 deductionOnce :: Proof -> Proof
+deductionOnce [] = []
 deductionOnce p
- | null asmProof = p -- nothing to do
- | null nonAsmProof = deductionBase p -- Asm reference is the conclusion of the proof
- | otherwise = deductionAux asmProof nonAsmProof
+ | null asmProof = p
+ | otherwise = let (_, r, _) = last p in if r == Asm then deductionBase p
+                                                     else deductionAux asmProof nonAsmProof
  where
       asmProof = proofToAsms p
       nonAsmProof = proofToNonAsms p
