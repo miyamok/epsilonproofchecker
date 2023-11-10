@@ -50,6 +50,9 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
                                 asms = proofToAssumptionFormulas p
                                 f = proofToConclusion p
 
+printErrorMessage :: Int -> String -> IO ()
+printErrorMessage ln msg = putStrLn ("Error at line " ++ show ln ++ ": " ++ msg)
+
 printProofWrong :: Proof -> Maybe Int -> [Int] -> IO ()
 printProofWrong p mi is =
         case mi of Nothing -> do putStrLn "The input is not a proof of"
@@ -57,9 +60,7 @@ printProofWrong p mi is =
                                  if null asms then return ()
                                               else do putStrLn "from the following assumptions"
                                                       putStrLn (prettyPrintAssumptions asms)
-                   Just i -> if i < length is && i < length p -- temporarily a line number of the erroneous proof step may be missing
-                             then putStrLn ("Error at line " ++ show (is!!i+1) ++ ": " ++ prettyPrintProofStep (p!!i))
-                             else putStrLn "Error found (possibly some lines after deduction-transformation??)"
+                   Just i -> printErrorMessage (i+1) (prettyPrintProofStep (p!!i))
                 where
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
@@ -67,26 +68,49 @@ printProofWrong p mi is =
 printIllStructuredProofBlockError :: [(Script, Int, Maybe String)] -> IO ()
 printIllStructuredProofBlockError pbs = undefined
 
-proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO ()
+proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
 proofAndFlagsToOutput p is pFlag debugFlag
- | not $ and bs = printProofWrong p mi is
- | null autoFlas = printProofCorrect p pFlag
+ | not $ and bs = do printProofWrong p mi is
+                     return False
+ | null autoFlas = do printProofCorrect p pFlag
+                      return True
  | otherwise = do ex <- findExecutable "z3"
                   autobs <- sequence autoResults
-                  case ex of Nothing -> putStrLn "Proof by Auto requires Microsoft's z3"
-                             Just _ -> if and autobs then printProofCorrect p pFlag
+                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3"
+                                           return False
+                             Just _ -> if and autobs then do printProofCorrect p pFlag
+                                                             return True
                                        else let mi' = do j <- findIndex not autobs
                                                          return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
-                                             in printProofWrong p mi' is
+                                             in do printProofWrong p mi' is
+                                                   return False
  where
         bs = checkClaims p
         mi = findIndex not bs
-        mln = do i <- mi -- temporarily the line number of the erroneous proof step may be missing
-                 if i < length is then return (is!!i) else Nothing
+        mln = do i <- mi
+                 return (is!!i)
         autoSteps = proofToAutoStepFormulas p
         asmFlas = proofToAssumptionFormulas p
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
+proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
+proofBlocksAndFlagsToOutput [] _ _ = return ()
+proofBlocksAndFlagsToOutput ((p, lns, ms):pbs) pFlag debugFlag =
+        do b <- proofAndFlagsToOutput p lns pFlag debugFlag
+           if b then proofBlocksAndFlagsToOutput pbs pFlag debugFlag
+                else return ()
+
+-- This function is needed only for a deprecated feature of the "-d" command line option
+proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
+proofBlocksAndFlagsToDeductionOutput [(proof, ln, ms)] onceFlag pFlag debugFlag
+ | isDeductionApplicable proof = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
+                                                          else deduction $ proofToUntaggedProof proof
+                                     in do b <- proofAndFlagsToOutput proof' ln pFlag debugFlag
+                                           return ()
+ | otherwise = putStrLn "Deduction transformation doesn't support a proof with Auto"
+proofBlocksAndFlagsToDeductionOutput _ _ _ _
+        = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
 
 main :: IO ()
 main = do args <- getArgs
@@ -98,28 +122,12 @@ main = do args <- getArgs
                       mErrorMsg = scriptToErrorMessage script
                       declarations = scriptToDeclarations script
                       mIllDeclInd = scriptToIllegalDeclarationIndex script
-                      --proof = scriptToProof script
                       scriptBlocks = scriptToScriptBlocks script
                       proofBlocks = scriptToProofBlocks script
-                      (proof, is, _) = last proofBlocks
-                      --proof = scriptToProof $ concat (map (\(l, _, _) -> l) scriptBlocks)
-                      --proofScripts = scriptToProofScripts script
-                      --proofBlocks = proofScriptToProofBlocks proofScripts
-                      --proofs = proofBlocksToProofs proofBlocks
-                      --proof = proofs!!0
-                      --linenums = scriptToLineNumbers script
-                      deductible = isDeductionApplicable proof
-                      proof' = if dFlag && deductible
-                               then if onceFlag then deductionOnce $ proofToUntaggedProof proof
-                                                else deduction $ proofToUntaggedProof proof
-                               else proof
-                --       in case scriptBlocksToIllegalDeclarationIndex scriptBlocks of
-                --          Just i -> do putStrLn ("Error at line " ++ show (i+1))
-                --                       putStrLn "Declarations may appear only before a proof starts"
-                --          Nothing -> 
                       in case mErrorMsg of
-                              Just msg -> do putStrLn msg; return ()
-                              Nothing -> if dFlag && not deductible
-                                         then putStrLn "Deduction transformation doesn't support a proof with Auto"
-                                         else case mIllDeclInd of Nothing -> proofAndFlagsToOutput proof' is pFlag debugFlag
-                                                                  Just i -> putStrLn ("Error at line " ++ show (i+1) ++ ": Declaration may not occur after a proof started.")
+                              Just msg -> putStrLn msg
+                              Nothing -> if dFlag
+                                         then proofBlocksAndFlagsToDeductionOutput proofBlocks onceFlag pFlag debugFlag
+                                         else case mIllDeclInd of
+                                                Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
+                                                Just i -> printErrorMessage (i+1) "Declaration may not occur after a proof started."
