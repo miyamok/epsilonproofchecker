@@ -128,7 +128,7 @@ F ::= A | bot | F -> F | F & F | (F | F)
 ```
 The vertical line is used for both the BNF syntax notation and our logical language, hence parentheses are inserted to make the matter a bit clear.
 A conjunction formula <code>A & B</code> claims that <code>A</code> and <code>B</code> hold.
-A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</code> hold.  Note that the disjunction doesn't mean that there is a possibility of both <code>A</code> and <code>B</code> hold.
+A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</code> hold.
 
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
