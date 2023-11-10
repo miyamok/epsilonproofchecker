@@ -322,8 +322,8 @@ deduction-transformation
 ~~(A | ~A) -> A | ~A by DNE
 A | ~A by MP
 ```
-By <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is translated into a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
-The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
+By <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is used to generate a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
+The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code> by the line 9.
 Another deduction transformation is applied to generate a proof of <code>⊢ ~~(A | ~A)</code>, which yields the goal <code>⊢ A | ~A</code> by DNE and MP.
 
 In lines after <code>deduction-transformation</code>, the original proof and tags there are not accessible.
