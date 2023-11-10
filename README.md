@@ -128,7 +128,7 @@ F ::= A | bot | F -> F | F & F | (F | F)
 ```
 The vertical line is used for both the BNF syntax notation and our logical language, hence parentheses are inserted to make the matter a bit clear.
 A conjunction formula <code>A & B</code> claims that <code>A</code> and <code>B</code> hold.
-A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</code> hold.  Note that the disjunction doesn't mean that there is a possibility of both <code>A</code> and <code>B</code> hold.
+A disjunction formula <code>A | B</code> claims that <code>A</code> or <code>B</code> hold.
 
 The way of reasoning with conjunction and disjunction is described in the next section, Syntax for proof scripts.
 ### Elementary calculus
@@ -300,7 +300,7 @@ miyamoto@station3179 epsilonproofchecker % ./Main -d -1 examples/ex16_peirce_fir
 It generated a correct proof of
 (A -> B) -> A, ~A ⊢ A -> B
 ```
-Note that the command line options <code>-d</code> as well as <code>-1</code> is deprecated.  The deduction transformation is now available through proof scripting, as described below.
+The command line options <code>-d</code> as well as <code>-1</code> are deprecated.  The deduction transformation is now available through proof scripting, as described below.
 
 One example showing the power of this proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex17_excluded_middle.proof</code>.
 ```
@@ -322,11 +322,12 @@ deduction-transformation
 ~~(A | ~A) -> A | ~A by DNE
 A | ~A by MP
 ```
-By <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is translated into a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
-The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code>.
+By <code>deduction-transformation</code>, the first five lines, the proof of <code>A | ~A -> bot, A ⊢ bot</code>, is used to generate a new proof of <code>A | ~A -> bot ⊢ ~A</code>.
+The proof scripts from the line 6 to 8 are added to the end of the new proof, and this establishes another proof concluding <code>A | ~A -> bot ⊢ bot</code> by the line 9.
 Another deduction transformation is applied to generate a proof of <code>⊢ ~~(A | ~A)</code>, which yields the goal <code>⊢ A | ~A</code> by DNE and MP.
 
-Note that in lines after <code>deduction-transformation</code>, the original proof and tags are not accessible.  It is a natural consequence, because <code>deduction-transformation</code> is a proof transformation, and no infrerence rule, definitely, and each conclusion formula of the original proof is modified by getting a new premise originated from the assumption formula to eliminate.  The command line option <code>-p</code> may be helpful to get to know how the generated proof looks.
+In lines after <code>deduction-transformation</code>, the original proof and tags there are not accessible.
+The command line option <code>-p</code> may be helpful to get to know how the generated proof looks.
 
 By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
@@ -350,12 +351,11 @@ Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
-Note that the external tool z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
+Microsoft z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
 There is no means for the proof assistant epsilon to verify the response from such an external prover, and the proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
 It implies that the correctness of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof assistant does not guarantee anything.
 
 The proof transformation feature does not maintain the tagged inference rules.  All tags are erased before transformation.
-The proof transformation currently doesn't support a proof involving Auto.
 
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
@@ -443,7 +443,6 @@ Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
 - Lemma feature
-- Deduction transformation should be able to be indicated in proof scripts
 - Epsilon equality axiom to implement
 - Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
