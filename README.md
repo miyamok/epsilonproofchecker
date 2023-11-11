@@ -447,7 +447,6 @@ Axiom name | Scheme | Note
 <code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>,<br /> <code>\|</code> and <code>&</code>
-<code>Auto</code> | | Requires Microsoft's z3
 
 In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
 If a proof comes with assumptions, those assumptions are displayed in the left hand side of <code>⊢</code>
@@ -457,6 +456,23 @@ Note that the formula <code>A</code> is distinct from any indexed ones <code>A<s
 The inference rule <code>Gen</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x E(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ E(x)</code> which should be a previous proof step, under the condition that <code>x</code> doesn't have a free occurrrence in any of the assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
 The search for suitable proof steps for those inference rules is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
+
+Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
+
+Reason name | Example | Note
+--- | --- | ---
+<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
+<code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
+<code>Auto</code> | | Requires Microsoft's z3
+<code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
+
+Command name | Example | Note
+--- | --- | ---
+<code>variables</code> | variables x y | Takes at least one variable name
+_n_<code>ary-constants</code> | 0ary-constants c | _n_ should be replaced by a natural number
+_n_<code>ary-predicates</code> | 2ary-constants R S | _n_ should be replaced by a natural number
+deduction-translation | | Applies the deduction translation to the current proof
+end-proof | end-proof Lemma123 | Ends the current proof.  A lemma is saved, provided an argument given
 
 Example proofs are found in the <code>examples</code> directory.
 
