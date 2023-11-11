@@ -469,8 +469,8 @@ Reason name | Example | Note
 Command name | Example | Note
 --- | --- | ---
 <code>variables</code> | variables x y | Takes at least one variable name
-_n_<code>ary-constants</code> | 0ary-constants c | _n_ should be replaced by a natural number
-_n_<code>ary-predicates</code> | 2ary-constants R S | _n_ should be replaced by a natural number
+_n_<code>ary-constants</code> | 0ary-constants c | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | 2ary-constants R S | A natural number should be substituted for _n_
 deduction-translation | | Applies the deduction translation to the current proof
 end-proof | end-proof Lemma123 | Ends the current proof.  A lemma is saved, provided an argument given
 
