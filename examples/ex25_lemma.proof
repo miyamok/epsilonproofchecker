@@ -1,6 +1,0 @@
-0ary-predicates A B
-A by Asm
--- aaa
-0ary-predicates C
-B by Asm
-deduction-transformation
