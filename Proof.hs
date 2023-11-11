@@ -32,7 +32,7 @@ checkS (ImpForm (ImpForm f1 (ImpForm f2 f3)) (ImpForm (ImpForm g1 g2) (ImpForm g
 checkS _ = False
 
 checkC :: Formula -> Bool
-checkC f = isCriticalFormula f
+checkC = isCriticalFormula
 
 checkConjI :: Formula -> Bool
 checkConjI (ImpForm f (ImpForm f' (ConjForm g g'))) = alphaEqFormula f g && alphaEqFormula f' g'
