@@ -288,6 +288,8 @@ ruleAux = do symbol "K"
               return Asm
        <|> do symbol "Auto"
               return Auto
+       <|> do symbol "Ref"
+              return Ref
        <|> do symbol "Use"
               symbol "("
               name <- some alphanum

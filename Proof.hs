@@ -9,7 +9,7 @@ import Debug.Trace
 
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
              | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
-             | Gen Tag | EFQ | DNE | LEM | Asm | Use String deriving (Show, Eq)
+             | Gen Tag | EFQ | DNE | LEM | Asm | Ref | Use String deriving (Show, Eq)
 type Step = (Formula, Rule, Tag)
 type Proof = [Step]
 type ProofWithLineNumbers = (Proof, [Int])
@@ -227,6 +227,9 @@ checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
 checkUse :: Formula -> [Formula] -> Statement -> Bool
 checkUse f asmFlas (asmFlas', f') = alphaEqFormula f f' && all (\asmFla' -> any (alphaEqFormula asmFla') asmFlas ) asmFlas'
 
+checkRef :: Formula -> [Formula] -> Bool
+checkRef f = any (alphaEqFormula f)
+
 -- Note that this function doesn't check Auto, simply saying it is correct.
 checkClaims :: Proof -> Lemmas -> [Bool]
 checkClaims = checkClaimsAux 0
@@ -270,6 +273,8 @@ checkClaimsAux offset p lemmas = if length p <= offset
                         Asm -> True
                         Use lname -> let asmFlas = proofToAssumptionFormulas (take (offset+1) p)
                                       in checkUse f asmFlas (lemmas Map.! lname)
+                        Ref -> let asmFlas = proofToAssumptionFormulas (take (offset+1) p)
+                                    in checkRef f asmFlas
                         _ -> False
 
 --- this is a stub.  to remove it?
@@ -327,7 +332,7 @@ formulaToIdentityProof f =
           (f', MP Nothing Nothing, Nothing)]
 
 deductionAsm :: Formula -> Step -> Proof
-deductionAsm f (g, Asm, t)
+deductionAsm f (g, _, t)
  | alphaEqFormula f g = formulaToIdentityProof f
  | otherwise = [(ImpForm g (ImpForm f g), K, Nothing), (ImpForm f g, MP Nothing Nothing, Nothing)]
 
@@ -392,4 +397,5 @@ deductionAux asmProof nonAsmProof =
                             (ImpForm newPrem newConcl, AllShift, Nothing),
                             (newConcl, MP Nothing Nothing, Nothing)]
                       Gen _ -> undefined
+                      Ref -> deductionAsm asmFla (last nonAsmProof)
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
