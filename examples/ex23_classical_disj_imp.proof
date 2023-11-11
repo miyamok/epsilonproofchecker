@@ -1,0 +1,15 @@
+A -> B by Asm
+~(~A | B) by Asm
+A by Asm
+B by MP
+B -> ~A | B by DisjI2
+~A | B by MP
+bot by MP
+deduction-transformation
+~A -> ~A | B by DisjI1
+~A | B by MP
+bot by MP
+deduction-transformation
+~~(~A | B) -> ~A | B by DNE
+~A | B by MP
+deduction-transformation
