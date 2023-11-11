@@ -3,6 +3,8 @@ import Syntax
 import Data.List
 import Data.Maybe
 import Axiom
+import Data.Map (Map)
+import qualified Data.Map as Map
 import Debug.Trace
 
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
@@ -14,6 +16,7 @@ type ProofWithLineNumbers = (Proof, [Int])
 type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
 type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
+type Lemmas = Map Name Formula
 
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
@@ -212,20 +215,23 @@ proofInGenFormToPremiseIndices p
                   in map snd (filter (\(x, i) -> x) (zip info [0..]))
 
 -- Note that this function doesn't check Auto, simply saying it is correct.
-checkProof :: Proof -> Bool
-checkProof p = foldl (\ x i -> x && cs!!i) (last cs) deps
-      where cs = checkClaims p
+checkProof :: Proof -> Lemmas -> Bool
+checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
+      where cs = checkClaims p lemma
             deps = proofToDependency p
 
--- Note that this function doesn't check Auto, simply saying it is correct.
-checkClaims :: Proof -> [Bool]
-checkClaims p = checkClaimsAux p 0
+checkUse :: Formula -> Formula -> Bool
+checkUse f g = alphaEqFormula f g
 
 -- Note that this function doesn't check Auto, simply saying it is correct.
-checkClaimsAux :: Proof -> Int -> [Bool]
-checkClaimsAux p offset = if length p <= offset
+checkClaims :: Proof -> Lemmas -> [Bool]
+checkClaims = checkClaimsAux 0
+
+-- Note that this function doesn't check Auto, simply saying it is correct.
+checkClaimsAux :: Int -> Proof -> Lemmas -> [Bool]
+checkClaimsAux offset p lemmas = if length p <= offset
       then []
-      else c:checkClaimsAux p (offset+1) where
+      else c:checkClaimsAux (offset+1) p lemmas where
             c = case p!!offset of
                   (f, r, t) -> case r of
                         K -> checkK f
@@ -258,6 +264,7 @@ checkClaimsAux p offset = if length p <= offset
                               in any (not . null) (map (\f -> proofAndFormulaToStepIndices p f offset) prems)
                         C -> checkC f
                         Asm -> True
+                        Use lname -> checkUse f (lemmas Map.! lname)
                         _ -> False
 
 --- this is a stub.  to remove it?

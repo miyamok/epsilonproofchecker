@@ -288,6 +288,11 @@ ruleAux = do symbol "K"
               return Asm
        <|> do symbol "Auto"
               return Auto
+       <|> do symbol "Use"
+              symbol "("
+              name <- some alphanum
+              symbol ")"
+              return (Use name)
 
 step :: Declarations -> Parser Step
 step (vds, cds, pds) = do f <- formula (vds, cds, pds)
