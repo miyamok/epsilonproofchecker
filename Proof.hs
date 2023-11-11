@@ -16,7 +16,8 @@ type ProofWithLineNumbers = (Proof, [Int])
 type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
 type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
-type Lemmas = Map Name Formula
+type Statement = ([Formula], Formula)
+type Lemmas = Map Name Statement
 
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
@@ -135,6 +136,9 @@ proofToAssumptionFormulas (l:ls) = let (f, r, t) = l
                                     in case r of Asm -> f:nx
                                                  _ -> nx
 
+proofToStatement :: Proof -> Statement
+proofToStatement p = (proofToAssumptionFormulas p, proofToConclusion p)
+
 proofAndTagStringToIndices :: Proof -> String -> [Int]
 proofAndTagStringToIndices p s = proofAndTagStringToIndicesAux p s 0
 
@@ -220,8 +224,8 @@ checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
       where cs = checkClaims p lemma
             deps = proofToDependency p
 
-checkUse :: Formula -> Formula -> Bool
-checkUse f g = alphaEqFormula f g
+checkUse :: Formula -> [Formula] -> Statement -> Bool
+checkUse f asmFlas (asmFlas', f') = alphaEqFormula f f' && all (\asmFla' -> any (alphaEqFormula asmFla') asmFlas ) asmFlas'
 
 -- Note that this function doesn't check Auto, simply saying it is correct.
 checkClaims :: Proof -> Lemmas -> [Bool]
@@ -264,7 +268,8 @@ checkClaimsAux offset p lemmas = if length p <= offset
                               in any (not . null) (map (\f -> proofAndFormulaToStepIndices p f offset) prems)
                         C -> checkC f
                         Asm -> True
-                        Use lname -> checkUse f (lemmas Map.! lname)
+                        Use lname -> let asmFlas = proofToAssumptionFormulas (take (offset+1) p)
+                                      in checkUse f asmFlas (lemmas Map.! lname)
                         _ -> False
 
 --- this is a stub.  to remove it?
