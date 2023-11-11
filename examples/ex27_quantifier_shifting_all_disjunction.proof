@@ -1,0 +1,32 @@
+A by Asm
+deduction-transformation
+end-proof ident
+all x(P(x) | A) by Asm
+~(all x P(x) | A) by Asm
+~P(x) by Asm
+P(x) by Asm
+bot by MP
+bot -> A by EFQ
+A by MP
+deduction-transformation
+P(x) | A -> (P(x) -> A) -> (A -> A) -> A by DisjE
+all x(P(x) | A) -> P(x) | A by AllE
+P(x) | A by MP
+(P(x) -> A) -> (A -> A) -> A by MP
+(A -> A) -> A by MP
+A -> A by Use(ident)
+A by MP
+A -> all x P(x) | A by DisjI2
+all x P(x) | A by MP
+bot by MP
+deduction-transformation
+~~P(x) -> P(x) by DNE
+P(x) by MP
+all x P(x) by Gen
+all x P(x) -> all x P(x) | A by DisjI1
+all x P(x) | A by MP
+bot by MP
+deduction-transformation
+~~(all x P(x) | A) -> all x P(x) | A by DNE
+all x P(x) | A by MP
+deduction-transformation

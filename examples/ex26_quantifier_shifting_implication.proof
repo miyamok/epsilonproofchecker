@@ -1,0 +1,36 @@
+(P(x) -> A) by Asm
+all x P(x) by Asm
+all x P(x) -> P(x) by AllE
+P(x) by MP
+A by MP
+deduction-transformation
+deduction-transformation
+all x((P(x) -> A) -> (all x P(x) -> A)) by Gen
+all x((P(x) -> A) -> (all x P(x) -> A)) -> ex x(P(x) -> A) -> (all x P(x) -> A) by ExShift
+ex x(P(x) -> A) -> (all x P(x) -> A) by MP
+end-proof Lemma1
+all x P(x) -> A by Asm
+~ex x(P(x) -> A) by Asm
+P(z) by Asm
+~P(x) by Asm
+P(x) by Asm
+bot by MP
+bot -> A by EFQ
+A by MP
+deduction-transformation
+(P(x) -> A) -> ex x(P(x) -> A) by ExI
+ex x(P(x) -> A) by MP
+bot by MP
+deduction-transformation
+~~P(x) -> P(x) by DNE
+P(x) by MP
+all x P(x) by Gen
+A by MP
+deduction-transformation
+(P(z) -> A) -> ex x(P(x) -> A) by ExI
+ex x(P(x) -> A) by MP
+bot by MP
+deduction-transformation
+~~ex x(P(x) -> A) -> ex x(P(x) -> A) by DNE
+ex x(P(x) -> A) by MP
+deduction-transformation
