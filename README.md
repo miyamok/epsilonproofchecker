@@ -470,7 +470,7 @@ Command name | Example | Note
 --- | --- | ---
 <code>variables</code> | <code>variables x y</code> | Takes at least one variable name
 _n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
-_n_<code>ary-predicates</code> | <code>2ary-constants R S</code> | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
 <code>deduction-translation</code> | | Applies the deduction translation to the current proof
 <code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
 
@@ -479,6 +479,5 @@ Example proofs are found in the <code>examples</code> directory.
 ## To do list
 - Instantiation for the Lemma feature (eg. a lemma concluding <code>A | ~A</code> should be applicable to prove <code>ex x P(x) | ~ex x P(x)</code>, that is currently not the case)
 - Epsilon equality axiom to implement
-- Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
 - Writing a brief history of Hilbert's logic
