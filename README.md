@@ -461,7 +461,6 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Generalized assumptions (eg. it should be possible to assume A and B in this order and conclude A to prove A, B ⊢ A which is currently impossible)
 - Instantiation for the Lemma feature (eg. a lemma concluding <code>A | ~A</code> should be applicable to prove <code>ex x P(x) | ~ex x P(x)</code>, that is currently not the case)
 - Epsilon equality axiom to implement
 - Forbidden names for custom declarations for variable names, constant names, and predicate names
