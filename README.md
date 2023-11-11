@@ -349,6 +349,16 @@ If you give also a name, <code>end-proof Lemma1</code> for example, this proof w
 Currently, the Use feature is limited to show exactly the same formula as the lemma claims.
 It means that a previously proven formula <code>A | ~A</code> is applicable to prove exactly the same formula in the later proof, but not yet applicable to prove <code>ex x P(x) | ~ex x P(x)</code> for this moment.
 
+If the last step of the proof is <code>Asm</code>, the assumed formula is the conclusion of the proof.  If one wants to write a proof whose conclusion is directly from an assumption which is not the last <code>Asm</code>, one can use <code>Ref</code> to make a claim referring to an assumption.  An example is found in <code>examples/ex08_assumption.proof</code> which generates a proof of <code>⊢ A -> B -> A</code> from another proof of <code>A, B ⊢ A</code>.
+```
+% cat examples/ex08_assumption.proof 
+A by Asm
+B by Asm
+A by Ref
+deduction-transformation
+deduction-transformation
+```
+
 On the other hand, it is also possible to make use of an external automated theorem prover.
 For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's z3 (https://github.com/Z3Prover/z3).
 Microsoft's z3 is supposed to be installed and be avaialble from your command line via a command z3.
