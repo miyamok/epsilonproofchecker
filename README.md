@@ -1,4 +1,4 @@
-# epsilon - a proof assistant for Hilbert's epsilon calculus and predicate calculus
+# Proof assistant for Hilbert's epsilon calculus and predicate calculus
 _Epsilon_ is a proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
 The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
 ##### Table of contents
