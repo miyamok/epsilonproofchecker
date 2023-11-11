@@ -65,6 +65,7 @@ prettyPrintReason r = case r of (MP Nothing Nothing) -> "MP"
                                 (MP (Just s) (Just s')) -> "MP(" ++ s ++ ", " ++ s' ++ ")"
                                 (Gen Nothing) -> "Gen"
                                 (Gen (Just s)) -> "Gen(" ++ s ++ ")"
+                                (Use s) -> "Use(" ++ s ++ ")"
                                 r -> show r
 
 prettyPrintProofStep :: Step -> String
