@@ -468,11 +468,11 @@ Reason name | Example | Note
 
 Command name | Example | Note
 --- | --- | ---
-<code>variables</code> | variables x y | Takes at least one variable name
-_n_<code>ary-constants</code> | 0ary-constants c | A natural number should be substituted for _n_
-_n_<code>ary-predicates</code> | 2ary-constants R S | A natural number should be substituted for _n_
-deduction-translation | | Applies the deduction translation to the current proof
-end-proof | end-proof Lemma123 | Ends the current proof.  A lemma is saved, provided an argument given
+<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
+_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | <code>2ary-constants R S</code> | A natural number should be substituted for _n_
+<code>deduction-translation</code> | | Applies the deduction translation to the current proof
+<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
 
 Example proofs are found in the <code>examples</code> directory.
 
