@@ -340,8 +340,16 @@ It is also possible to print out the final proof by the option <code>-p</code>.
 ```
 The outcome consists of 64 lines, and would be hard without relying on the proof transformation, although there can be a clever idea for a shorter proof.
 
+A proof script (it is exaxtly one file on the computer) may contain multiple proofs.
+Completed proofs can be later used in other proofs.
+By <code>end-proof</code>, the current proof is concluded and a new proof can start from the next line.
+If you give also a name, <code>end-proof Lemma1</code> for example, this proof will be available in the future work via <code>Use</code> with the specified name, <code>by Use(Lemma1)</code> for example.
+
+Currently, the Use feature is limited to show exactly the same formula as the lemma claims.
+It means that a previously proven formula <code>A | ~A</code> is applicable to prove exactly the same formula in the later proof, but not yet applicable to prove <code>ex x P(x) | ~ex x P(x)</code> for this moment.
+
 On the other hand, it is also possible to make use of an external automated theorem prover.
-For this moment, the epsilon proof assistant supports automation for predicate calculus due to Microsoft's z3 (https://github.com/Z3Prover/z3).
+For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's z3 (https://github.com/Z3Prover/z3).
 Microsoft's z3 is supposed to be installed and be avaialble from your command line via a command z3.
 ```
 % z3 -version
@@ -442,7 +450,8 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Lemma feature
+- Generalized assumptions (eg. it should be possible to assume A and B in this order and conclude A to probe A, B ⊢ A which is currently impossible)
+- Instantiation for the Lemma feature
 - Epsilon equality axiom to implement
 - Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
