@@ -1,5 +1,6 @@
 module Syntax where
 import Data.List(nub, delete, union, unionBy, intercalate)
+import Utils
 
 type Name = String
 type Index = Int
@@ -12,6 +13,31 @@ data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
+
+type VariableDeclaration = Name
+type ConstantDeclaration = (Name, Int)
+type PredicateDeclaration = (Name, Int)
+type Declarations = ([VariableDeclaration], [ConstantDeclaration], [PredicateDeclaration])
+
+defaultVariables :: [VariableDeclaration]
+defaultVariables = ["x", "y", "z", "u", "v"]
+
+defaultConstants :: [ConstantDeclaration]
+defaultConstants = [("f",1), ("g", 1), ("c", 0), ("a", 0), ("b", 0), ("h", 2)]
+
+defaultPredicates :: [PredicateDeclaration]
+defaultPredicates = [("P", 1), ("A", 0), ("Q", 1), ("R", 2), ("B", 0), ("C", 0)]
+
+emptyDeclarations :: Declarations
+emptyDeclarations = ([], [], [])
+
+defaultDeclarations :: Declarations
+defaultDeclarations = (defaultVariables, defaultConstants, defaultPredicates)
+
+-- researvedNames :: [String]
+-- researvedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
+--                   "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
+--                   "deduction-translation", "end-proof", "variables", "constants", "predicates"]
 
 variableToIndex :: Variable -> Index
 variableToIndex (Var n i) = i
@@ -265,3 +291,12 @@ makeKFormula f g = ImpForm f (ImpForm g f)
 
 makeSFormula :: Formula -> Formula -> Formula -> Formula
 makeSFormula f g h = ImpForm (ImpForm f (ImpForm g h)) (ImpForm (ImpForm f g) (ImpForm f h))
+
+declarationsToInconsistentIdentifierNames :: Declarations -> [Name]
+declarationsToInconsistentIdentifierNames (vds, cds, pds) =
+      if null doubledNames then [] else doubledNames
+      where
+            vnames = if null vds then defaultVariables else vds
+            cnames = map fst (if null cds then defaultConstants else cds)
+            pnames = map fst (if null pds then defaultPredicates else pds)
+            doubledNames = doubles (vnames ++ cnames ++ pnames)

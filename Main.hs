@@ -70,35 +70,9 @@ printProofWrong p mi is =
 -- printProofBlockWrong :: (Proof, [Int], Maybe String) -> IO ()
 -- printProofBlockWrong (p, lns, mn) =
 
-proofBlockAndFlagsToOutput :: (Proof, [Int], Maybe String) -> Bool -> Bool -> IO Bool
-proofBlockAndFlagsToOutput (p, lns, _) = proofAndFlagsToOutput p lns
+-- proofBlockAndFlagsToOutput :: (Proof, [Int], Maybe String) -> Bool -> Bool -> IO Bool
+-- proofBlockAndFlagsToOutput (p, lns, _) = proofAndFlagsToOutput p lns
 
---- obsolate
-proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
-proofAndFlagsToOutput p is pFlag debugFlag
- | not $ and bs = do printProofWrong p mi is
-                     return False
- | null autoFlas = do printProofCorrect p pFlag
-                      return True
- | otherwise = do ex <- findExecutable "z3"
-                  autobs <- sequence autoResults
-                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3 (github.com/Z3Prover/z3)"
-                                           return False
-                             Just _ -> if and autobs then do printProofCorrect p pFlag
-                                                             return True
-                                       else let mi' = do j <- findIndex not autobs
-                                                         return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
-                                             in do printProofWrong p mi' is
-                                                   return False
- where
-        bs = checkClaims p Map.empty
-        mi = findIndex not bs
-        mln = do i <- mi
-                 return (is!!i)
-        autoSteps = proofToAutoStepFormulas p
-        asmFlas = proofToAssumptionFormulas p
-        autoFlas = proofToAutoStepFormulas p
-        autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
 proofBlockWithAutoToWrongLineIndex :: (Proof, [Int], Maybe String) -> Lemmas -> IO (Maybe Int)
 proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
@@ -106,7 +80,7 @@ proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
  | null autoFlas = do return Nothing
  | otherwise = do ex <- findExecutable "z3"
                   autobs <- sequence autoResults
-                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's z3 (github.com/Z3Prover/z3)"
+                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's Z3 (github.com/Z3Prover/z3)"
                                            case findIndex (\(_, r, _) -> r == Auto) p of
                                                 Nothing -> return Nothing
                                                 Just i -> return (Just (lns!!i))
@@ -125,12 +99,12 @@ proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
 ---- must take Lemmas
-checkProofBlocksWithAuto :: [(Proof, [Int], Maybe String)] -> IO Bool
-checkProofBlocksWithAuto [] = return True
-checkProofBlocksWithAuto ((p, lns, ms):pbs) =
-        do b <- checkProofWithAuto p Map.empty
-           if b then checkProofBlocksWithAuto pbs
-                else return False
+-- checkProofBlocksWithAuto :: [(Proof, [Int], Maybe String)] -> IO Bool
+-- checkProofBlocksWithAuto [] = return True
+-- checkProofBlocksWithAuto ((p, lns, ms):pbs) =
+--         do b <- checkProofWithAuto p Map.empty
+--            if b then checkProofBlocksWithAuto pbs
+--                 else return False
 
 checkProofWithAuto :: Proof -> Lemmas -> IO Bool
 checkProofWithAuto p lemmas
@@ -206,6 +180,7 @@ proofBlocksAndFlagsToOutputAux lemmas ((p, lns, mn):pbs) pFlag debugFlag =
 --                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn)
 --                         printProofWrong p mi lns
 
+-- obsolate
 -- This function is needed only for a deprecated feature of the "-d" command line option
 proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
 proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
@@ -215,6 +190,64 @@ proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
           return ()
 proofBlocksAndFlagsToDeductionOutput _ _ _ _
         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
+
+-- obsolate
+-- This function is needed only for a deprecated feature of the "-d" command line option
+proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
+proofAndFlagsToOutput p is pFlag debugFlag
+ | not $ and bs = do printProofWrong p mi is
+                     return False
+ | null autoFlas = do printProofCorrect p pFlag
+                      return True
+ | otherwise = do ex <- findExecutable "z3"
+                  autobs <- sequence autoResults
+                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's Z3 (github.com/Z3Prover/z3)"
+                                           return False
+                             Just _ -> if and autobs then do printProofCorrect p pFlag
+                                                             return True
+                                       else let mi' = do j <- findIndex not autobs
+                                                         return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+                                             in do printProofWrong p mi' is
+                                                   return False
+ where
+        bs = checkClaims p Map.empty
+        mi = findIndex not bs
+        mln = do i <- mi
+                 return (is!!i)
+        autoSteps = proofToAutoStepFormulas p
+        asmFlas = proofToAssumptionFormulas p
+        autoFlas = proofToAutoStepFormulas p
+        autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
+printConflictingDeclarationError :: Script -> IO ()
+printConflictingDeclarationError s
+ | not (null varDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default constants or predicates"
+ | not (null constDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default variables or predicates"
+ | not (null predDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default variables or constants"
+ | not (null confVarDecLNs) = let (ns, i) = head confVarDecLNs
+                                in printErrorMessage (i+1) "Declaration conflicts against another declaration"
+ | not (null confConstDecLNs) = let (ns, i) = head confConstDecLNs
+                                in printErrorMessage (i+1) "Declaration conflicts against another declaration"
+ | not (null confPredDecLNs) = let (ns, i) = head confPredDecLNs
+                                in printErrorMessage (i+1) "Declaration conflicts against another declaration"
+        where
+                conflictingNames = scriptToInconsistentIdentifierNames s
+                varDef = scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
+                varDecLNs = scriptToVariableDeclarationsWithLineNumbers s
+                confVarDecLNs = filter (\(vds, i) -> not (null (vds `intersect` conflictingNames))) varDecLNs
+                vnames = concat $ map fst varDecLNs
+                constDef = scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations s
+                constDecLNs = scriptToConstantDeclarationsWithLineNumbers s
+                cds = concat $ map fst constDecLNs
+                cnames = map fst cds
+                confConstDecLNs = filter (\(cds, i) -> not (null (map fst cds `intersect` conflictingNames))) constDecLNs
+                predDef = scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
+                predDecLNs = scriptToPredicateDeclarationsWithLineNumbers s
+                pds = concat $ map fst predDecLNs
+                pnames = map fst pds
+                confPredDecLNs = filter (\(pds, i) -> not (null (map fst pds `intersect` conflictingNames))) predDecLNs
+
+
 
 main :: IO ()
 main = do args <- getArgs
@@ -227,7 +260,10 @@ main = do args <- getArgs
                       mErrorMsg = scriptToErrorMessage script
                       mIllDeclInd = scriptToIllegalDeclarationIndex script
                       proofBlocks = scriptToProofBlocks script
-                      in case mErrorMsg of
+                      inconsistentIdentNames = scriptToInconsistentIdentifierNames script
+                     in if not (null inconsistentIdentNames)
+                        then printConflictingDeclarationError script
+                        else case mErrorMsg of
                               Just msg -> putStrLn msg
                               Nothing -> if dFlag
                                          then proofBlocksAndFlagsToDeductionOutput proofBlocks onceFlag pFlag debugFlag
