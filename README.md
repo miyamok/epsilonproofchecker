@@ -460,8 +460,8 @@ If one wants to explicitly specify the two proof steps, tagged by <code>#one</co
 
 Inference rule name | Note
 --- | ---
-MP | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
-Gen | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
+<code>MP</code> | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
+<code>Gen</code> | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
 
 Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
 
