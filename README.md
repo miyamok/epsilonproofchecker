@@ -174,6 +174,7 @@ FV(A | B) = FV(A) ∪ FV(B)
 FV(all x E(x)) = FV(E(x)) - {x}
 FV(ex x E(x)) = FV(E(x)) - {x}
 ```
+We allow to write <code>FV(A<sub>1</sub>, ..., A<sub>k</sub>)</code> to mean <code>FV(A<sub>1</sub>)∪...∪FV(A<sub>k</sub>)</code>. 
 From now on, if we write a formula in the form <code>A(x)</code>, it means that <code>x</code> may occur freely in <code>A(x)</code>, however, it is not the case that a bound variable <code>x</code> is indicated in this notation.
 Moreover, a change of bound variable names doesn't affect the meaning of formulas and terms.
 Consider a formula <code>A(x)</code> which does not have a free occurrence of variables other than <code>x</code>.
@@ -456,6 +457,11 @@ Note that the formula <code>A</code> is distinct from any indexed ones <code>A<s
 The inference rule <code>Gen</code> derives <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ all x E(x)</code> from <code>A<sub>1</sub>, ..., A<sub>k</sub> ⊢ E(x)</code> which should be a previous proof step, under the condition that <code>x</code> doesn't have a free occurrrence in any of the assumptions <code>A<sub>1</sub>, ..., A<sub>k</sub></code>.
 The search for suitable proof steps for those inference rules is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
+
+Inference rule name | Note
+--- | ---
+MP | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
+Gen | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
 
 Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
 
