@@ -426,8 +426,8 @@ Command name | Example | Note
 <code>variables</code> | <code>variables x y</code> | Takes at least one variable name
 _n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
 _n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
-<code>deduction-translation</code> | | Applies the deduction translation to the current proof
-<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
+<code>deduction-translation</code> | | Applies the deduction translation to the<br />current proof
+<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.<br />A lemma is saved, provided an argument given
 
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
