@@ -1,6 +1,6 @@
 # Proof assistant for Hilbert's epsilon calculus and predicate calculus
 _Epsilon_ is a proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft Z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -33,7 +33,7 @@ A -> B by K
 % cat examples/ex08_assumption.proof 
 A by Asm
 deduction-transformation
-% z3 -version ## assume Microsoft's z3 is installed
+% z3 -version ## assume Microsoft's Z3 is installed
 Z3 version 4.12.3 - 64 bit
 % ./Main examples/ex14_prop_auto.proof
 Correct proof of ⊢ A -> A
@@ -174,6 +174,7 @@ FV(A | B) = FV(A) ∪ FV(B)
 FV(all x E(x)) = FV(E(x)) - {x}
 FV(ex x E(x)) = FV(E(x)) - {x}
 ```
+We allow to write <code>FV(A<sub>1</sub>, ..., A<sub>k</sub>)</code> to mean <code>FV(A<sub>1</sub>)∪...∪FV(A<sub>k</sub>)</code>. 
 From now on, if we write a formula in the form <code>A(x)</code>, it means that <code>x</code> may occur freely in <code>A(x)</code>, however, it is not the case that a bound variable <code>x</code> is indicated in this notation.
 Moreover, a change of bound variable names doesn't affect the meaning of formulas and terms.
 Consider a formula <code>A(x)</code> which does not have a free occurrence of variables other than <code>x</code>.
@@ -360,8 +361,8 @@ deduction-transformation
 ```
 
 On the other hand, it is also possible to make use of an external automated theorem prover.
-For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's z3 (https://github.com/Z3Prover/z3).
-Microsoft's z3 is supposed to be installed and be avaialble from your command line via a command z3.
+For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's Z3 (https://github.com/Z3Prover/z3).
+Microsoft's Z3 is supposed to be installed and be avaialble from your command line via a command z3.
 ```
 % z3 -version
 Z3 version 4.12.3 - 64 bit
@@ -370,7 +371,7 @@ Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
-Microsoft z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
+Microsoft Z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
 There is no means for the proof assistant epsilon to verify the response from such an external prover, and the proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
 It implies that the correctness of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof assistant does not guarantee anything.
 
@@ -420,6 +421,14 @@ For any natural number _n_, a declarations starts with _n_<code>ary-predicates</
 ```
 A custom declaration makes the default names unavailable.  For example, assume one made a custom declaration for variables and didn't make any custom declarations for constants names nor predicate names.  In this case, the default variable names are gone, while the default constant names and predicate names are still there.
 
+Command name | Example | Note
+--- | --- | ---
+<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
+_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
+<code>deduction-translation</code> | | Applies the deduction translation to the<br />current proof
+<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.<br />A lemma is saved, provided an argument given
+
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
 E(x) by X
@@ -457,22 +466,19 @@ The inference rule <code>Gen</code> derives <code>A<sub>1</sub>, ..., A<sub>k</s
 The search for suitable proof steps for those inference rules is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 
+Inference rule name | Note
+--- | ---
+<code>MP</code> | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
+<code>Gen</code> | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
+
 Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
 
 Reason name | Example | Note
 --- | --- | ---
 <code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
 <code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
-<code>Auto</code> | | Requires Microsoft's z3
+<code>Auto</code> | | Requires Microsoft's Z3
 <code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
-
-Command name | Example | Note
---- | --- | ---
-<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
-_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
-_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
-<code>deduction-translation</code> | | Applies the deduction translation to the current proof
-<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
 
 Example proofs are found in the <code>examples</code> directory.
 
