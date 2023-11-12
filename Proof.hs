@@ -399,3 +399,20 @@ deductionAux asmProof nonAsmProof =
                       Gen _ -> undefined
                       Ref -> deductionAsm asmFla (last nonAsmProof)
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
+
+isPredicateCalculusRule :: Rule -> Bool
+isPredicateCalculusRule AllE = True
+isPredicateCalculusRule ExI = True
+isPredicateCalculusRule AllShift = True
+isPredicateCalculusRule ExShift = True
+isPredicateCalculusRule (Gen _) = True
+isPredicateCalculusRule _ = False
+
+isPredicateCalculusProof :: Proof -> Bool
+isPredicateCalculusProof = any (\(_, r, _) -> isPredicateCalculusRule r)
+
+isEpsilonCalculusProof :: Proof -> Bool
+isEpsilonCalculusProof = any (\(_, r, _) -> r == C)
+
+isElementaryCalculusProof :: Proof -> Bool
+isElementaryCalculusProof p = not (isEpsilonCalculusProof p || isPredicateCalculusProof p)
