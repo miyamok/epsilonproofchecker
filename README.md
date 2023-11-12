@@ -1,6 +1,6 @@
 # Proof assistant for Hilbert's epsilon calculus and predicate calculus
 _Epsilon_ is a proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft Z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -33,7 +33,7 @@ A -> B by K
 % cat examples/ex08_assumption.proof 
 A by Asm
 deduction-transformation
-% z3 -version ## assume Microsoft's z3 is installed
+% z3 -version ## assume Microsoft's Z3 is installed
 Z3 version 4.12.3 - 64 bit
 % ./Main examples/ex14_prop_auto.proof
 Correct proof of ⊢ A -> A
@@ -361,8 +361,8 @@ deduction-transformation
 ```
 
 On the other hand, it is also possible to make use of an external automated theorem prover.
-For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's z3 (https://github.com/Z3Prover/z3).
-Microsoft's z3 is supposed to be installed and be avaialble from your command line via a command z3.
+For this moment, the epsilon proof assistant supports automation for predicate calculus and its subsystems due to Microsoft's Z3 (https://github.com/Z3Prover/z3).
+Microsoft's Z3 is supposed to be installed and be avaialble from your command line via a command z3.
 ```
 % z3 -version
 Z3 version 4.12.3 - 64 bit
@@ -371,7 +371,7 @@ Correct proof of
  ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
-Microsoft z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
+Microsoft Z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
 There is no means for the proof assistant epsilon to verify the response from such an external prover, and the proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
 It implies that the correctness of a proof involving Auto totally relies on the correctness of the external prover, and the epsiolon proof assistant does not guarantee anything.
 
@@ -477,7 +477,7 @@ Reason name | Example | Note
 --- | --- | ---
 <code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
 <code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
-<code>Auto</code> | | Requires Microsoft's z3
+<code>Auto</code> | | Requires Microsoft's Z3
 <code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
 
 Example proofs are found in the <code>examples</code> directory.
