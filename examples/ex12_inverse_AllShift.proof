@@ -1,8 +1,0 @@
-B -> all x P(x) by Asm
-B by Asm
-all x P(x) by MP
-all x P(x) -> P(y) by AllE
-P(y) by MP
-deduction-transformation
-all y(B -> P(y)) by Gen
-deduction-transformation

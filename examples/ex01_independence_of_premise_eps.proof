@@ -1,1 +1,0 @@
-(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C

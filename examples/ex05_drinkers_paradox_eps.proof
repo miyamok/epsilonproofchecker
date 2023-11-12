@@ -1,7 +1,0 @@
-(P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
-P(eps x ~P(x)) -> (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x ~P(x)) by K
-P(eps x ~P(x)) -> P(eps x ~P(x)) -> P(eps x ~P(x)) by K
-(P(eps x ~P(x)) -> (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x ~P(x))) -> (P(eps x ~P(x)) -> P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x ~P(x)) -> P(eps x ~P(x)) by S
-(P(eps x ~P(x)) -> P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x ~P(x)) -> P(eps x ~P(x)) by MP
-P(eps x ~P(x)) -> P(eps x ~P(x)) by MP
-P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by MP

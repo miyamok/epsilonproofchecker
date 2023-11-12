@@ -1,6 +1,0 @@
-B by Asm
-A by Asm
-deduction-transformation
-end-proof ident
-B by Asm
-A -> A by Use(ident)
