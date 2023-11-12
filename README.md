@@ -421,6 +421,14 @@ For any natural number _n_, a declarations starts with _n_<code>ary-predicates</
 ```
 A custom declaration makes the default names unavailable.  For example, assume one made a custom declaration for variables and didn't make any custom declarations for constants names nor predicate names.  In this case, the default variable names are gone, while the default constant names and predicate names are still there.
 
+Command name | Example | Note
+--- | --- | ---
+<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
+_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
+<code>deduction-translation</code> | | Applies the deduction translation to the current proof
+<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
+
 Assume <code>E(x)</code> is a formula and X is some name of axiom or inference rule, the syntax of the proof step is given as follows
 ```
 E(x) by X
@@ -471,14 +479,6 @@ Reason name | Example | Note
 <code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
 <code>Auto</code> | | Requires Microsoft's z3
 <code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
-
-Command name | Example | Note
---- | --- | ---
-<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
-_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
-_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
-<code>deduction-translation</code> | | Applies the deduction translation to the current proof
-<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
 
 Example proofs are found in the <code>examples</code> directory.
 
