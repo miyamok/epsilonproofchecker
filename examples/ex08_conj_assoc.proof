@@ -1,0 +1,8 @@
+A & B by Asm
+A & B -> A by ConjE1
+A by MP
+A & B -> B by ConjE2
+B by MP
+B -> A -> B & A by ConjI
+A -> B & A by MP
+B & A by MP

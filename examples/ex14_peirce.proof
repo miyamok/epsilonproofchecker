@@ -1,0 +1,13 @@
+(A -> B) -> A by Asm
+~A by Asm
+A by Asm
+bot by MP
+bot -> B by EFQ
+B by MP
+deduction-transformation
+A by MP
+bot by MP
+deduction-transformation
+~~A -> A by DNE
+A by MP
+deduction-transformation

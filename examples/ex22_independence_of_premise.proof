@@ -1,0 +1,25 @@
+A -> ex x P(x) by Asm
+~ex x(A -> P(x)) by Asm
+A by Asm
+P(x) by Asm
+P(x) -> A -> P(x) by K
+A -> P(x) by MP
+(A -> P(x)) -> ex x(A -> P(x)) by ExI
+ex x(A -> P(x)) by MP
+deduction-transformation
+all x(P(x) -> ex x (A -> P(x))) -> ex x P(x) -> ex x(A -> P(x)) by ExShift
+all x(P(x) -> ex x (A -> P(x))) by Gen
+ex x P(x) -> ex x(A -> P(x)) by MP
+ex x P(x) by MP
+ex x(A -> P(x)) by MP
+bot by MP
+bot -> P(z) by EFQ
+P(z) by MP
+deduction-transformation
+(A -> P(z)) -> ex x(A -> P(x)) by ExI
+ex x(A -> P(x)) by MP
+bot by MP
+deduction-transformation
+~~ex x(A -> P(x)) -> ex x(A -> P(x)) by DNE
+ex x(A -> P(x)) by MP
+deduction-transformation
