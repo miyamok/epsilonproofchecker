@@ -447,7 +447,6 @@ Axiom name | Scheme | Note
 <code>ExShift</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>,<br /> <code>\|</code> and <code>&</code>
-<code>Auto</code> | | Requires Microsoft's z3
 
 In order to pose an assumption, <code>Asm</code> is used as the reason.  Whereever the assumption is witten in the proof, either top, middle, or the bottom, it does not make any difference.
 If a proof comes with assumptions, those assumptions are displayed in the left hand side of <code>⊢</code>
@@ -458,11 +457,27 @@ The inference rule <code>Gen</code> derives <code>A<sub>1</sub>, ..., A<sub>k</s
 The search for suitable proof steps for those inference rules is done automatically.
 If one wants to explicitly specify the two proof steps, tagged by <code>#one</code> and <code>#two</code>, the arguments should be fed as <code>MP(#one, #two)</code>, which is order insensitive.
 
+Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
+
+Reason name | Example | Note
+--- | --- | ---
+<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
+<code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
+<code>Auto</code> | | Requires Microsoft's z3
+<code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
+
+Command name | Example | Note
+--- | --- | ---
+<code>variables</code> | <code>variables x y</code> | Takes at least one variable name
+_n_<code>ary-constants</code> | <code>0ary-constants c</code> | A natural number should be substituted for _n_
+_n_<code>ary-predicates</code> | <code>2ary-predicates R S</code> | A natural number should be substituted for _n_
+<code>deduction-translation</code> | | Applies the deduction translation to the current proof
+<code>end-proof</code> | <code>end-proof Lemma123</code> | Ends the current proof.  A lemma is saved, provided an argument given
+
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
 - Instantiation for the Lemma feature (eg. a lemma concluding <code>A | ~A</code> should be applicable to prove <code>ex x P(x) | ~ex x P(x)</code>, that is currently not the case)
 - Epsilon equality axiom to implement
-- Forbidden names for custom declarations for variable names, constant names, and predicate names
 - Further examples
 - Writing a brief history of Hilbert's logic
