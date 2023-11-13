@@ -57,6 +57,9 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
 printErrorMessage :: Int -> String -> IO ()
 printErrorMessage ln msg = putStrLn ("Error at line " ++ show ln ++ ": " ++ msg)
 
+printErrorMessageSeveralLines :: [Int] -> String -> IO ()
+printErrorMessageSeveralLines lns msg = putStrLn ("Error at lines " ++ intercalate ", " (map show lns) ++ ": " ++ msg)
+
 printProofWrong :: Proof -> Maybe Int -> [Int] -> IO ()
 printProofWrong p mi is =
         case mi of Nothing -> do putStrLn "The input is not a proof of"
@@ -149,6 +152,9 @@ printConflictingDeclarationError s
                 pnames = map fst pds
                 confPredDecLNs = filter (\(pds, i) -> not (null (map fst pds `intersect` conflictingNames))) predDecLNs
 
+printConflictingLemmaError :: (String, [Int]) -> IO ()
+printConflictingLemmaError (name, indices) = printErrorMessageSeveralLines (map (1+) indices) ("Duplicated lemma name \"" ++ name ++ "\"")
+
 main :: IO ()
 main = do args <- getArgs
           let (debugFlag, pFlag, filenames) = argsToFlagsAndFilename args
@@ -161,8 +167,11 @@ main = do args <- getArgs
                       mIllDeclInd = scriptToIllegalDeclarationIndex script
                       proofBlocks = scriptToProofBlocks script
                       inconsistentIdentNames = scriptToInconsistentIdentifierNames script
+                      conflictingLemmas = scriptToConflictingLemmaNameAndIndexList script
                      in if not (null inconsistentIdentNames)
                         then printConflictingDeclarationError script
+                        else if not (null conflictingLemmas)
+                        then printConflictingLemmaError (head conflictingLemmas)
                         else case mErrorMsg of
                               Just msg -> putStrLn msg
                               Nothing -> case mIllDeclInd of

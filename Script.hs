@@ -171,3 +171,21 @@ scriptToIllegalDeclarationIndices s = let mfpi = findIndex isProofScriptLine s
                                         in case mfpi of Nothing -> []
                                                         Just fpi -> filter (>fpi) dis
 
+scriptToLemmaNameAndIndexList :: Script -> [(String, Int)]
+scriptToLemmaNameAndIndexList = scriptToLemmaNameAndIndexListAux 0
+
+scriptToLemmaNameAndIndexListAux :: Int -> Script -> [(String, Int)]
+scriptToLemmaNameAndIndexListAux _ [] = []
+scriptToLemmaNameAndIndexListAux i (EndProofLine Nothing:ls) = scriptToLemmaNameAndIndexListAux (i+1) ls
+scriptToLemmaNameAndIndexListAux i (EndProofLine (Just n):ls) = (n,i):scriptToLemmaNameAndIndexListAux (i+1) ls
+scriptToLemmaNameAndIndexListAux i (_:ls) = scriptToLemmaNameAndIndexListAux (i+1) ls
+
+scriptToConflictingLemmaNameAndIndexList :: Script -> [(String, [Int])]
+scriptToConflictingLemmaNameAndIndexList [] = []
+scriptToConflictingLemmaNameAndIndexList s
+ | null duplicatedNames = []
+ | otherwise = map (\dupName -> (dupName, map snd (filter (\(n, i) -> dupName == n) lemmaNameAndIndexList))) duplicatedNames
+       where
+              lemmaNameAndIndexList = scriptToLemmaNameAndIndexList s
+              duplicatedNames = doubles (map fst lemmaNameAndIndexList)
+
