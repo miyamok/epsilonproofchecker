@@ -17,7 +17,7 @@ type Tag = Maybe String
 -- type Tag = NoTag | Expl String | Impl String
 type ProofBlock = (Maybe String, Proof, Int) -- name, proof, and the line number offset
 type Statement = ([Formula], Formula)
-type Lemmas = Map Name Statement
+type Lemmas = Map Name Proof
 
 stepToFormula :: Step -> Formula
 stepToFormula (f, _, _) = f
@@ -272,7 +272,7 @@ checkClaimsAux offset p lemmas = if length p <= offset
                         C -> checkC f
                         Asm -> True
                         Use lname -> let asmFlas = proofToAssumptionFormulas (take (offset+1) p)
-                                      in checkUse f asmFlas (lemmas Map.! lname)
+                                      in checkUse f asmFlas (proofToStatement (lemmas Map.! lname))
                         Ref -> let asmFlas = proofToAssumptionFormulas (take (offset+1) p)
                                     in checkRef f asmFlas
                         _ -> False

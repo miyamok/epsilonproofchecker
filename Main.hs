@@ -166,7 +166,7 @@ proofBlocksAndFlagsToOutputAux lemmas ((p, lns, mn):pbs) pFlag debugFlag =
         do b <- checkProofWithAuto p lemmas
            if b then do if null pbs then printProofCorrect p pFlag
                                     else let lemmas' = case mn of Nothing -> lemmas
-                                                                  Just n -> Map.insert n (proofToStatement p) lemmas
+                                                                  Just n -> Map.insert n p lemmas
                                           in proofBlocksAndFlagsToOutputAux lemmas' pbs pFlag debugFlag
                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
                         printProofWrong p mi lns
