@@ -218,7 +218,8 @@ ex x E(x) := E(eps x E(x))
 all x E(x) := E(eps x ~E(x))
 ```
 We are going to look at examples.
-The following formula is known as independence of premise, where the formula <code>A</code> does not contain a free variable <code>x</code>.
+Assume the formula <code>A</code> does not contain a free variable <code>x</code>.
+The following formula is known as independence of premise, whose proof is given as examples/ex22_independence_of_premise.proof .
 ```
 (A -> ex x P(x)) -> ex x (A -> P(x))
 ```
@@ -226,12 +227,12 @@ Applying the definition of the existential quantifier by epsilon operator, the a
 ```
 (A -> P(eps x P(x))) -> A -> B(eps x(A -> P(x)))
 ```
-A proof to this formula is given in examples/ex23_independence_of_premise.proof .
+A proof to this formula is given in examples/ex23_independence_of_premise_eps.proof .
 ```
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
 Notice that this formula is an instance of the critical axiom.
-Another example is a so-called Drinker's formula, which is often referred to as Drinker's paradox.
+Another example is a so-called Drinker's formula, which is often referred to as Drinker's paradox, and a proof is given as examples/ex24_drinkers_paradox.proof .
 ```
 ex x(P(x) -> all x P(x))
 ```
@@ -241,7 +242,7 @@ The epsilon version of the above formula is
 ```
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 ```
-A proof is given in examples/ex24_drinkers_paradox.proof
+A proof is given in examples/ex25_drinkers_paradox_eps.proof
 After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>, the rest of the proof goes as follows.
 ```
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
