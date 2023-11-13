@@ -55,10 +55,10 @@ printProofCorrect p pFlag = do putStrLn ("-- Correct proof of " ++ (prettyPrintJ
                                 f = proofToConclusion p
 
 printErrorMessage :: Int -> String -> IO ()
-printErrorMessage ln msg = putStrLn ("Error at line " ++ show ln ++ ": " ++ msg)
+printErrorMessage ln msg = putStrLn ("-- Error at line " ++ show ln ++ ": " ++ msg)
 
 printErrorMessageSeveralLines :: [Int] -> String -> IO ()
-printErrorMessageSeveralLines lns msg = putStrLn ("Error at lines " ++ intercalate ", " (map show lns) ++ ": " ++ msg)
+printErrorMessageSeveralLines lns msg = putStrLn ("-- Error at lines " ++ intercalate ", " (map show lns) ++ ": " ++ msg)
 
 printProofWrong :: Proof -> Maybe Int -> [Int] -> IO ()
 printProofWrong p mi is =
@@ -123,6 +123,8 @@ proofBlocksAndFlagsToOutputAux lemmas ((p, lns, mn):pbs) pFlag debugFlag =
                                           in proofBlocksAndFlagsToOutputAux lemmas' pbs pFlag debugFlag
                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
                         printProofWrong p mi lns
+                        if debugFlag then do putStr $ prettyPrintProof p
+                                     else return ()
 
 printConflictingDeclarationError :: Script -> IO ()
 printConflictingDeclarationError s
@@ -177,43 +179,3 @@ main = do args <- getArgs
                               Nothing -> case mIllDeclInd of
                                                 Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
                                                 Just i -> printErrorMessage (i+1) "Declaration may not occur after a proof started."
-
--- -- obsolate
--- -- This function is needed only for a deprecated feature of the "-d" command line option
--- proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
--- proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
---  = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
---                                  else deduction $ proofToUntaggedProof proof
---     in do proofAndFlagsToOutput proof' lns pFlag debugFlag
---           return ()
--- proofBlocksAndFlagsToDeductionOutput _ _ _ _
---         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
-
--- -- obsolate
--- -- This function is needed only for a deprecated feature of the "-d" command line option
--- proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
--- proofAndFlagsToOutput p is pFlag debugFlag
---  | not $ and bs = do printProofWrong p mi is
---                      return False
---  | null autoFlas = do printProofCorrect p pFlag
---                       return True
---  | otherwise = do ex <- findExecutable "z3"
---                   autobs <- sequence autoResults
---                   case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's Z3 (github.com/Z3Prover/z3)"
---                                            return False
---                              Just _ -> if and autobs then do printProofCorrect p pFlag
---                                                              return True
---                                        else let mi' = do j <- findIndex not autobs
---                                                          return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
---                                              in do printProofWrong p mi' is
---                                                    return False
---  where
---         bs = checkClaims p Map.empty
---         mi = findIndex not bs
---         mln = do i <- mi
---                  return (is!!i)
---         autoSteps = proofToAutoStepFormulas p
---         asmFlas = proofToAssumptionFormulas p
---         autoFlas = proofToAutoStepFormulas p
---         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
-

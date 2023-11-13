@@ -214,7 +214,10 @@ checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
             deps = proofToDependency p
 
 checkUse :: Formula -> [Formula] -> Statement -> Bool
-checkUse f asmFlas (asmFlas', f') = alphaEqFormula f f' && all (\asmFla' -> any (alphaEqFormula asmFla') asmFlas ) asmFlas'
+checkUse goalFla goalAsmFlas (lemmaAsmFlas, lemmaGoalFla) = eq && asmValid
+      where
+            eq = alphaEqFormula goalFla lemmaGoalFla
+            asmValid = all (\lemmaAsmFla -> any (alphaEqFormula lemmaAsmFla) goalAsmFlas) lemmaAsmFlas
 
 checkRef :: Formula -> [Formula] -> Bool
 checkRef f = any (alphaEqFormula f)
@@ -273,6 +276,8 @@ proofToDependency p = [0..length p-1]
 proofToDependencyAux :: Proof -> Int -> [Int]
 proofToDependencyAux p i = case p!!i of
       (f, r, t) -> case r of
+                  MP Nothing Nothing -> []
+                  Gen Nothing -> []
                   K -> []
                   S -> []
                   C -> []
@@ -386,7 +391,8 @@ deductionAux asmProof nonAsmProof =
                             (ImpForm newPrem newConcl, AllShift, Nothing),
                             (newConcl, MP Nothing Nothing, Nothing)]
                       Gen _ -> undefined
-                      Ref -> deductionAsm asmFla (last nonAsmProof)
+                      Ref -> if alphaEqFormula concl asmFla then []
+                             else deductionAsm asmFla (last nonAsmProof)
                       _ -> deductionBase (asmProof ++ nonAsmProof) -- case for axioms
 
 isPredicateCalculusRule :: Rule -> Bool

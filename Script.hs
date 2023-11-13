@@ -188,4 +188,3 @@ scriptToConflictingLemmaNameAndIndexList s
        where
               lemmaNameAndIndexList = scriptToLemmaNameAndIndexList s
               duplicatedNames = doubles (map fst lemmaNameAndIndexList)
-
