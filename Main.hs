@@ -144,7 +144,7 @@ printConflictingDeclarationError s
                 cnames = map fst cds
                 confConstDecLNs = filter (\(cds, i) -> not (null (map fst cds `intersect` conflictingNames))) constDecLNs
                 predDef = scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
-                predDecLNs = traceShowId $ scriptToPredicateDeclarationsWithLineIndices s
+                predDecLNs = scriptToPredicateDeclarationsWithLineIndices s
                 pds = concat $ map fst predDecLNs
                 pnames = map fst pds
                 confPredDecLNs = filter (\(pds, i) -> not (null (map fst pds `intersect` conflictingNames))) predDecLNs
