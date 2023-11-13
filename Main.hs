@@ -67,13 +67,6 @@ printProofWrong p mi is =
                         f = proofToConclusion p
                         asms = proofToAssumptionFormulas p
 
--- printProofBlockWrong :: (Proof, [Int], Maybe String) -> IO ()
--- printProofBlockWrong (p, lns, mn) =
-
--- proofBlockAndFlagsToOutput :: (Proof, [Int], Maybe String) -> Bool -> Bool -> IO Bool
--- proofBlockAndFlagsToOutput (p, lns, _) = proofAndFlagsToOutput p lns
-
-
 proofBlockWithAutoToWrongLineIndex :: (Proof, [Int], Maybe String) -> Lemmas -> IO (Maybe Int)
 proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
  | not $ and bs = do return mln
@@ -98,14 +91,6 @@ proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
----- must take Lemmas
--- checkProofBlocksWithAuto :: [(Proof, [Int], Maybe String)] -> IO Bool
--- checkProofBlocksWithAuto [] = return True
--- checkProofBlocksWithAuto ((p, lns, ms):pbs) =
---         do b <- checkProofWithAuto p Map.empty
---            if b then checkProofBlocksWithAuto pbs
---                 else return False
-
 checkProofWithAuto :: Proof -> Lemmas -> IO Bool
 checkProofWithAuto p lemmas
  | not $ and $ checkClaims p lemmas = return False
@@ -120,43 +105,6 @@ checkProofWithAuto p lemmas
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
--- checkProofWithAuto :: Proof -> IO Bool
--- checkProofWithAuto p
---  | not $ and $ checkClaims p = return False
---  | null autoFlas = return True
---  | otherwise = do ex <- findExecutable "z3"
---                   autobs <- sequence autoResults
---                   case ex of Nothing -> return False
---                              Just _ -> if and autobs then return True
---                                        else return False
---  where
---         asmFlas = proofToAssumptionFormulas p
---         autoFlas = proofToAutoStepFormulas p
---         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
-
--- checkProofBlockWithAuto :: (Proof, [Int], Maybe String) -> IO Bool
--- checkProofBlockWithAuto (p, lns, ms) = checkProofWithAuto p
-
--- proofBlockToErrorMessageAndLineIndex :: (Proof, [Int], Maybe String) -> IO (Maybe (String, Int))
--- proofBlockToErrorMessageAndLineIndex (p, lns, mn) =
---         let bs = checkClaims p
---             autobs = 
-
--- proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
--- proofBlocksAndFlagsToOutput = proofBlocksAndFlagsToOutputAux 0
-
--- proofBlocksAndFlagsToOutputAux :: Int -> [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
--- proofBlocksAndFlagsToOutputAux i pbs pFlag debugFlag
---  | i < length pbs = let (p, lns, mn) = pbs!!i
---                         lemmaPbs = filter (\(_, _, mname) -> case mname of Just _ -> True ; Nothing -> False) (take i pbs)
---                         lemmas = Map.fromList $ map (\(proof, linenums, Just name) -> (name, proofToConclusion proof)) lemmaPbs
---                      in do b <- checkProofWithAuto p lemmas
---                            if b then do if null pbs then printProofCorrect p pFlag
---                                                     else proofBlocksAndFlagsToOutput pbs pFlag debugFlag
---                                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn)
---                                         printProofWrong p mi lns
---  | otherwise = return ()
-
 proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
 proofBlocksAndFlagsToOutput = proofBlocksAndFlagsToOutputAux Map.empty
 
@@ -170,15 +118,6 @@ proofBlocksAndFlagsToOutputAux lemmas ((p, lns, mn):pbs) pFlag debugFlag =
                                           in proofBlocksAndFlagsToOutputAux lemmas' pbs pFlag debugFlag
                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
                         printProofWrong p mi lns
-
--- proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
--- proofBlocksAndFlagsToOutput [] _ _ = return ()
--- proofBlocksAndFlagsToOutput ((p,lns,mn):pbs) pFlag debugFlag =
---         do b <- checkProofWithAuto p
---            if b then do if null pbs then printProofCorrect p pFlag
---                                     else proofBlocksAndFlagsToOutput pbs pFlag debugFlag
---                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn)
---                         printProofWrong p mi lns
 
 -- obsolate
 -- This function is needed only for a deprecated feature of the "-d" command line option

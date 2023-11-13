@@ -86,17 +86,6 @@ checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g
             (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
             alphaEqFormula f' (substFormula v (VarTerm v') f)
 
--- checkGen :: Proof -> Int -> Tag -> Bool
--- checkGen p i t =
---       let pproof = take (i+1) p
---           is = proofInGenFormToPremiseIndices pproof
---           asms = proofToAssumptionFormulas p
---           freeVars = concat $ map formulaToFreeVariables asms
---           genVar = let (f, t, r) = (p!!i) in case f of (ForallForm v f) -> v
---       in if genVar `elem` freeVars then False
---          else case t of Nothing -> if null is then False else True
---                         Just s -> any (`elem` is) (proofAndTagStringToIndices pproof s)
-
 checkGen :: Proof -> Bool
 checkGen p = let (ForallForm genVar genFlaKernel, _, _) = last p
                  asmFlas = proofToAssumptionFormulas p
