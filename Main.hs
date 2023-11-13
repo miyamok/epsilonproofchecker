@@ -222,8 +222,8 @@ proofAndFlagsToOutput p is pFlag debugFlag
 printConflictingDeclarationError :: Script -> IO ()
 printConflictingDeclarationError s
  | not (null varDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default constants or predicates"
- | not (null constDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default variables or predicates"
- | not (null predDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default variables or constants"
+ | not (null constDef) = printErrorMessage ((snd (head constDef))+1) "Declaration conflicts against the default variables or predicates"
+ | not (null predDef) = printErrorMessage ((snd (head predDef))+1) "Declaration conflicts against the default variables or constants"
  | not (null confVarDecLNs) = let (ns, i) = head confVarDecLNs
                                 in printErrorMessage (i+1) "Declaration conflicts against another declaration"
  | not (null confConstDecLNs) = let (ns, i) = head confConstDecLNs
@@ -233,21 +233,19 @@ printConflictingDeclarationError s
         where
                 conflictingNames = scriptToInconsistentIdentifierNames s
                 varDef = scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
-                varDecLNs = scriptToVariableDeclarationsWithLineNumbers s
+                varDecLNs = scriptToVariableDeclarationsWithLineIndices s
                 confVarDecLNs = filter (\(vds, i) -> not (null (vds `intersect` conflictingNames))) varDecLNs
                 vnames = concat $ map fst varDecLNs
                 constDef = scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations s
-                constDecLNs = scriptToConstantDeclarationsWithLineNumbers s
+                constDecLNs = scriptToConstantDeclarationsWithLineIndices s
                 cds = concat $ map fst constDecLNs
                 cnames = map fst cds
                 confConstDecLNs = filter (\(cds, i) -> not (null (map fst cds `intersect` conflictingNames))) constDecLNs
                 predDef = scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
-                predDecLNs = scriptToPredicateDeclarationsWithLineNumbers s
+                predDecLNs = traceShowId $ scriptToPredicateDeclarationsWithLineIndices s
                 pds = concat $ map fst predDecLNs
                 pnames = map fst pds
                 confPredDecLNs = filter (\(pds, i) -> not (null (map fst pds `intersect` conflictingNames))) predDecLNs
-
-
 
 main :: IO ()
 main = do args <- getArgs

@@ -28,36 +28,36 @@ scriptToProof (_:ls) = scriptToProof ls
 
 scriptToDeclarations :: Script -> Declarations
 scriptToDeclarations s = (varDecs, constDecs, predDecs)
- where varDecsLNs = scriptToVariableDeclarationsWithLineNumbers s
+ where varDecsLNs = scriptToVariableDeclarationsWithLineIndices s
        varDecs = concat $ map fst varDecsLNs
-       constDecsLNs = scriptToConstantDeclarationsWithLineNumbers s
+       constDecsLNs = scriptToConstantDeclarationsWithLineIndices s
        constDecs = concat $ map fst constDecsLNs
-       predDecsLNs = scriptToPredicateDeclarationsWithLineNumbers s
+       predDecsLNs = scriptToPredicateDeclarationsWithLineIndices s
        predDecs = concat $ map fst predDecsLNs
 
-scriptToVariableDeclarationsWithLineNumbers :: Script -> [([VariableDeclaration], Int)]
-scriptToVariableDeclarationsWithLineNumbers = scriptToVariableDeclarationsWithLineNumbersAux 0
+scriptToVariableDeclarationsWithLineIndices :: Script -> [([VariableDeclaration], Int)]
+scriptToVariableDeclarationsWithLineIndices = scriptToVariableDeclarationsWithLineIndicesAux 0
 
-scriptToVariableDeclarationsWithLineNumbersAux :: Int -> Script -> [([VariableDeclaration], Int)]
-scriptToVariableDeclarationsWithLineNumbersAux _ [] = []
-scriptToVariableDeclarationsWithLineNumbersAux i (VarDeclareLine ds:ls) = (ds, i):scriptToVariableDeclarationsWithLineNumbersAux (i+1) ls
-scriptToVariableDeclarationsWithLineNumbersAux i (_:ls) = scriptToVariableDeclarationsWithLineNumbersAux (i+1) ls
+scriptToVariableDeclarationsWithLineIndicesAux :: Int -> Script -> [([VariableDeclaration], Int)]
+scriptToVariableDeclarationsWithLineIndicesAux _ [] = []
+scriptToVariableDeclarationsWithLineIndicesAux i (VarDeclareLine ds:ls) = (ds, i):scriptToVariableDeclarationsWithLineIndicesAux (i+1) ls
+scriptToVariableDeclarationsWithLineIndicesAux i (_:ls) = scriptToVariableDeclarationsWithLineIndicesAux (i+1) ls
 
-scriptToConstantDeclarationsWithLineNumbers :: Script -> [([ConstantDeclaration], Int)]
-scriptToConstantDeclarationsWithLineNumbers = scriptToConstantDeclarationsWithLineNumbersAux 0
+scriptToConstantDeclarationsWithLineIndices :: Script -> [([ConstantDeclaration], Int)]
+scriptToConstantDeclarationsWithLineIndices = scriptToConstantDeclarationsWithLineIndicesAux 0
 
-scriptToConstantDeclarationsWithLineNumbersAux :: Int -> Script -> [([ConstantDeclaration], Int)]
-scriptToConstantDeclarationsWithLineNumbersAux _ [] = []
-scriptToConstantDeclarationsWithLineNumbersAux i (ConstDeclareLine ds:ls) = (ds, i):scriptToConstantDeclarationsWithLineNumbersAux (i+1) ls
-scriptToConstantDeclarationsWithLineNumbersAux i (_:ls) = scriptToConstantDeclarationsWithLineNumbersAux (i+1) ls
+scriptToConstantDeclarationsWithLineIndicesAux :: Int -> Script -> [([ConstantDeclaration], Int)]
+scriptToConstantDeclarationsWithLineIndicesAux _ [] = []
+scriptToConstantDeclarationsWithLineIndicesAux i (ConstDeclareLine ds:ls) = (ds, i):scriptToConstantDeclarationsWithLineIndicesAux (i+1) ls
+scriptToConstantDeclarationsWithLineIndicesAux i (_:ls) = scriptToConstantDeclarationsWithLineIndicesAux (i+1) ls
 
-scriptToPredicateDeclarationsWithLineNumbers :: Script -> [([PredicateDeclaration], Int)]
-scriptToPredicateDeclarationsWithLineNumbers = scriptToPredicateDeclarationsWithLineNumbersAux 0
+scriptToPredicateDeclarationsWithLineIndices :: Script -> [([PredicateDeclaration], Int)]
+scriptToPredicateDeclarationsWithLineIndices = scriptToPredicateDeclarationsWithLineIndicesAux 0
 
-scriptToPredicateDeclarationsWithLineNumbersAux :: Int -> Script -> [([PredicateDeclaration], Int)]
-scriptToPredicateDeclarationsWithLineNumbersAux _ [] = []
-scriptToPredicateDeclarationsWithLineNumbersAux i (PredDeclareLine ds:ls) = (ds, i):scriptToPredicateDeclarationsWithLineNumbersAux (i+1) ls
-scriptToPredicateDeclarationsWithLineNumbersAux i (_:ls) = scriptToPredicateDeclarationsWithLineNumbersAux (i+1) ls
+scriptToPredicateDeclarationsWithLineIndicesAux :: Int -> Script -> [([PredicateDeclaration], Int)]
+scriptToPredicateDeclarationsWithLineIndicesAux _ [] = []
+scriptToPredicateDeclarationsWithLineIndicesAux i (PredDeclareLine ds:ls) = (ds, i):scriptToPredicateDeclarationsWithLineIndicesAux (i+1) ls
+scriptToPredicateDeclarationsWithLineIndicesAux i (_:ls) = scriptToPredicateDeclarationsWithLineIndicesAux (i+1) ls
 
 -- scriptToInconsistentVariableDeclarationsWithLineNumbersDueToDefaultNames :: Script -> [(Name, Int)]
 -- scriptToInconsistentVariableDeclarationsWithLineNumbersDueToDefaultNames s
@@ -85,9 +85,9 @@ scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
               conflictingDefCNames = if null cnames then map fst defaultConstants `intersect` vnames else []
               conflictingDefPNames = if null pnames then map fst defaultPredicates `intersect` vnames else []
               conflictingVarDecLNs = filter (\(ds, i) -> not (null (ds `intersect` conflictingNames)))
-                                            (scriptToVariableDeclarationsWithLineNumbers s)
-              -- constDecLNs = scriptToConstantDeclarationsWithLineNumbers s
-              -- predDecLNs = scriptToPredicateDeclarationsWithLineNumbers s
+                                            (scriptToVariableDeclarationsWithLineIndices s)
+              -- constDecLNs = scriptToConstantDeclarationsWithLineIndices s
+              -- predDecLNs = scriptToPredicateDeclarationsWithLineIndices s
 
 scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations :: Script -> [([ConstantDeclaration], Int)]
 scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations s
@@ -102,9 +102,9 @@ scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations s
               conflictingDefVNames = if null vnames then defaultVariables `intersect` vnames else []
               conflictingDefPNames = if null pnames then map fst defaultPredicates `intersect` vnames else []
               conflictingConstDecLNs = filter (\(ds, i) -> not (null (map fst ds `intersect` conflictingNames)))
-                                              (scriptToConstantDeclarationsWithLineNumbers s)
-              -- constDecLNs = scriptToConstantDeclarationsWithLineNumbers s
-              -- predDecLNs = scriptToPredicateDeclarationsWithLineNumbers s
+                                              (scriptToConstantDeclarationsWithLineIndices s)
+              -- constDecLNs = scriptToConstantDeclarationsWithLineIndices s
+              -- predDecLNs = scriptToPredicateDeclarationsWithLineIndices s
 
 scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations :: Script -> [([PredicateDeclaration], Int)]
 scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
@@ -120,7 +120,7 @@ scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
               conflictingDefVNames = if null vnames then defaultVariables `intersect` vnames else []
               conflictingDefPNames = if null pnames then map fst defaultPredicates `intersect` vnames else []
               conflictingPredDecLNs = filter (\(ds, i) -> not (null (map fst ds `intersect` conflictingNames)))
-                                              (scriptToPredicateDeclarationsWithLineNumbers s)
+                                              (scriptToPredicateDeclarationsWithLineIndices s)
 
 -- scriptToInconsistentDeclarationIndices :: Script -> [Int]
 -- scriptToInconsistentDeclarationIndices s = undefined
@@ -137,9 +137,9 @@ scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
 --  | null predDecs && meets consts defaultPredicateNames = undefined
 -- -- otherwise conflicting among explicit declarations (no concern of defaults)
 --  | otherwise = undefined
---  where varDecs = scriptToVariableDeclarationsWithLineNumbers s
---        constDecs = scriptToConstantDeclarationsWithLineNumbers s
---        predDecs = scriptToPredicateDeclarationsWithLineNumbers s
+--  where varDecs = scriptToVariableDeclarationsWithLineIndices s
+--        constDecs = scriptToConstantDeclarationsWithLineIndices s
+--        predDecs = scriptToPredicateDeclarationsWithLineIndices s
 --        vars = if null varDecs then defaultVariables else concat $ map fst varDecs
 --        consts = map fst $ if null constDecs then defaultConstants else concat $ map fst constDecs
 --        preds = map fst $ if null predDecs then defaultPredicates else concat $ map fst predDecs
