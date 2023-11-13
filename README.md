@@ -273,44 +273,13 @@ Correct proof of
  ⊢ (A -> P(eps x P(x))) -> A -> P(eps x(A -> P(x)))
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
-The option <code>-d</code> applies the proof transformation due to deduction theorem.
-Combinating with the oprion <code>-p</code>, it shows the transformed proof.
-```
-% cat examples/ex08_assumption.proof  
-A by Asm
-% ./Main examples/ex08_assumption.proof 
-Correct proof of
-A ⊢ A
-% ./Main -d examples/ex08_assumption.proof
-It generated a correct proof of
-⊢ A -> A
-% ./Main -d -p examples/ex08_assumption.proof
-It generated a correct proof of
-⊢ A -> A
-(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
-A -> (A -> A) -> A by K
-(A -> A -> A) -> A -> A by MP
-A -> A -> A by K
-A -> A by MP
-```
-The option <code>-1</code> together with <code>-d</code> limites the application of deduction transformation, so that only the last assumption is handled.
-```
-% ./Main examples/ex16_peirce_first_preparation.proof 
-Correct proof of
-(A -> B) -> A, ~A, A ⊢ B
-miyamoto@station3179 epsilonproofchecker % ./Main -d -1 examples/ex16_peirce_first_preparation.proof
-It generated a correct proof of
-(A -> B) -> A, ~A ⊢ A -> B
-```
-The command line options <code>-d</code> as well as <code>-1</code> are deprecated.  The deduction transformation is now available through proof scripting, as described below.
-
-One example showing the power of this proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex17_excluded_middle.proof</code>.
+One example making use of the proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex16_excluded_middle.proof</code>.
 ```
 A | ~A
 ```
-First step is to prove that <code>A | ~A -> bot, A ⊢ bot</code> which is done in the lines 1 to 5 in <code>ex17_excluded_middle.proof</code>.
+First step is to prove that <code>A | ~A -> bot, A ⊢ bot</code> which is done in the lines 1 to 5 in <code>ex16_excluded_middle.proof</code>.
 ```
-% cat examples/examples/ex17_excluded_middle.proof 
+% cat examples/examples/ex16_excluded_middle.proof 
 A | ~A -> bot by Asm
 A by Asm
 A -> A | ~A by DisjI1
@@ -333,12 +302,12 @@ The command line option <code>-p</code> may be helpful to get to know how the ge
 
 By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
-% ./Main examples/ex17_excluded_middle.proof
+% ./Main examples/ex16_excluded_middle.proof
 -- Correct proof of ⊢ A | ~A
 ```
 It is also possible to print out the final proof by the option <code>-p</code>.
 ```
-% ./Main -p examples/ex17_excluded_middle.proof
+% ./Main -p examples/ex16_excluded_middle.proof
 ```
 The outcome consists of 64 lines, and would be hard without relying on the proof transformation, although there can be a clever idea for a shorter proof.
 
