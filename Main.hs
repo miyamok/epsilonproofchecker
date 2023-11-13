@@ -13,9 +13,9 @@ import Debug.Trace
 import Data.List
 
 printHelpMessage :: IO ()
-printHelpMessage = do putStrLn "-d option to apply deduction transformation"
+printHelpMessage = do --putStrLn "-d option to apply deduction transformation"
                       putStrLn "-p option to print out the proof"
-                      putStrLn "-1 option to limit the application of deduction transformation only for one assumption"
+                      --putStrLn "-1 option to limit the application of deduction transformation only for one assumption"
                       putStrLn "Usage:"
                       putStrLn "./Main [options] filepath"
 
@@ -26,20 +26,22 @@ printHelpMessage = do putStrLn "-d option to apply deduction transformation"
 argsToDebugFlag :: [String] -> Bool
 argsToDebugFlag = elem "--debug"
 
-argsToDeductionFlag :: [String] -> Bool
-argsToDeductionFlag = elem "-d"
+-- argsToDeductionFlag :: [String] -> Bool
+-- argsToDeductionFlag = elem "-d"
 
-argsToOnceFlag :: [String] -> Bool
-argsToOnceFlag = elem "-1"
+-- argsToOnceFlag :: [String] -> Bool
+-- argsToOnceFlag = elem "-1"
 
 argsToPrintFlag :: [String] -> Bool
 argsToPrintFlag = elem "-p"
 
 argsToFilename :: [String] -> [String]
-argsToFilename args = [ s | s <- args, notElem s ["--debug", "-1", "-d", "-p"] ]
+--argsToFilename args = [ s | s <- args, notElem s ["--debug", "-1", "-d", "-p"] ]
+argsToFilename args = [ s | s <- args, notElem s ["--debug", "-p"] ]
 
-argsToFlagsAndFilename :: [String] -> (Bool, Bool, Bool, Bool, [String])
-argsToFlagsAndFilename args = (elem "--debug" args, elem "-d" args, elem "-1" args, elem "-p" args, argsToFilename args)
+argsToFlagsAndFilename :: [String] -> (Bool, Bool, [String])
+argsToFlagsAndFilename args = (elem "--debug" args, elem "-p" args, argsToFilename args)
+--argsToFlagsAndFilename args = (elem "--debug" args, elem "-d" args, elem "-1" args, elem "-p" args, argsToFilename args)
 
 --------------------------------------------------
 -- Output
@@ -119,45 +121,6 @@ proofBlocksAndFlagsToOutputAux lemmas ((p, lns, mn):pbs) pFlag debugFlag =
                 else do mi <- proofBlockWithAutoToWrongLineIndex (p, lns, mn) lemmas
                         printProofWrong p mi lns
 
--- obsolate
--- This function is needed only for a deprecated feature of the "-d" command line option
-proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
-proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
- = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
-                                 else deduction $ proofToUntaggedProof proof
-    in do proofAndFlagsToOutput proof' lns pFlag debugFlag
-          return ()
-proofBlocksAndFlagsToDeductionOutput _ _ _ _
-        = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
-
--- obsolate
--- This function is needed only for a deprecated feature of the "-d" command line option
-proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
-proofAndFlagsToOutput p is pFlag debugFlag
- | not $ and bs = do printProofWrong p mi is
-                     return False
- | null autoFlas = do printProofCorrect p pFlag
-                      return True
- | otherwise = do ex <- findExecutable "z3"
-                  autobs <- sequence autoResults
-                  case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's Z3 (github.com/Z3Prover/z3)"
-                                           return False
-                             Just _ -> if and autobs then do printProofCorrect p pFlag
-                                                             return True
-                                       else let mi' = do j <- findIndex not autobs
-                                                         return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
-                                             in do printProofWrong p mi' is
-                                                   return False
- where
-        bs = checkClaims p Map.empty
-        mi = findIndex not bs
-        mln = do i <- mi
-                 return (is!!i)
-        autoSteps = proofToAutoStepFormulas p
-        asmFlas = proofToAssumptionFormulas p
-        autoFlas = proofToAutoStepFormulas p
-        autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
-
 printConflictingDeclarationError :: Script -> IO ()
 printConflictingDeclarationError s
  | not (null varDef) = printErrorMessage ((snd (head varDef))+1) "Declaration conflicts against the default constants or predicates"
@@ -188,7 +151,7 @@ printConflictingDeclarationError s
 
 main :: IO ()
 main = do args <- getArgs
-          let (debugFlag, dFlag, onceFlag, pFlag, filenames) = argsToFlagsAndFilename args
+          let (debugFlag, pFlag, filenames) = argsToFlagsAndFilename args
           if length filenames /= 1
           then do putStrLn "Wrong option given, otherwise not exactly one filename given"
                   printHelpMessage
@@ -202,8 +165,46 @@ main = do args <- getArgs
                         then printConflictingDeclarationError script
                         else case mErrorMsg of
                               Just msg -> putStrLn msg
-                              Nothing -> if dFlag
-                                         then proofBlocksAndFlagsToDeductionOutput proofBlocks onceFlag pFlag debugFlag
-                                         else case mIllDeclInd of
+                              Nothing -> case mIllDeclInd of
                                                 Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
                                                 Just i -> printErrorMessage (i+1) "Declaration may not occur after a proof started."
+
+-- -- obsolate
+-- -- This function is needed only for a deprecated feature of the "-d" command line option
+-- proofBlocksAndFlagsToDeductionOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> Bool -> IO ()
+-- proofBlocksAndFlagsToDeductionOutput [(proof, lns, ms)] onceFlag pFlag debugFlag
+--  = let proof' = if onceFlag then deductionOnce $ proofToUntaggedProof proof
+--                                  else deduction $ proofToUntaggedProof proof
+--     in do proofAndFlagsToOutput proof' lns pFlag debugFlag
+--           return ()
+-- proofBlocksAndFlagsToDeductionOutput _ _ _ _
+--         = putStrLn "-d option may not be specified for a proof script with deduction-transformation or end-proof"
+
+-- -- obsolate
+-- -- This function is needed only for a deprecated feature of the "-d" command line option
+-- proofAndFlagsToOutput :: Proof -> [Int] -> Bool -> Bool -> IO Bool
+-- proofAndFlagsToOutput p is pFlag debugFlag
+--  | not $ and bs = do printProofWrong p mi is
+--                      return False
+--  | null autoFlas = do printProofCorrect p pFlag
+--                       return True
+--  | otherwise = do ex <- findExecutable "z3"
+--                   autobs <- sequence autoResults
+--                   case ex of Nothing -> do putStrLn "Proof by Auto requires Microsoft's Z3 (github.com/Z3Prover/z3)"
+--                                            return False
+--                              Just _ -> if and autobs then do printProofCorrect p pFlag
+--                                                              return True
+--                                        else let mi' = do j <- findIndex not autobs
+--                                                          return (is!!(findIndices (\(_, r, _) -> r == Auto) p!!j))
+--                                              in do printProofWrong p mi' is
+--                                                    return False
+--  where
+--         bs = checkClaims p Map.empty
+--         mi = findIndex not bs
+--         mln = do i <- mi
+--                  return (is!!i)
+--         autoSteps = proofToAutoStepFormulas p
+--         asmFlas = proofToAssumptionFormulas p
+--         autoFlas = proofToAutoStepFormulas p
+--         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
+
