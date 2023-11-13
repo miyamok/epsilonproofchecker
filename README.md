@@ -38,7 +38,7 @@ deduction-transformation
 % z3 -version ## assume Microsoft's Z3 is installed
 Z3 version 4.12.3 - 64 bit
 % ./Main examples/ex18_inverse_AllShift_auto.proof
-Correct proof of ⊢ (B -> all x P(x)) -> all y (B -> P(y))
+-- Correct proof of ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 % cat examples/ex18_inverse_AllShift_auto.proof
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
