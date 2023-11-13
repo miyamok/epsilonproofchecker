@@ -14,31 +14,33 @@ The proof scripting language is simple, and there are useful features such as pr
 ```
 ## ghc-9.2.8 used
 % ghc Main
-% ./Main examples/ex04_identity.proof
+% ./Main examples/ex03_identity.proof
 -- Correct proof of ⊢ A -> A
-% cat examples/ex04_identity.proof 
+% cat examples/ex03_identity.proof 
 A -> (A -> A) -> A by K
 A -> A -> A by K
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 (A -> A -> A) -> A -> A by MP
 A -> A by MP
-% ./Main examples/ex05_drinkers_paradox.proof
+% ./Main examples/ex24_drinkers_paradox.proof
+-- Correct proof of ⊢ ex x(P(x) -> all x P(x))
+% ./Main examples/ex25_drinkers_paradox_eps.proof
 -- Correct proof of ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
-% ./Main examples/ex06_wrong.proof
+% ./Main examples/ex05_wrong.proof
 Error at line 1: A -> B by K
-% cat examples/ex06_wrong.proof
+% cat examples/ex05_wrong.proof
 A -> B by K
-% ./Main examples/ex08_assumption.proof 
+% ./Main examples/ex07_assumption.proof 
 -- Correct proof of ⊢ A -> A
-% cat examples/ex08_assumption.proof 
+% cat examples/ex07_assumption.proof 
 A by Asm
 deduction-transformation
 % z3 -version ## assume Microsoft's Z3 is installed
 Z3 version 4.12.3 - 64 bit
-% ./Main examples/ex14_prop_auto.proof
-Correct proof of ⊢ A -> A
-% cat examples/ex14_prop_auto.proof 
-A -> A by Auto
+% ./Main examples/ex18_inverse_AllShift_auto.proof
+-- Correct proof of ⊢ (B -> all x P(x)) -> all y (B -> P(y))
+% cat examples/ex18_inverse_AllShift_auto.proof
+(B -> all x P(x)) -> all y (B -> P(y)) by Auto
 ```
 ## Logic
 This section describes propositional calculus first, and then extends this calculus step-by-step to arrive at more powerful calculi such as predicate calculus and epsilon calculus.
@@ -224,7 +226,7 @@ Applying the definition of the existential quantifier by epsilon operator, the a
 ```
 (A -> P(eps x P(x))) -> A -> B(eps x(A -> P(x)))
 ```
-A proof to this formula is given in examples/ex01_independence_of_premise.proof .
+A proof to this formula is given in examples/ex23_independence_of_premise.proof .
 ```
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
@@ -239,7 +241,7 @@ The epsilon version of the above formula is
 ```
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 ```
-A proof is given in examples/ex05_drinkers_paradox.proof
+A proof is given in examples/ex24_drinkers_paradox.proof
 After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>, the rest of the proof goes as follows.
 ```
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
@@ -260,20 +262,31 @@ Get the source code and compile the code in the following way.
 ```
 Then you can try examples in the <code>examples</code> directory.
 ```
-% ./Main examples/ex01_independence_of_premise.proof
+% ./Main examples/ex22_independence_of_premise.proof
 Correct proof of
- ⊢ (A -> P(eps x P(x))) -> A -> P(eps x(A -> P(x)))
-% cat examples/ex01_independence_of_premise.proof
-(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
+ ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
+% cat examples/ex22_independence_of_premise.proof
+A -> ex x P(x) by Asm
+~ex x(A -> P(x)) by Asm
+A by Asm
+
+...
+
+~~ex x(A -> P(x)) -> ex x(A -> P(x)) by DNE
+ex x(A -> P(x)) by MP
+deduction-transformation
 ```
 The oprion <code>-p</code> is to display the proof.
 ```
-% ./Main -p examples/ex01_independence_of_premise.proof
-Correct proof of
- ⊢ (A -> P(eps x P(x))) -> A -> P(eps x(A -> P(x)))
-(A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
+% ./Main -p examples/ex03_identity.proof
+-- Correct proof of ⊢ A -> A
+A -> (A -> A) -> A by K
+A -> A -> A by K
+(A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
+(A -> A -> A) -> A -> A by MP
+A -> A by MP
 ```
-One example making use of the proof transformation is the proof of the excluded middle, a proof of which is available as <code>examples/ex16_excluded_middle.proof</code>.
+One example making use of the proof transformation is the proof of the excluded middle, which is available as <code>examples/ex16_excluded_middle.proof</code>.
 ```
 A | ~A
 ```
@@ -319,9 +332,9 @@ If you give also a name, <code>end-proof Lemma1</code> for example, this proof w
 Currently, the Use feature is limited to show exactly the same formula as the lemma claims.
 It means that a previously proven formula <code>A | ~A</code> is applicable to prove exactly the same formula in the later proof, but not yet applicable to prove <code>ex x P(x) | ~ex x P(x)</code> for this moment.
 
-If the last step of the proof is <code>Asm</code>, the assumed formula is the conclusion of the proof.  If one wants to write a proof whose conclusion is directly from an assumption which is not the last <code>Asm</code>, one can use <code>Ref</code> to make a claim referring to an assumption.  An example is found in <code>examples/ex08_assumption.proof</code> which generates a proof of <code>⊢ A -> B -> A</code> from another proof of <code>A, B ⊢ A</code>.
+If the last step of the proof is <code>Asm</code>, the assumed formula is the conclusion of the proof.  If one wants to write a proof whose conclusion is directly from an assumption which is not the last <code>Asm</code>, one can use <code>Ref</code> to make a claim referring to an assumption.  An example is found in <code>examples/ex07_assumption.proof</code> which generates a proof of <code>⊢ A -> B -> A</code> from another proof of <code>A, B ⊢ A</code>.
 ```
-% cat examples/ex08_assumption.proof 
+% cat examples/ex07_assumption.proof 
 A by Asm
 B by Asm
 A by Ref
@@ -335,10 +348,9 @@ Microsoft's Z3 is supposed to be installed and be avaialble from your command li
 ```
 % z3 -version
 Z3 version 4.12.3 - 64 bit
-% ./Main -p examples/ex15_pred_auto.proof 
-Correct proof of
- ⊢ (B -> all x P(x)) -> all y (B -> P(y))
-(B -> all x P(x)) -> all y (B -> P(y)) by Auto
+% ./Main -p examples/ex15_peirce_auto.proof 
+Correct proof of ⊢ ((A -> B) -> A) -> A
+((A -> B) -> A) -> A by Auto
 ```
 Microsoft Z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
 There is no means for the proof assistant epsilon to verify the response from such an external prover, and the proof assistant epsilon simply accepts what the external prover said, in stead of performing a syntactic proof checking. 
