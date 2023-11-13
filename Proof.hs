@@ -411,3 +411,20 @@ isEpsilonCalculusProof = any (\(_, r, _) -> r == C)
 
 isElementaryCalculusProof :: Proof -> Bool
 isElementaryCalculusProof p = not (isEpsilonCalculusProof p || isPredicateCalculusProof p)
+
+proofToProofWithoutDetour :: Proof -> Proof
+proofToProofWithoutDetour [] = []
+proofToProofWithoutDetour ((f, r, _):ls)
+ | alphaEqFormula f f' = [(f, r, Nothing)]
+ | otherwise = (f, r, Nothing):proofToProofWithoutDetour (filter (\(g, _, _) -> not (alphaEqFormula f g)) ls)
+      where
+            (f', _, _) = last ls
+
+emptyLemmas :: Map String Proof
+emptyLemmas = Map.empty
+
+proofAndLemmasToInstantiatedProof :: Proof -> Lemmas -> Proof
+proofAndLemmasToInstantiatedProof [] _ = []
+proofAndLemmasToInstantiatedProof ((f, Use name, _):ls) lemmas =
+      proofToNonAsms (lemmas Map.! name) ++ proofAndLemmasToInstantiatedProof ls lemmas
+proofAndLemmasToInstantiatedProof (l:ls) lemmas = l:proofAndLemmasToInstantiatedProof ls lemmas

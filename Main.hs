@@ -110,8 +110,19 @@ checkProofWithAuto p lemmas
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
+proofWithAutoToCheckList :: Proof -> Lemmas -> IO [Bool]
+proofWithAutoToCheckList p lemmas = let bs' = map (\i -> if i `elem` autoIndices
+                                                        then let (f, _, _) = p !! i in checkFormulaByZ3 (foldr ImpForm f asmFlas)
+                                                        else return (bs !! i)) [0..length p-1]
+                                      in sequence bs'
+        where
+                bs = checkClaims p lemmas
+                asmFlas = proofToAssumptionFormulas p
+                autoIndices = findIndices (\(f, r, t) -> r == Auto) p
+                autoFlas = proofToAutoStepFormulas p
+
 proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
-proofBlocksAndFlagsToOutput = proofBlocksAndFlagsToOutputAux Map.empty
+proofBlocksAndFlagsToOutput = proofBlocksAndFlagsToOutputAux emptyLemmas
 
 proofBlocksAndFlagsToOutputAux :: Lemmas -> [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
 proofBlocksAndFlagsToOutputAux _ [] _ _ = return ()

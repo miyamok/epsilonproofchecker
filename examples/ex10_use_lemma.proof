@@ -1,6 +1,24 @@
-B by Asm
-A by Asm
+~A by Asm
+~B by Asm
+A | B by Asm
+A | B -> (A -> bot) -> (B -> bot) -> bot by DisjE
+(A -> bot) -> (B -> bot) -> bot by MP
+(B -> bot) -> bot by MP
+bot by MP
 deduction-transformation
-end-proof ident
-B by Asm
-A -> A by Use(ident)
+end-proof Lemma
+~~(A | B) by Asm
+~(~~A | ~~B) by Asm
+~A by Asm
+~B by Asm
+~(A | B) by Use(Lemma)
+bot by MP
+deduction-transformation
+~~B -> ~~A | ~~B by DisjI2
+~~A | ~~B by MP
+bot by MP
+deduction-transformation
+~~A -> ~~A | ~~B by DisjI1
+~~A | ~~B by MP
+bot by MP
+deduction-transformation

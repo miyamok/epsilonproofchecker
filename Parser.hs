@@ -358,58 +358,58 @@ emptyLine = do many (string " ")
 endProofLine :: Parser ScriptLine
 endProofLine = do symbol "end-proof"
                   name <- many alphanum
-                  if null name then return (EndProofLine Nothing)
-                               else return (EndProofLine (Just name))
+                  if null name then return (EndProofLine (-1) Nothing)
+                               else return (EndProofLine (-1) (Just name))
 
 deductionTransformationLine :: Parser ScriptLine
 deductionTransformationLine = do symbol "deduction-transformation-repeatedly"
                                  name <- many alphanum
-                                 if null name then return (DeductionTransformationLine Nothing Nothing)
-                                 else return (DeductionTransformationLine Nothing (Just name))
+                                 if null name then return (DeductionTransformationLine (-1) Nothing Nothing)
+                                 else return (DeductionTransformationLine (-1) Nothing (Just name))
                             <|> do symbol "deduction-transformation"
                                    name <- many alphanum
-                                   if null name then return (DeductionTransformationLine (Just 1) Nothing)
-                                   else return (DeductionTransformationLine (Just 1) (Just name))
+                                   if null name then return (DeductionTransformationLine (-1) (Just 1) Nothing)
+                                   else return (DeductionTransformationLine (-1) (Just 1) (Just name))
 
 proofScriptLine :: Declarations -> Parser ScriptLine
 proofScriptLine (vds, cds, pds) =
            do vd <- variableDeclaration
-              return (VarDeclareLine vd)
+              return (VarDeclareLine (-1) vd)
        <|> do cd <- constantDeclaration
-              return (ConstDeclareLine cd)
+              return (ConstDeclareLine (-1) cd)
        <|> do pd <- predicateDeclaration
-              return (PredDeclareLine pd)
+              return (PredDeclareLine (-1) pd)
        <|> do step <- step (vds, cds, pds)
-              return (ProofLine step)
+              return (ProofLine (-1) step)
        <|> do mn <- endProofLine
               return mn
        <|> do mn <- deductionTransformationLine
               return mn
        <|> do commentLine
-              return EmptyLine
+              return (EmptyLine (-1))
        <|> do emptyLine
-              return EmptyLine
+              return (EmptyLine (-1))
 
 parseLines :: [String] -> Script
-parseLines ls = parseLinesAux ls emptyDeclarations
+parseLines ls = parseLinesAux 0 emptyDeclarations ls
 
-parseLinesAux :: [String] -> Declarations -> Script
-parseLinesAux [] (vds, cds, pds) = []
-parseLinesAux (l:ls) (vds, cds, pds) =
+parseLinesAux :: Int -> Declarations -> [String] -> Script
+parseLinesAux _ (_, _, _) []= []
+parseLinesAux i (vds, cds, pds) (l:ls) =
        let mpl = parse (proofScriptLine (if null vds then defaultVariables else vds,
                                          if null cds then defaultConstants else cds,
                                          if null pds then defaultPredicates else pds)) l
-           aux = parseLinesAux ls
-        in case mpl of [] -> [ErrorLine l]
+           aux ds = parseLinesAux (i+1) ds ls
+        in case mpl of [] -> [ErrorLine i l]
                        [(pl, str)] ->
                             if null str
-                            then case pl of (ProofLine step) -> ProofLine step:aux (vds, cds, pds)
-                                            (VarDeclareLine newds) -> VarDeclareLine newds:aux (vds++newds, cds, pds)
-                                            (PredDeclareLine newds) -> PredDeclareLine newds:aux (vds, cds, pds++newds)
-                                            (ConstDeclareLine newds) -> ConstDeclareLine newds:aux (vds, cds++newds, pds)
-                                            EndProofLine ms -> EndProofLine ms:aux (vds, cds, pds)
-                                            DeductionTransformationLine mi ms ->
-                                                 DeductionTransformationLine mi ms:aux (vds, cds, pds)
-                                            EmptyLine -> EmptyLine:aux (vds, cds, pds)
-                            else [ErrorLine l]
-                       _ -> [ErrorLine l]
+                            then case pl of (ProofLine _ step) -> ProofLine i step:aux (vds, cds, pds)
+                                            (VarDeclareLine _ newds) -> VarDeclareLine i newds:aux (vds++newds, cds, pds)
+                                            (PredDeclareLine _ newds) -> PredDeclareLine i newds:aux (vds, cds, pds++newds)
+                                            (ConstDeclareLine _ newds) -> ConstDeclareLine i newds:aux (vds, cds++newds, pds)
+                                            EndProofLine _ ms -> EndProofLine i ms:aux (vds, cds, pds)
+                                            DeductionTransformationLine _ mi ms ->
+                                                 DeductionTransformationLine i mi ms:aux (vds, cds, pds)
+                                            EmptyLine _ -> EmptyLine i:aux (vds, cds, pds)
+                            else [ErrorLine i l]
+                       _ -> [ErrorLine i l]
