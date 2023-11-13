@@ -218,7 +218,8 @@ ex x E(x) := E(eps x E(x))
 all x E(x) := E(eps x ~E(x))
 ```
 We are going to look at examples.
-The following formula is known as independence of premise, where the formula <code>A</code> does not contain a free variable <code>x</code>.
+Assume the formula <code>A</code> does not contain a free variable <code>x</code>.
+The following formula is known as independence of premise, whose proof is given as examples/ex22_independence_of_premise.proof .
 ```
 (A -> ex x P(x)) -> ex x (A -> P(x))
 ```
@@ -226,12 +227,12 @@ Applying the definition of the existential quantifier by epsilon operator, the a
 ```
 (A -> P(eps x P(x))) -> A -> B(eps x(A -> P(x)))
 ```
-A proof to this formula is given in examples/ex23_independence_of_premise.proof .
+A proof to this formula is given in examples/ex23_independence_of_premise_eps.proof .
 ```
 (A -> P(eps x P(x))) -> A -> P(eps x (A -> P(x))) by C
 ```
 Notice that this formula is an instance of the critical axiom.
-Another example is a so-called Drinker's formula, which is often referred to as Drinker's paradox.
+Another example is a so-called Drinker's formula, which is often referred to as Drinker's paradox, and a proof is given as examples/ex24_drinkers_paradox.proof .
 ```
 ex x(P(x) -> all x P(x))
 ```
@@ -241,7 +242,7 @@ The epsilon version of the above formula is
 ```
 P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
 ```
-A proof is given in examples/ex24_drinkers_paradox.proof
+A proof is given in examples/ex25_drinkers_paradox_eps.proof
 After proving the identity formula <code>P(eps x ~P(x)) -> P(eps x ~P(x))</code>, the rest of the proof goes as follows.
 ```
 (P(eps x ~P(x)) -> P(eps x ~P(x))) -> P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x)) by C
@@ -263,8 +264,7 @@ Get the source code and compile the code in the following way.
 Then you can try examples in the <code>examples</code> directory.
 ```
 % ./Main examples/ex22_independence_of_premise.proof
-Correct proof of
- ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
+-- Correct proof of ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
 % cat examples/ex22_independence_of_premise.proof
 A -> ex x P(x) by Asm
 ~ex x(A -> P(x)) by Asm
@@ -349,7 +349,7 @@ Microsoft's Z3 is supposed to be installed and be avaialble from your command li
 % z3 -version
 Z3 version 4.12.3 - 64 bit
 % ./Main -p examples/ex15_peirce_auto.proof 
-Correct proof of ⊢ ((A -> B) -> A) -> A
+-- Correct proof of ⊢ ((A -> B) -> A) -> A
 ((A -> B) -> A) -> A by Auto
 ```
 Microsoft Z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
