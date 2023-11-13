@@ -264,8 +264,7 @@ Get the source code and compile the code in the following way.
 Then you can try examples in the <code>examples</code> directory.
 ```
 % ./Main examples/ex22_independence_of_premise.proof
-Correct proof of
- ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
+-- Correct proof of ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
 % cat examples/ex22_independence_of_premise.proof
 A -> ex x P(x) by Asm
 ~ex x(A -> P(x)) by Asm
@@ -350,7 +349,7 @@ Microsoft's Z3 is supposed to be installed and be avaialble from your command li
 % z3 -version
 Z3 version 4.12.3 - 64 bit
 % ./Main -p examples/ex15_peirce_auto.proof 
-Correct proof of ⊢ ((A -> B) -> A) -> A
+-- Correct proof of ⊢ ((A -> B) -> A) -> A
 ((A -> B) -> A) -> A by Auto
 ```
 Microsoft Z3 does not supply a syntactic proof of the claimed formula, but it just says "yes" or "no" as a result of determining the provability of the claimed formula.
