@@ -34,6 +34,13 @@ emptyDeclarations = ([], [], [])
 defaultDeclarations :: Declarations
 defaultDeclarations = (defaultVariables, defaultConstants, defaultPredicates)
 
+declarationsToDeclarationsFilledWithDefaults :: Declarations -> Declarations
+declarationsToDeclarationsFilledWithDefaults (vds, cds, pds) = (vds', cds', pds')
+      where
+            vds' = if null vds then defaultVariables else vds
+            cds' = if null cds then defaultConstants else cds
+            pds' = if null pds then defaultPredicates else pds
+
 -- researvedNames :: [String]
 -- researvedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
 --                   "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",

@@ -390,26 +390,55 @@ proofScriptLine (vds, cds, pds) =
        <|> do emptyLine
               return EmptyLine
 
-parseLines :: [String] -> Script
-parseLines ls = parseLinesAux ls emptyDeclarations
+declarationLine :: Parser ScriptLine
+declarationLine = do vd <- variableDeclaration
+                     return (VarDeclareLine vd)
+              <|> do cd <- constantDeclaration
+                     return (ConstDeclareLine cd)
+              <|> do pd <- predicateDeclaration
+                     return (PredDeclareLine pd)
+              <|> do commentLine
+                     return EmptyLine
+              <|> do emptyLine
+                     return EmptyLine
 
-parseLinesAux :: [String] -> Declarations -> Script
-parseLinesAux [] (vds, cds, pds) = []
-parseLinesAux (l:ls) (vds, cds, pds) =
-       let mpl = parse (proofScriptLine (if null vds then defaultVariables else vds,
-                                         if null cds then defaultConstants else cds,
-                                         if null pds then defaultPredicates else pds)) l
+proofLine :: Declarations -> Parser ScriptLine
+proofLine d = do step <- step d
+                 return (ProofLine step)
+         <|> do mn <- endProofLine
+                return mn
+         <|> do mn <- deductionTransformationLine
+                return mn
+         <|> do commentLine
+                return EmptyLine
+         <|> do emptyLine
+                return EmptyLine
+
+parseLines :: [String] -> Script
+parseLines ls = parseLinesAux ls False emptyDeclarations
+
+parseLinesAux :: [String] -> Bool -> Declarations -> Script
+parseLinesAux [] _ _ = []
+parseLinesAux (l:ls) isProofPart (vds, cds, pds) =
+       let mpl = parse (proofScriptLine (declarationsToDeclarationsFilledWithDefaults (vds, cds, pds))) l
+           illegalDeclarationMessage = "A declaration may not come after a proof started"
            aux = parseLinesAux ls
         in case mpl of [] -> [ErrorLine l]
                        [(pl, str)] ->
                             if null str
-                            then case pl of (ProofLine step) -> ProofLine step:aux (vds, cds, pds)
-                                            (VarDeclareLine newds) -> VarDeclareLine newds:aux (vds++newds, cds, pds)
-                                            (PredDeclareLine newds) -> PredDeclareLine newds:aux (vds, cds, pds++newds)
-                                            (ConstDeclareLine newds) -> ConstDeclareLine newds:aux (vds, cds++newds, pds)
-                                            EndProofLine ms -> EndProofLine ms:aux (vds, cds, pds)
+                            then case pl of (ProofLine step) -> ProofLine step:aux True (vds, cds, pds)
+                                            (VarDeclareLine newds) ->
+                                                 if isProofPart then [ErrorLine illegalDeclarationMessage]
+                                                        else VarDeclareLine newds:aux False (vds++newds, cds, pds)
+                                            (PredDeclareLine newds) ->
+                                                 if isProofPart then [ErrorLine illegalDeclarationMessage]
+                                                        else PredDeclareLine newds:aux False (vds, cds, pds++newds)
+                                            (ConstDeclareLine newds) ->
+                                                 if isProofPart then [ErrorLine illegalDeclarationMessage]
+                                                        else ConstDeclareLine newds:aux False (vds, cds++newds, pds)
+                                            EndProofLine ms -> EndProofLine ms:aux True (vds, cds, pds)
                                             DeductionTransformationLine mi ms ->
-                                                 DeductionTransformationLine mi ms:aux (vds, cds, pds)
-                                            EmptyLine -> EmptyLine:aux (vds, cds, pds)
+                                                 DeductionTransformationLine mi ms:aux True (vds, cds, pds)
+                                            EmptyLine -> EmptyLine:aux isProofPart (vds, cds, pds)
                             else [ErrorLine l]
                        _ -> [ErrorLine l]

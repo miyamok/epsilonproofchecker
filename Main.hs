@@ -26,22 +26,14 @@ printHelpMessage = do --putStrLn "-d option to apply deduction transformation"
 argsToDebugFlag :: [String] -> Bool
 argsToDebugFlag = elem "--debug"
 
--- argsToDeductionFlag :: [String] -> Bool
--- argsToDeductionFlag = elem "-d"
-
--- argsToOnceFlag :: [String] -> Bool
--- argsToOnceFlag = elem "-1"
-
 argsToPrintFlag :: [String] -> Bool
 argsToPrintFlag = elem "-p"
 
 argsToFilename :: [String] -> [String]
---argsToFilename args = [ s | s <- args, notElem s ["--debug", "-1", "-d", "-p"] ]
 argsToFilename args = [ s | s <- args, notElem s ["--debug", "-p"] ]
 
 argsToFlagsAndFilename :: [String] -> (Bool, Bool, [String])
 argsToFlagsAndFilename args = (elem "--debug" args, elem "-p" args, argsToFilename args)
---argsToFlagsAndFilename args = (elem "--debug" args, elem "-d" args, elem "-1" args, elem "-p" args, argsToFilename args)
 
 --------------------------------------------------
 -- Output
@@ -110,17 +102,6 @@ checkProofWithAuto p lemmas
         autoFlas = proofToAutoStepFormulas p
         autoResults = map (\autoFla -> checkFormulaByZ3 $ foldr ImpForm autoFla asmFlas) autoFlas
 
-proofWithAutoToCheckList :: Proof -> Lemmas -> IO [Bool]
-proofWithAutoToCheckList p lemmas = let bs' = map (\i -> if i `elem` autoIndices
-                                                        then let (f, _, _) = p !! i in checkFormulaByZ3 (foldr ImpForm f asmFlas)
-                                                        else return (bs !! i)) [0..length p-1]
-                                      in sequence bs'
-        where
-                bs = checkClaims p lemmas
-                asmFlas = proofToAssumptionFormulas p
-                autoIndices = findIndices (\(f, r, t) -> r == Auto) p
-                autoFlas = proofToAutoStepFormulas p
-
 proofBlocksAndFlagsToOutput :: [(Proof, [Int], Maybe String)] -> Bool -> Bool -> IO ()
 proofBlocksAndFlagsToOutput = proofBlocksAndFlagsToOutputAux emptyLemmas
 
@@ -177,7 +158,6 @@ main = do args <- getArgs
           else do ls <- fmap lines (readFile (head filenames))
                   let script = parseLines ls
                       mErrorMsg = scriptToErrorMessage script
-                      mIllegalDeclarationIdx = scriptToFirstIllegalDeclarationIndex script
                       proofBlocks = scriptToProofBlocks script
                       conflictingIdentNames = scriptToConflictingIdentifierNames script
                       conflictingLemmas = scriptToConflictingLemmaNameAndIndexList script
@@ -187,6 +167,4 @@ main = do args <- getArgs
                         then printConflictingLemmaError (head conflictingLemmas)
                         else case mErrorMsg of
                               Just msg -> putStrLn msg
-                              Nothing -> case mIllegalDeclarationIdx of
-                                                Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
-                                                Just i -> printErrorMessage (i+1) "Declaration may not occur after a proof started."
+                              Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
