@@ -129,10 +129,10 @@ constant ((n, a):ds) = do name <- string n
 
 appterm :: Declarations -> Parser Term
 appterm (vds, cds, pds) = do c <- constant cds
-                             if constToArity c == 0
+                             if constantToArity c == 0
                              then return (AppTerm c [])
                              else do ts <- argterms (vds, cds, pds)
-                                     if length ts == constToArity c
+                                     if length ts == constantToArity c
                                      then return (AppTerm c ts)
                                      else empty
 

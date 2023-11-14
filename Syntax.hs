@@ -14,6 +14,7 @@ data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
+data Comprehension = Compr [Variable] Formula deriving (Show)
 
 type VariableDeclaration = Name
 type ConstantDeclaration = (Name, Int)
@@ -42,11 +43,11 @@ declarationsToDeclarationsFilledWithDefaults (vds, cds, pds) = (vds', cds', pds'
             cds' = if null cds then defaultConstants else cds
             pds' = if null pds then defaultPredicates else pds
 
-researvedNames :: [String]
-researvedNames = ["Falsum", "Equality"]
--- researvedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
---                   "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
---                   "deduction-translation", "end-proof", "variables", "constants", "predicates"]
+reservedNames :: [String]
+reservedNames = ["Falsum", "Equality"]
+-- reservedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
+--                  "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
+--                  "deduction-translation", "end-proof", "variables", "constants", "predicates"]
 
 variableToIndex :: Variable -> Index
 variableToIndex (Var n i) = i
@@ -54,8 +55,8 @@ variableToIndex (Var n i) = i
 variableToName :: Variable -> Name
 variableToName (Var n i) = n
 
-constToArity :: Constant -> Arity
-constToArity (Const n i a) = a
+constantToArity :: Constant -> Arity
+constantToArity (Const n i a) = a
 
 predicateToName :: Predicate -> String
 predicateToName (Pred n i a) = n
@@ -72,9 +73,11 @@ predicateToArity (Pred n i a) = a
 predicateToArity Falsum = 0
 predicateToArity Equality = 2
 
+comprehensionToArity :: Comprehension -> Arity
+comprehensionToArity (Compr vars _) = length vars
 
-makeVar :: Name -> Variable
-makeVar n = Var n (-1)
+makeVariable :: Name -> Variable
+makeVariable n = Var n (-1)
 
 isVariable :: Variable -> Bool
 isVariable (Var n i) = not (null n) && i >= -1
@@ -125,23 +128,23 @@ variablesToFreshVariable :: [Variable] -> Variable
 variablesToFreshVariable [] = Var "x" 0
 variablesToFreshVariable (v:vs) = Var (variableToName v) (maximum (map variableToIndex (v:vs)) + 1)
 
-variablesToFreshVariables :: [Variable] -> [Variable]
-variablesToFreshVariables vs = variablesToFreshVariablesAux (length vs) vs
+-- variablesToFreshVariables :: [Variable] -> [Variable]
+-- variablesToFreshVariables vs = variablesToFreshVariablesAux (length vs) vs
 
-variablesToFreshVariablesAux :: Int -> [Variable] -> [Variable]
-variablesToFreshVariablesAux 0 knownVars = []
-variablesToFreshVariablesAux n knownVars = newVar:newVars
+variablesToFreshVariables :: Int -> [Variable] -> [Variable]
+variablesToFreshVariables 0 knownVars = []
+variablesToFreshVariables n knownVars = newVar:newVars
       where
             newVar = variablesToFreshVariable knownVars
-            newVars = variablesToFreshVariablesAux (n-1) (newVar:knownVars)
+            newVars = variablesToFreshVariables (n-1) (newVar:knownVars)
 
 isPredicate :: Predicate -> Bool
 isPredicate (Pred n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
 isPredicate Equality = True
 
-makePred :: Name -> Arity -> Predicate
-makePred n a = Pred n (-1) a
+makePredicate :: Name -> Arity -> Predicate
+makePredicate n a = Pred n (-1) a
 
 formulaToConstants :: Formula -> [Constant]
 formulaToConstants (PredForm p ts) = nub $ concat $ map termToConstants ts
@@ -176,18 +179,68 @@ isFormula (ImpForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (ConjForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (DisjForm f1 f2) = isFormula f1 && isFormula f2
 
-substTerm :: Variable -> Term -> Term -> Term
-substTerm v t (VarTerm v2) = if v==v2 then t else VarTerm v2
-substTerm v t (AppTerm c ts) = AppTerm c (map (substTerm v t) ts)
-substTerm v t (EpsTerm v2 f) = if v==v2 then EpsTerm v2 f else EpsTerm v2 (substFormula v t f)
+termSubstitutionInTerm :: Variable -> Term -> Term -> Term
+termSubstitutionInTerm v t targetTerm = termSubstitutionInTermAux forbVars v t targetTerm
+      where
+            forbVars = nub (v:termToVariables t++termToVariables targetTerm)
 
-substFormula :: Variable -> Term -> Formula -> Formula
-substFormula v t (PredForm p ts) = PredForm p (map (substTerm v t) ts)
-substFormula v t (ForallForm v' f) = if v==v' then ForallForm v' f else ForallForm v' (substFormula v t f)
-substFormula v t (ExistsForm v' f) = if v==v' then ExistsForm v' f else ExistsForm v' (substFormula v t f)
-substFormula v t (ImpForm f1 f2) = ImpForm (substFormula v t f1) (substFormula v t f2)
-substFormula v t (ConjForm f1 f2) = ConjForm (substFormula v t f1) (substFormula v t f2)
-substFormula v t (DisjForm f1 f2) = DisjForm (substFormula v t f1) (substFormula v t f2)
+termSubstitutionInTermAux :: [Variable] -> Variable -> Term -> Term -> Term
+termSubstitutionInTermAux forbVars v t (VarTerm v2) = if v==v2 then t else VarTerm v2
+termSubstitutionInTermAux forbVars v t (AppTerm c ts) = AppTerm c (map (termSubstitutionInTermAux forbVars v t) ts)
+termSubstitutionInTermAux forbVars v t (EpsTerm v2 f)
+  | v==v2 = EpsTerm v2 f
+  | v2 `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable forbVars
+                                          freshVarTerm = VarTerm freshVar
+                                          forbVars' = freshVar:forbVars
+                                          f' = termSubstitutionInFormula v2 freshVarTerm f
+                                       in EpsTerm freshVar (termSubstitutionInFormulaAux forbVars' v t f')
+  | otherwise = EpsTerm v2 (termSubstitutionInFormulaAux forbVars v t f)
+
+termSubstitutionInFormula :: Variable -> Term -> Formula -> Formula
+termSubstitutionInFormula v t f = termSubstitutionInFormulaAux forbVars v t f
+      where forbVars = nub (v:formulaToVariables f ++ termToVariables t)
+
+termSubstitutionInFormulaAux :: [Variable] -> Variable -> Term -> Formula -> Formula
+termSubstitutionInFormulaAux forbVars v t (PredForm p ts) = PredForm p (map (termSubstitutionInTermAux forbVars v t) ts)
+termSubstitutionInFormulaAux forbVars v t (ForallForm v' f)
+  | v==v' = ForallForm v' f
+  | v' `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable forbVars
+                                          freshVarTerm = VarTerm freshVar
+                                          forbVars' = freshVar:forbVars
+                                          f' = termSubstitutionInFormula v' freshVarTerm f
+                                       in ForallForm freshVar (termSubstitutionInFormulaAux forbVars' v t f')
+  | otherwise = ForallForm v' (termSubstitutionInFormulaAux forbVars v t f)
+termSubstitutionInFormulaAux forbVars v t (ExistsForm v' f)
+  | v==v' = ExistsForm v' f
+  | v' `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable forbVars
+                                          freshVarTerm = VarTerm freshVar
+                                          forbVars' = freshVar:forbVars
+                                          f' = termSubstitutionInFormula v' freshVarTerm f
+                                       in ExistsForm freshVar (termSubstitutionInFormulaAux forbVars' v t f')
+  | otherwise = ExistsForm v' (termSubstitutionInFormulaAux forbVars v t f)
+termSubstitutionInFormulaAux forbVars v t (ImpForm f1 f2) = ImpForm (termSubstitutionInFormulaAux forbVars v t f1) (termSubstitutionInFormulaAux forbVars v t f2)
+termSubstitutionInFormulaAux forbVars v t (ConjForm f1 f2) = ConjForm (termSubstitutionInFormulaAux forbVars v t f1) (termSubstitutionInFormulaAux forbVars v t f2)
+termSubstitutionInFormulaAux forbVars v t (DisjForm f1 f2) = DisjForm (termSubstitutionInFormulaAux forbVars v t f1) (termSubstitutionInFormulaAux forbVars v t f2)
+
+formulaSubstitutionInFormula :: Predicate -> Comprehension -> Formula -> Formula
+formulaSubstitutionInFormula p c f
+ | predicateToArity p == comprehensionToArity c = formulaSubstitutionInFormulaAux p c f
+ | otherwise = undefined
+
+formulaSubstitutionInFormulaAux :: Predicate -> Comprehension -> Formula -> Formula
+formulaSubstitutionInFormulaAux p c (PredForm p' ts) = undefined
+
+-- it does not care about violation of variable condition yet
+comprehensionAndTermsToFormula :: Comprehension -> [Term] -> Formula
+comprehensionAndTermsToFormula (Compr vs f) ts =
+      let forbVars = nub $ concat $ map termToVariables ts
+          bindings = zip vs ts
+          -- (a -> b -> b) -> b -> t a -> b
+          -- ((V, T) -> T -> T) -> T -> [(Variable, Term)] -> T
+          newArgTerms = map (\argTerm -> foldr (\ (v, t) argTerm' -> termSubstitutionInTerm v t argTerm') argTerm bindings) ts
+       in
+          -- ((V,T) -> Fla -> Fla) -> Fla -> [(V, T)] -> Fla
+          foldr (\(v,t) f -> termSubstitutionInFormula v t f) f bindings
 
 alphaEqTerm :: Term -> Term -> Bool
 alphaEqTerm (VarTerm v1) (VarTerm v2) = v1==v2
@@ -195,8 +248,8 @@ alphaEqTerm (AppTerm c1 ts1) (AppTerm c2 ts2) = c1==c2 && and (zipWith alphaEqTe
 alphaEqTerm (EpsTerm v1 f1) (EpsTerm v2 f2) = alphaEqFormula g1 g2
             where vs = termToVariables (EpsTerm v1 f1) `union` termToVariables (EpsTerm v2 f2)
                   u = variablesToFreshVariable vs
-                  g1 = substFormula v1 (VarTerm u) f1
-                  g2 = substFormula v2 (VarTerm u) f2
+                  g1 = termSubstitutionInFormula v1 (VarTerm u) f1
+                  g2 = termSubstitutionInFormula v2 (VarTerm u) f2
 alphaEqTerm _ _ = False
 
 alphaEqFormula :: Formula -> Formula -> Bool
@@ -204,13 +257,13 @@ alphaEqFormula (PredForm p1 ts1) (PredForm p2 ts2) = p1==p2 && and (zipWith alph
 alphaEqFormula (ForallForm v1 f1) (ForallForm v2 f2) = alphaEqFormula g1 g2
                where vs = formulaToVariables (ForallForm v1 f1) `union` formulaToVariables (ForallForm v2 f2)
                      u = variablesToFreshVariable vs
-                     g1 = substFormula v1 (VarTerm u) f1
-                     g2 = substFormula v2 (VarTerm u) f2
+                     g1 = termSubstitutionInFormula v1 (VarTerm u) f1
+                     g2 = termSubstitutionInFormula v2 (VarTerm u) f2
 alphaEqFormula (ExistsForm v1 f1) (ExistsForm v2 f2) = alphaEqFormula g1 g2
                where vs = formulaToVariables (ExistsForm v1 f1) `union` formulaToVariables (ExistsForm v2 f2)
                      u = variablesToFreshVariable vs
-                     g1 = substFormula v1 (VarTerm u) f1
-                     g2 = substFormula v2 (VarTerm u) f2
+                     g1 = termSubstitutionInFormula v1 (VarTerm u) f1
+                     g2 = termSubstitutionInFormula v2 (VarTerm u) f2
 alphaEqFormula (ImpForm f1 g1) (ImpForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (ConjForm f1 g1) (ConjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
 alphaEqFormula (DisjForm f1 g1) (DisjForm f2 g2) = alphaEqFormula f1 f2 && alphaEqFormula g1 g2
@@ -299,10 +352,10 @@ unfoldNegationAux (AppTerm c ts) = AppTerm c (map unfoldNegationAux ts)
 unfoldNegationAux (EpsTerm v f) = EpsTerm v (unfoldNegation f)
 
 epsTranslation :: Formula -> Formula
-epsTranslation (ExistsForm v f) = substFormula v e f'
+epsTranslation (ExistsForm v f) = termSubstitutionInFormula v e f'
       where e = EpsTerm v f'
             f' = epsTranslation f
-epsTranslation (ForallForm v f) = substFormula v e f'
+epsTranslation (ForallForm v f) = termSubstitutionInFormula v e f'
       where e = EpsTerm v (makeNegFormula f')
             f' = epsTranslation f
 epsTranslation (PredForm p ts) = PredForm p ts

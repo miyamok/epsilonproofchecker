@@ -77,14 +77,14 @@ checkAllShift :: Formula -> Bool
 checkAllShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm f' (ForallForm v' g'))) =
       alphaEqFormula f f' && not (v `elem` formulaToFreeVariables f) &&
             (v == v' || not (v' `elem` formulaToFreeVariables g)) &&
-            alphaEqFormula g' (substFormula v (VarTerm v') g)
+            alphaEqFormula g' (termSubstitutionInFormula v (VarTerm v') g)
 checkAllShift _ = False
 
 checkExShift :: Formula -> Bool
 checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g')) =
       alphaEqFormula g g' && not (v `elem` formulaToFreeVariables g) &&
             (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
-            alphaEqFormula f' (substFormula v (VarTerm v') f)
+            alphaEqFormula f' (termSubstitutionInFormula v (VarTerm v') f)
 
 checkGen :: Proof -> Bool
 checkGen p = let (ForallForm genVar genFlaKernel, _, _) = last p

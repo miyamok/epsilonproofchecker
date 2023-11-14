@@ -26,14 +26,14 @@ simpleFormulaUnificationAux (ForallForm v f) (ForallForm v' f') = simpleFormulaU
     where
         vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
         freshvarterm = VarTerm (variablesToFreshVariable vars)
-        g = substFormula v freshvarterm f
-        g' = substFormula v' freshvarterm f'
+        g = termSubstitutionInFormula v freshvarterm f
+        g' = termSubstitutionInFormula v' freshvarterm f'
 simpleFormulaUnificationAux (ExistsForm v f) (ExistsForm v' f') = simpleFormulaUnificationAux f f'
     where
         vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
         freshvarterm = VarTerm (variablesToFreshVariable vars)
-        g = substFormula v freshvarterm f
-        g' = substFormula v' freshvarterm f'
+        g = termSubstitutionInFormula v freshvarterm f
+        g' = termSubstitutionInFormula v' freshvarterm f'
 simpleFormulaUnificationAux f f' = []
 
 simpleTermUnification :: Term -> Term -> [(Term, Term)]
@@ -51,8 +51,8 @@ simpleTermUnificationAux (EpsTerm v f) (EpsTerm v' f') = simpleFormulaUnificatio
     where
         vars = nub (formulaToVariables f ++ formulaToVariables f' ++ [v, v'])
         freshvarterm = VarTerm (variablesToFreshVariable vars)
-        g = substFormula v freshvarterm f
-        g' = substFormula v' freshvarterm f'
+        g = termSubstitutionInFormula v freshvarterm f
+        g' = termSubstitutionInFormula v' freshvarterm f'
 
 alphaEqTermPair :: (Term, Term) -> (Term, Term) -> Bool
 alphaEqTermPair (t1, t2) (s1, s2) = alphaEqTerm t1 s1 && alphaEqTerm t2 s2
