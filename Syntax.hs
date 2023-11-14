@@ -230,17 +230,14 @@ formulaSubstitutionInFormula p c f
 formulaSubstitutionInFormulaAux :: Predicate -> Comprehension -> Formula -> Formula
 formulaSubstitutionInFormulaAux p c (PredForm p' ts) = undefined
 
--- it does not care about violation of variable condition yet
 comprehensionAndTermsToFormula :: Comprehension -> [Term] -> Formula
-comprehensionAndTermsToFormula (Compr vs f) ts =
-      let forbVars = nub $ concat $ map termToVariables ts
-          bindings = zip vs ts
-          -- (a -> b -> b) -> b -> t a -> b
-          -- ((V, T) -> T -> T) -> T -> [(Variable, Term)] -> T
-          newArgTerms = map (\argTerm -> foldr (\ (v, t) argTerm' -> termSubstitutionInTerm v t argTerm') argTerm bindings) ts
+comprehensionAndTermsToFormula (Compr vs kernel) ts =
+      let forbVars = nub (concat (map termToVariables ts) ++ formulaToVariables kernel)
+          freshVars = variablesToFreshVariables (length vs) forbVars
+          freshVarTerms = map VarTerm freshVars
+          renamedKernel = foldr (\(v, t) f -> termSubstitutionInFormula v t f) kernel (zip freshVars freshVarTerms)
        in
-          -- ((V,T) -> Fla -> Fla) -> Fla -> [(V, T)] -> Fla
-          foldr (\(v,t) f -> termSubstitutionInFormula v t f) f bindings
+          foldr (\(v,t) f -> termSubstitutionInFormula v t f) renamedKernel (zip vs ts)
 
 alphaEqTerm :: Term -> Term -> Bool
 alphaEqTerm (VarTerm v1) (VarTerm v2) = v1==v2
