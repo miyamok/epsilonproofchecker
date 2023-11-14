@@ -149,7 +149,7 @@ printConflictingDeclarationError s
  | not (null confPredDecLNs) = let (ns, i) = head confPredDecLNs
                                 in printErrorMessage (i+1) "Declaration conflicts against another declaration"
         where
-                conflictingNames = scriptToInconsistentIdentifierNames s
+                conflictingNames = scriptToConflictingIdentifierNames s
                 varDef = scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
                 varDecLNs = scriptToVariableDeclarationsWithLineIndices s
                 confVarDecLNs = filter (\(vds, i) -> not (null (vds `intersect` conflictingNames))) varDecLNs
@@ -177,16 +177,16 @@ main = do args <- getArgs
           else do ls <- fmap lines (readFile (head filenames))
                   let script = parseLines ls
                       mErrorMsg = scriptToErrorMessage script
-                      mIllDeclInd = scriptToIllegalDeclarationIndex script
+                      mIllegalDeclarationIdx = scriptToFirstIllegalDeclarationIndex script
                       proofBlocks = scriptToProofBlocks script
-                      inconsistentIdentNames = scriptToInconsistentIdentifierNames script
+                      conflictingIdentNames = scriptToConflictingIdentifierNames script
                       conflictingLemmas = scriptToConflictingLemmaNameAndIndexList script
-                     in if not (null inconsistentIdentNames)
+                     in if not (null conflictingIdentNames)
                         then printConflictingDeclarationError script
                         else if not (null conflictingLemmas)
                         then printConflictingLemmaError (head conflictingLemmas)
                         else case mErrorMsg of
                               Just msg -> putStrLn msg
-                              Nothing -> case mIllDeclInd of
+                              Nothing -> case mIllegalDeclarationIdx of
                                                 Nothing -> proofBlocksAndFlagsToOutput proofBlocks pFlag debugFlag
                                                 Just i -> printErrorMessage (i+1) "Declaration may not occur after a proof started."

@@ -292,8 +292,8 @@ makeKFormula f g = ImpForm f (ImpForm g f)
 makeSFormula :: Formula -> Formula -> Formula -> Formula
 makeSFormula f g h = ImpForm (ImpForm f (ImpForm g h)) (ImpForm (ImpForm f g) (ImpForm f h))
 
-declarationsToInconsistentIdentifierNames :: Declarations -> [Name]
-declarationsToInconsistentIdentifierNames (vds, cds, pds) =
+declarationsToConflictingIdentifierNames :: Declarations -> [Name]
+declarationsToConflictingIdentifierNames (vds, cds, pds) =
       if null doubledNames then [] else doubledNames
       where
             vnames = if null vds then defaultVariables else vds

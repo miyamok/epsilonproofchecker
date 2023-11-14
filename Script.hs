@@ -6,23 +6,21 @@ import Proof
 import Utils
 import Data.Map (Map)
 import qualified Data.Map as Map
-
 import Debug.Trace
 
-data ScriptLine = ProofLine Step | VarDeclareLine [VariableDeclaration] | ConstDeclareLine [ConstantDeclaration]
- | PredDeclareLine [PredicateDeclaration] | EmptyLine | ErrorLine String | EndProofLine (Maybe String)
- | DeductionTransformationLine (Maybe Int) (Maybe String) deriving (Show)
+data ScriptLine = VarDeclareLine [VariableDeclaration] | ConstDeclareLine [ConstantDeclaration]
+ | PredDeclareLine [PredicateDeclaration] | EmptyLine | ProofLine Step | EndProofLine (Maybe String)
+ | DeductionTransformationLine (Maybe Int) (Maybe String) | ErrorLine String deriving (Show)
 type Script = [ScriptLine]
-type ScriptBlock = (Script, Int, Maybe String)
+--type ScriptBlock = (Script, Int, Maybe String)
 type ProofBlock = (Proof, [Int], Maybe String)
 
 scriptToErrorMessage :: Script -> Maybe String
 scriptToErrorMessage [] = Just "Empty input"
-scriptToErrorMessage ls =
-    do i <- findIndex (\l -> case l of ErrorLine s -> True; _ -> False) ls
-       l <- listToMaybe [e | e@(ErrorLine _) <- ls]
-       s <- case l of ErrorLine s -> Just s ; _ -> Nothing
-       return ("Error at line " ++ show (i+1) ++ ": " ++ s)
+scriptToErrorMessage ls = do i <- findIndex (\l -> case l of ErrorLine s -> True; _ -> False) ls
+                             l <- listToMaybe [e | e@(ErrorLine _) <- ls]
+                             s <- case l of ErrorLine s -> Just s ; _ -> Nothing
+                             return ("Error at line " ++ show (i+1) ++ ": " ++ s)
 
 scriptToProof :: Script -> Proof
 scriptToProof [] = []
@@ -62,8 +60,8 @@ scriptToPredicateDeclarationsWithLineIndicesAux _ [] = []
 scriptToPredicateDeclarationsWithLineIndicesAux i (PredDeclareLine ds:ls) = (ds, i):scriptToPredicateDeclarationsWithLineIndicesAux (i+1) ls
 scriptToPredicateDeclarationsWithLineIndicesAux i (_:ls) = scriptToPredicateDeclarationsWithLineIndicesAux (i+1) ls
 
-scriptToInconsistentIdentifierNames :: Script -> [Name]
-scriptToInconsistentIdentifierNames s = declarationsToInconsistentIdentifierNames (scriptToDeclarations s)
+scriptToConflictingIdentifierNames :: Script -> [Name]
+scriptToConflictingIdentifierNames s = declarationsToConflictingIdentifierNames (scriptToDeclarations s)
 
 scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations :: Script -> [([VariableDeclaration], Int)]
 scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
@@ -71,7 +69,7 @@ scriptToConflictingVariableDeclarationsWithLNsDueToDefaultDeclarations s
  | not (null conflictingDefCNames) || not (null conflictingDefPNames) = conflictingVarDecLNs
  | otherwise = []
        where
-              conflictingNames = scriptToInconsistentIdentifierNames s
+              conflictingNames = scriptToConflictingIdentifierNames s
               (vnames, cds, pds) = scriptToDeclarations s
               cnames = map fst cds
               pnames = map fst pds
@@ -86,7 +84,7 @@ scriptToConflictingConstantDeclarationsWithLNsDueToDefaultDeclarations s
  | not (null conflictingDefVNames) || not (null conflictingDefPNames) = conflictingConstDecLNs
  | otherwise = []
        where
-              conflictingNames = scriptToInconsistentIdentifierNames s
+              conflictingNames = scriptToConflictingIdentifierNames s
               (vnames, cds, pds) = scriptToDeclarations s
               cnames = map fst cds
               pnames = map fst pds
@@ -101,7 +99,7 @@ scriptToConflictingPredicateDeclarationsWithLNsDueToDefaultDeclarations s
  | not (null conflictingDefVNames) || not (null conflictingDefCNames) = conflictingPredDecLNs
  | otherwise = []
        where
-              conflictingNames = scriptToInconsistentIdentifierNames s
+              conflictingNames = scriptToConflictingIdentifierNames s
               (vnames, cds, pds) = scriptToDeclarations s
               cnames = map fst cds
               pnames = map fst pds
@@ -164,17 +162,17 @@ isPredicateDeclarationScriptLine :: ScriptLine -> Bool
 isPredicateDeclarationScriptLine (PredDeclareLine _) = True
 isPredicateDeclarationScriptLine _ = False
 
-scriptToIllegalDeclarationIndex :: Script -> Maybe Int
-scriptToIllegalDeclarationIndex s = do fpi <- findIndex isProofScriptLine s
-                                       let dis = findIndices isDeclarationScriptLine s
-                                           illIs = filter (>fpi) dis
-                                        in if null illIs then Nothing else Just (head illIs)
-
 scriptToIllegalDeclarationIndices :: Script -> [Int]
 scriptToIllegalDeclarationIndices s = let mfpi = findIndex isProofScriptLine s
                                           dis = findIndices isDeclarationScriptLine s
                                         in case mfpi of Nothing -> []
                                                         Just fpi -> filter (>fpi) dis
+
+scriptToFirstIllegalDeclarationIndex :: Script -> Maybe Int
+scriptToFirstIllegalDeclarationIndex s
+ | null is =  Nothing
+ | otherwise = Just $ head is
+ where is = scriptToIllegalDeclarationIndices s
 
 scriptToLemmaNameAndIndexList :: Script -> [(String, Int)]
 scriptToLemmaNameAndIndexList = scriptToLemmaNameAndIndexListAux 0
@@ -192,7 +190,7 @@ scriptToConflictingLemmaNameAndIndexList :: Script -> [(String, [Int])]
 scriptToConflictingLemmaNameAndIndexList [] = []
 scriptToConflictingLemmaNameAndIndexList s
  | null duplicatedNames = []
- | otherwise = map (\dupName -> (dupName, map snd (filter (\(n, i) -> dupName == n) lemmaNameAndIndexList))) duplicatedNames
+ | otherwise = map (\dupName -> (dupName, map snd (filter (\(n, _) -> dupName == n) lemmaNameAndIndexList))) duplicatedNames
        where
               lemmaNameAndIndexList = scriptToLemmaNameAndIndexList s
               duplicatedNames = doubles (map fst lemmaNameAndIndexList)
