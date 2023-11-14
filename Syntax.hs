@@ -1,6 +1,7 @@
 module Syntax where
-import Data.List(nub, delete, union, unionBy, intercalate)
+import Data.List(nub, delete, union, unionBy, intercalate, intersect)
 import Utils
+import Debug.Trace
 
 type Name = String
 type Index = Int
@@ -41,7 +42,8 @@ declarationsToDeclarationsFilledWithDefaults (vds, cds, pds) = (vds', cds', pds'
             cds' = if null cds then defaultConstants else cds
             pds' = if null pds then defaultPredicates else pds
 
--- researvedNames :: [String]
+researvedNames :: [String]
+researvedNames = ["Falsum", "Equality"]
 -- researvedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
 --                   "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
 --                   "deduction-translation", "end-proof", "variables", "constants", "predicates"]
@@ -55,10 +57,21 @@ variableToName (Var n i) = n
 constToArity :: Constant -> Arity
 constToArity (Const n i a) = a
 
-predToArity :: Predicate -> Arity
-predToArity (Pred n i a) = a
-predToArity Falsum = 0
-predToArity Equality = 2
+predicateToName :: Predicate -> String
+predicateToName (Pred n i a) = n
+predicateToName Falsum = "Falsum"
+predicateToName Equality = "Equality"
+
+predicateToIndex :: Predicate -> Index
+predicateToIndex (Pred n i a) = i
+-- predicateToIndex Falsum = 0
+-- predicateToIndex Equality = 0
+
+predicateToArity :: Predicate -> Arity
+predicateToArity (Pred n i a) = a
+predicateToArity Falsum = 0
+predicateToArity Equality = 2
+
 
 makeVar :: Name -> Variable
 makeVar n = Var n (-1)
@@ -112,6 +125,16 @@ variablesToFreshVariable :: [Variable] -> Variable
 variablesToFreshVariable [] = Var "x" 0
 variablesToFreshVariable (v:vs) = Var (variableToName v) (maximum (map variableToIndex (v:vs)) + 1)
 
+variablesToFreshVariables :: [Variable] -> [Variable]
+variablesToFreshVariables vs = variablesToFreshVariablesAux (length vs) vs
+
+variablesToFreshVariablesAux :: Int -> [Variable] -> [Variable]
+variablesToFreshVariablesAux 0 knownVars = []
+variablesToFreshVariablesAux n knownVars = newVar:newVars
+      where
+            newVar = variablesToFreshVariable knownVars
+            newVars = variablesToFreshVariablesAux (n-1) (newVar:knownVars)
+
 isPredicate :: Predicate -> Bool
 isPredicate (Pred n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
@@ -146,7 +169,7 @@ isImpFormula (ImpForm _ _) = True
 isImpFormula _ = False
 
 isFormula :: Formula -> Bool
-isFormula (PredForm p ts) = isPredicate p && predToArity p == length ts && all isTerm ts
+isFormula (PredForm p ts) = isPredicate p && predicateToArity p == length ts && all isTerm ts
 isFormula (ForallForm v f) = isFormula f
 isFormula (ExistsForm v f) = isFormula f
 isFormula (ImpForm f1 f2) = isFormula f1 && isFormula f2
@@ -222,6 +245,22 @@ termToPredicates (EpsTerm v f) = formulaToPredicates f
 isPredicateVariable :: Predicate -> Bool
 isPredicateVariable (Pred _ _ _) = True
 isPredicateVariable _ = False
+
+predicatesToFreshPredicate :: [Predicate] -> Predicate
+predicatesToFreshPredicate [] = undefined
+predicatesToFreshPredicate (p:ps)
+ | allEqual $ map predicateToArity (p:ps) = let a = predicateToArity p
+                                                n = predicateToName p
+                                                i = 1+maximum (map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps)))
+                                          in Pred n i a
+ | otherwise = undefined
+
+predicatesToFreshPredicates :: Int -> [Predicate] -> [Predicate]
+predicatesToFreshPredicates 0 _ = []
+predicatesToFreshPredicates n ps = newPred:newPreds
+      where
+            newPred = predicatesToFreshPredicate ps
+            newPreds = predicatesToFreshPredicates (n-1) (newPred:ps)
 
 formulaToPredicateVariables :: Formula -> [Predicate]
 formulaToPredicateVariables f = filter isPredicateVariable (formulaToPredicates f)

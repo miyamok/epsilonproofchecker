@@ -175,10 +175,10 @@ formula = impformula
 predformula :: Declarations -> Parser Formula
 predformula (vds, cds, pds) =
     do p <- predconst pds
-       if predToArity p == 0
+       if predicateToArity p == 0
         then return (PredForm p [])
         else do ts <- argterms (vds, cds, pds)
-                if length ts == predToArity p
+                if length ts == predicateToArity p
                     then return (PredForm p ts)
                     else empty
 

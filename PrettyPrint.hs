@@ -11,7 +11,7 @@ prettyPrintPredicate Falsum = "bot"
 
 prettyPrintFormula :: Formula -> String
 prettyPrintFormula (PredForm p ts)
- | null ts = if predToArity p == 0 then ppPred else ppPred ++ "()"
+ | null ts = if predicateToArity p == 0 then ppPred else ppPred ++ "()"
  | otherwise = ppPred ++ ppArgs
  where ppPred = prettyPrintPredicate p
        ppArgs = prettyPrintArgTerms ts
