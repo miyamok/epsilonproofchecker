@@ -15,6 +15,7 @@ data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsF
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
 data Comprehension = Compr [Variable] Formula deriving (Show)
+type Binding = Either (Variable, Term) (Predicate, Comprehension)
 
 type VariableDeclaration = Name
 type ConstantDeclaration = (Name, Int)
@@ -93,6 +94,9 @@ isVariable (Var n i) = not (null n) && i >= -1
 
 isConstant :: Constant -> Bool
 isConstant (Const n i a) = not (null n) && i >= -1 && a >= 0
+
+varTermToVar :: Term -> Variable
+varTermToVar (VarTerm v) = v
 
 isTerm :: Term -> Bool
 isTerm (VarTerm v) = isVariable v
