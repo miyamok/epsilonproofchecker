@@ -76,6 +76,15 @@ predicateToArity Equality = 2
 comprehensionToArity :: Comprehension -> Arity
 comprehensionToArity (Compr vars _) = length vars
 
+comprehensionToKernel :: Comprehension -> Formula
+comprehensionToKernel (Compr vs f) = f
+
+comprehensionToFreeVariables :: Comprehension -> [Variable]
+comprehensionToFreeVariables (Compr vs f) = foldr delete (formulaToFreeVariables f) vs
+
+comprehensionToVariables :: Comprehension -> [Variable]
+comprehensionToVariables (Compr vs f) = nub (vs ++ formulaToFreeVariables f)
+
 makeVariable :: Name -> Variable
 makeVariable n = Var n (-1)
 
@@ -127,9 +136,6 @@ formulaToVariables (DisjForm f1 f2) = formulaToVariables f1 `union` formulaToVar
 variablesToFreshVariable :: [Variable] -> Variable
 variablesToFreshVariable [] = Var "x" 0
 variablesToFreshVariable (v:vs) = Var (variableToName v) (maximum (map variableToIndex (v:vs)) + 1)
-
--- variablesToFreshVariables :: [Variable] -> [Variable]
--- variablesToFreshVariables vs = variablesToFreshVariablesAux (length vs) vs
 
 variablesToFreshVariables :: Int -> [Variable] -> [Variable]
 variablesToFreshVariables 0 knownVars = []
@@ -224,20 +230,65 @@ termSubstitutionInFormulaAux forbVars v t (DisjForm f1 f2) = DisjForm (termSubst
 
 formulaSubstitutionInFormula :: Predicate -> Comprehension -> Formula -> Formula
 formulaSubstitutionInFormula p c f
- | predicateToArity p == comprehensionToArity c = formulaSubstitutionInFormulaAux p c f
+ | predicateToArity p == comprehensionToArity c = formulaSubstitutionInFormulaAux forbVars p c f
  | otherwise = undefined
+ where forbVars = nub (formulaToVariables f ++ formulaToVariables (comprehensionToKernel c))
 
-formulaSubstitutionInFormulaAux :: Predicate -> Comprehension -> Formula -> Formula
-formulaSubstitutionInFormulaAux p c (PredForm p' ts) = undefined
+formulaSubstitutionInFormulaAux :: [Variable] -> Predicate -> Comprehension -> Formula -> Formula
+formulaSubstitutionInFormulaAux forbVars p c (PredForm p' ts) = if p == p' && length ts == comprehensionToArity c
+      then comprehensionAndTermsToFormula c ts
+      else PredForm p' (map (\t -> formulaSubstitutionInTermAux forbVars p c t) ts)
+formulaSubstitutionInFormulaAux forbVars p c (ImpForm f g) = ImpForm f' g'
+      where f' = formulaSubstitutionInFormulaAux forbVars p c f
+            g' = formulaSubstitutionInFormulaAux forbVars p c g
+formulaSubstitutionInFormulaAux forbVars p c (ConjForm f g) = ConjForm f' g'
+      where f' = formulaSubstitutionInFormulaAux forbVars p c f
+            g' = formulaSubstitutionInFormulaAux forbVars p c g
+formulaSubstitutionInFormulaAux forbVars p c (DisjForm f g) = DisjForm f' g'
+      where f' = formulaSubstitutionInFormulaAux forbVars p c f
+            g' = formulaSubstitutionInFormulaAux forbVars p c g
+formulaSubstitutionInFormulaAux forbVars p c (ForallForm v f)
+      | v `elem` comprehensionToFreeVariables c = let forbVars' = v:forbVars
+                                                      freshVar = variablesToFreshVariable forbVars'
+                                                      freshVarTerm = VarTerm freshVar
+                                                      f' = termSubstitutionInFormulaAux forbVars' v freshVarTerm f
+                                                   in ForallForm freshVar (formulaSubstitutionInFormulaAux forbVars' p c f')
+      | otherwise = ForallForm v (formulaSubstitutionInFormulaAux (v:forbVars) p c f)
+formulaSubstitutionInFormulaAux forbVars p c (ExistsForm v f)
+      | v `elem` comprehensionToFreeVariables c = let forbVars' = v:forbVars
+                                                      freshVar = variablesToFreshVariable forbVars'
+                                                      freshVarTerm = VarTerm freshVar
+                                                      f' = termSubstitutionInFormulaAux forbVars' v freshVarTerm f
+                                                   in ExistsForm freshVar (formulaSubstitutionInFormulaAux forbVars' p c f')
+      | otherwise = ExistsForm v (formulaSubstitutionInFormulaAux (v:forbVars) p c f)
+
+formulaSubstitutionInTerm :: Predicate -> Comprehension -> Term -> Term
+formulaSubstitutionInTerm p c t
+ | predicateToArity p == comprehensionToArity c = formulaSubstitutionInTermAux forbVars p c t
+ | otherwise = undefined
+ where forbVars = nub (termToVariables t ++ comprehensionToVariables c)
+
+formulaSubstitutionInTermAux :: [Variable] -> Predicate -> Comprehension -> Term -> Term
+formulaSubstitutionInTermAux forbVars p c (VarTerm v) = VarTerm v
+formulaSubstitutionInTermAux forbVars p c (AppTerm c' ts) = AppTerm c' (map (formulaSubstitutionInTermAux forbVars p c) ts)
+formulaSubstitutionInTermAux forbVars p c (EpsTerm v f)
+ | v `elem` comprehensionToFreeVariables c = let forbVars' = v:forbVars
+                                                 freshVar = variablesToFreshVariable forbVars'
+                                                 freshVarTerm = VarTerm freshVar
+                                                 f' = termSubstitutionInFormulaAux forbVars' v freshVarTerm f
+                                              in EpsTerm freshVar (formulaSubstitutionInFormulaAux forbVars' p c f')
+ | otherwise = EpsTerm v (formulaSubstitutionInFormulaAux (v:forbVars) p c f)
 
 comprehensionAndTermsToFormula :: Comprehension -> [Term] -> Formula
-comprehensionAndTermsToFormula (Compr vs kernel) ts =
-      let forbVars = nub (concat (map termToVariables ts) ++ formulaToVariables kernel)
-          freshVars = variablesToFreshVariables (length vs) forbVars
-          freshVarTerms = map VarTerm freshVars
-          renamedKernel = foldr (\(v, t) f -> termSubstitutionInFormula v t f) kernel (zip freshVars freshVarTerms)
-       in
-          foldr (\(v,t) f -> termSubstitutionInFormula v t f) renamedKernel (zip vs ts)
+comprehensionAndTermsToFormula (Compr [] kernel) [] = kernel
+comprehensionAndTermsToFormula (Compr (v:vs) kernel) (t:ts)
+ | v `elem` vs = comprehensionAndTermsToFormula (Compr vs kernel) ts
+ | null (vs `intersect` termToFreeVariables t) = comprehensionAndTermsToFormula (Compr vs (termSubstitutionInFormula v t kernel)) ts
+ | otherwise = let forbVars = nub (termToVariables t ++ formulaToVariables kernel ++ (v:vs))
+                   freshVars = variablesToFreshVariables (length vs) forbVars
+                   freshVarTerms = map VarTerm freshVars
+                   renamedKernel = foldr (\(v, t) f -> termSubstitutionInFormula v t f) kernel (zip vs freshVarTerms)
+                in comprehensionAndTermsToFormula (Compr freshVars (termSubstitutionInFormula v t renamedKernel)) ts
 
 alphaEqTerm :: Term -> Term -> Bool
 alphaEqTerm (VarTerm v1) (VarTerm v2) = v1==v2
