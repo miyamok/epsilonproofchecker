@@ -10,7 +10,8 @@ par ss = "(" ++ intercalate " " ss ++ ")"
 
 predToSMTLibExpr :: Predicate -> String
 predToSMTLibExpr Falsum = "false"
-predToSMTLibExpr (Pred n i a) = prettyPrintPredicate (Pred n i a)
+predToSMTLibExpr Equality = "="
+predToSMTLibExpr (Pvar n i a) = prettyPrintPredicate (Pvar n i a)
 
 formulaToSMTLibExpr :: Formula -> String
 formulaToSMTLibExpr (PredForm p []) = predToSMTLibExpr p
@@ -52,8 +53,8 @@ constantToSMTLibDeclaration (Const n i a) =
     par ["declare-fun", prettyPrintConstant (Const n i a), par $ replicate a "Type", "Type"]
 
 predicateVariableToSMTLibDeclaration :: Predicate -> String
-predicateVariableToSMTLibDeclaration (Pred n i a) =
-    par ["declare-fun", prettyPrintPredicate (Pred n i a), par $ replicate a "Type", "Bool"]
+predicateVariableToSMTLibDeclaration (Pvar n i a) =
+    par ["declare-fun", prettyPrintPredicate (Pvar n i a), par $ replicate a "Type", "Bool"]
 
 checkFormulaByZ3 :: Formula -> IO Bool
 checkFormulaByZ3 f = checkByZ3 (assertSMTLib f)

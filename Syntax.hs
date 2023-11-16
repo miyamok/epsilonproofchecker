@@ -10,7 +10,7 @@ type Arity = Int
 data Variable = Var Name Index deriving (Eq, Show, Ord)
 data Constant = Const Name Index Arity deriving (Eq, Show)
 data Term = VarTerm Variable | AppTerm Constant [Term] | EpsTerm Variable Formula deriving (Eq, Show)
-data Predicate = Falsum | Equality | Pred Name Index Arity deriving (Eq, Show)
+data Predicate = Falsum | Equality | Pvar Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
@@ -60,17 +60,17 @@ constantToArity :: Constant -> Arity
 constantToArity (Const n i a) = a
 
 predicateToName :: Predicate -> String
-predicateToName (Pred n i a) = n
+predicateToName (Pvar n i a) = n
 predicateToName Falsum = "Falsum"
 predicateToName Equality = "Equality"
 
 predicateToIndex :: Predicate -> Index
-predicateToIndex (Pred n i a) = i
+predicateToIndex (Pvar n i a) = i
 -- predicateToIndex Falsum = 0
 -- predicateToIndex Equality = 0
 
 predicateToArity :: Predicate -> Arity
-predicateToArity (Pred n i a) = a
+predicateToArity (Pvar n i a) = a
 predicateToArity Falsum = 0
 predicateToArity Equality = 2
 
@@ -149,12 +149,12 @@ variablesToFreshVariables n knownVars = newVar:newVars
             newVars = variablesToFreshVariables (n-1) (newVar:knownVars)
 
 isPredicate :: Predicate -> Bool
-isPredicate (Pred n i a) = not (null n) && i >= -1 && a >= 0
+isPredicate (Pvar n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
 isPredicate Equality = True
 
-makePredicate :: Name -> Arity -> Predicate
-makePredicate n a = Pred n (-1) a
+makePredicateVariable :: Name -> Arity -> Predicate
+makePredicateVariable n a = Pvar n (-1) a
 
 formulaToConstants :: Formula -> [Constant]
 formulaToConstants (PredForm p ts) = nub $ concat $ map termToConstants ts
@@ -348,24 +348,49 @@ termToPredicates (AppTerm c ts) = nub $ concat $ map termToPredicates ts
 termToPredicates (EpsTerm v f) = formulaToPredicates f
 
 isPredicateVariable :: Predicate -> Bool
-isPredicateVariable (Pred _ _ _) = True
+isPredicateVariable (Pvar _ _ _) = True
 isPredicateVariable _ = False
 
-predicatesToFreshPredicate :: [Predicate] -> Predicate
-predicatesToFreshPredicate [] = undefined
-predicatesToFreshPredicate (p:ps)
+predicateFormToPredicate :: Formula -> Predicate
+predicateFormToPredicate (PredForm p _) = p
+predicateFormToPredicate _ = undefined
+
+predicateVariablesToFreshPredicateVariable :: [Predicate] -> Predicate
+predicateVariablesToFreshPredicateVariable [] = undefined
+predicateVariablesToFreshPredicateVariable (p:ps)
  | allEqual $ map predicateToArity (p:ps) = let a = predicateToArity p
                                                 n = predicateToName p
                                                 i = 1+maximum (map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps)))
-                                          in Pred n i a
+                                          in Pvar n i a
  | otherwise = undefined
 
-predicatesToFreshPredicates :: Int -> [Predicate] -> [Predicate]
-predicatesToFreshPredicates 0 _ = []
-predicatesToFreshPredicates n ps = newPred:newPreds
+predicateVariablesToFreshPredicateVariables :: Int -> [Predicate] -> [Predicate]
+predicateVariablesToFreshPredicateVariables 0 _ = []
+predicateVariablesToFreshPredicateVariables n ps = newPred:newPreds
       where
-            newPred = predicatesToFreshPredicate ps
-            newPreds = predicatesToFreshPredicates (n-1) (newPred:ps)
+            newPred = predicateVariablesToFreshPredicateVariable ps
+            newPreds = predicateVariablesToFreshPredicateVariables (n-1) (newPred:ps)
+
+predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
+predicateVariablesAndArityToFreshPredicateVariable [] a = undefined
+predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
+ | null preds = undefined
+ | otherwise =  Pvar n i a
+      where
+            preds = filter (\p -> predicateToArity p == a) (p:ps)
+            pred = head preds
+            n = predicateToName p
+            i = 1+maximum (map predicateToIndex preds)
+
+predicateVariablesAndArityToFreshPredicateVariables :: Int -> [Predicate] -> Int -> [Predicate]
+predicateVariablesAndArityToFreshPredicateVariables _ [] _ = undefined
+predicateVariablesAndArityToFreshPredicateVariables n ps a
+ | null relevantPvars = undefined
+ | otherwise = newPvar:newPvars
+      where
+            relevantPvars = filter (\p -> predicateToArity p == a) ps
+            newPvar = predicateVariablesAndArityToFreshPredicateVariable ps a
+            newPvars = predicateVariablesAndArityToFreshPredicateVariables (n-1) (newPvar:ps) a
 
 formulaToPredicateVariables :: Formula -> [Predicate]
 formulaToPredicateVariables f = filter isPredicateVariable (formulaToPredicates f)

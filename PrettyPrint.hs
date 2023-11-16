@@ -4,7 +4,7 @@ import Proof
 import Data.List
 
 prettyPrintPredicate :: Predicate -> String
-prettyPrintPredicate (Pred n i a)
+prettyPrintPredicate (Pvar n i a)
  | i /= -1 = n ++ show i
  | otherwise = n
 prettyPrintPredicate Falsum = "bot"

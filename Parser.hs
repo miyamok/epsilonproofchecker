@@ -162,9 +162,9 @@ predconst :: [PredicateDeclaration] -> Parser Predicate
 predconst [] = empty
 predconst ((n, a):pds) = do name <- string n
                             index <- integer
-                            return (Pred name index a)
+                            return (Pvar name index a)
                      <|> do name <- string n
-                            return (Pred name (-1) a)
+                            return (Pvar name (-1) a)
                      <|> do name <- string "bot"
                             return Falsum
                      <|> predconst pds
