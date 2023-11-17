@@ -5,6 +5,9 @@ import Data.Maybe (catMaybes)
 import Data.Either
 
 type VarOrPvar = Either Variable Predicate
+type TermOrForm = Either Term Formula
+type Binding = Either (Variable, Term) (Predicate, Comprehension)
+
 unificationBound :: Int
 unificationBound = 1000
 
@@ -65,11 +68,86 @@ isRigidTerm :: [VarOrPvar] -> Term -> Bool
 isRigidTerm rigidVars (VarTerm v) = Left v `elem` rigidVars
 isRigidTerm _ _ = True
 
-isRigidFormula :: [Predicate] -> Formula -> Bool
+isRigidFormula :: [VarOrPvar] -> Formula -> Bool
 isRigidFormula rigidPvars (PredForm Falsum _) = True
 isRigidFormula rigidPvars (PredForm Equality _) = True
-isRigidFormula rigidPvars (PredForm p _) = p `elem` rigidPvars
+isRigidFormula rigidPvars (PredForm p _) = Right p `elem` rigidPvars
 isRigidFormula _ _ = True
+
+isRigid :: [VarOrPvar] -> Either Term Formula -> Bool
+isRigid rigids (Left t) = isRigidTerm rigids t
+isRigid rigids (Right f) = isRigidFormula rigids f
+
+unify :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> [Binding]
+unify = unifyAux unificationBound
+
+unifyAux :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> [Binding]
+unifyAux _ _ _ _ [] = []
+unifyAux 0 _ _ _ _ = []
+unifyAux bound sigs flexs forbs (Left (t1, t2):pairs)
+ | alphaEqTerm t1 t2 = unifyAux (bound-1) sigs flexs forbs pairs
+ | isRigidTerm rigids t1 && isRigidTerm rigids t2 =
+    case (t1, t2) of (EpsTerm v1 f1, EpsTerm v2 f2) -> undefined
+                     (AppTerm c1 ts1, AppTerm c2 ts2) ->
+                        if c1 == c2 then unifyAux (bound-1) sigs flexs forbs (map Left (zip ts1 ts2)++pairs)
+                        else []
+                     _ -> []
+ | isRigidTerm rigids t1 && not (isRigidTerm rigids t2) = unifyAux (bound-1) sigs flexs forbs (Left (t2,t1):pairs)
+ | not (isRigidTerm rigids t1) && isRigidTerm rigids t2 =
+    let x = do i <- findIndex (\pair -> case pair of Left(s1, s2) -> isRigidTerm rigids s1 || isRigidTerm rigids s2
+                                                     Right(f1, f2) -> isRigidFormula rigids f1 || isRigidFormula rigids f2) pairs
+               let (h, t) = splitAt i pairs
+               return (head t:h ++ tail t)
+      in case x of Just pairs' -> unifyAux (bound-1) sigs flexs forbs (pairs' ++ [Left (t1, t2)])
+                   Nothing -> unifyFlexFlex sigs flexs forbs (Left (t1, t2):pairs)
+                    
+                    --  let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
+                    --               freshVarTerm = VarTerm freshVar
+                    --               pairs' = filter isRight pairs
+                    --               (ls,rs) = unzip $ map (\x -> case x of Left t -> t; _ -> undefined) (filter isLeft pairs)
+                    --               ts' :: [Binding] = map (\s -> Left (varTermToVar s, freshVarTerm)) (ls++rs)
+                    --             in ts' ++ unifyAux (bound -1) sigs flexs forbs pairs'
+ where
+    rigids = sigs ++ forbs
+unifyAux bound sigs flexs forbs (Right (f1, f2):pairs)
+ | alphaEqFormula f1 f2 = unifyAux (bound-1) sigs flexs forbs pairs
+ | isRigidFormula rigids f1 && isRigidFormula rigids f2 =
+    case (f1, f2) of (ImpForm f1' f2', ImpForm g1' g2') -> unifyAux (bound-1) sigs flexs forbs (Right (f1',g1'):Right (f2',g2'):pairs)
+                     (ConjForm f1' f2', ConjForm g1' g2') -> unifyAux (bound-1) sigs flexs forbs (Right (f1',g1'):Right (f2',g2'):pairs)
+                     (DisjForm f1' f2', DisjForm g1' g2') -> unifyAux (bound-1) sigs flexs forbs (Right (f1',g1'):Right (f2',g2'):pairs)
+                     (ForallForm v f', ForallForm u g') ->
+                      let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
+                          freshVarTerm = VarTerm freshVar
+                          f1' = termSubstitutionInFormula v freshVarTerm f'
+                          g1' = termSubstitutionInFormula u freshVarTerm g'
+                       in unifyAux (bound-1) sigs flexs (Left freshVar:forbs) (Right (f1',g1'):pairs)
+                     (ExistsForm v f', ExistsForm u g') ->
+                      let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
+                          freshVarTerm = VarTerm freshVar
+                          f1' = termSubstitutionInFormula v freshVarTerm f'
+                          g1' = termSubstitutionInFormula u freshVarTerm g'
+                       in unifyAux (bound-1) sigs flexs (Left freshVar:forbs) (Right (f1',g1'):pairs)
+                   --fla -> fla $ undefined
+ | not (isRigidFormula rigids f1) && isRigidFormula rigids f2 =
+    -- NOTE: projection case never happens. only imitation case
+    let (bindings, flexs') = unifyFormulasAuxFlexRigid sigs flexs forbs f1 f2
+        flexPvar = predicateFormToPredicate f1
+        newFlexs = delete (Right flexPvar) flexs++flexs'
+     in unifyAux (bound-1) sigs newFlexs forbs (Right (f1, f2):pairs)
+ | isRigidFormula rigids f1 && not (isRigidFormula rigids f2) = unifyAux (bound-1) sigs flexs forbs (Right (f2, f1):pairs)
+ | not (isRigidFormula rigids f1) && not (isRigidFormula rigids f2) =
+    let x = do i <- findIndex (\pair -> case pair of Right (f1, g1) -> isRigidFormula rigids f1 || isRigidFormula rigids g1
+                                                     _ -> False) pairs
+               let (h, t) = splitAt i pairs
+               return (head t:h ++ tail t)
+      in case x of Just pairs' -> unifyAux (bound-1) sigs flexs forbs (pairs' ++ [Right (f1, f2)])
+                   -- Nothing means that there is no rigid formula nor rigit term in the pairs.
+                   Nothing -> unifyFlexFlex sigs flexs forbs (Right (f1, f2):pairs)
+                    
+                    -- let knownPreds = concat $ map formulaToPredicates (let (x, y) = unzip ((f, g):pairs) in x++y)
+                    --             in concat $ map (uncurry $ unifyAuxFlexFlex knownPreds) (Right (f1, f2):pairs)
+ where
+    rigids = sigs ++ forbs
 
 unifyTerms :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [(Term, Term)] -> [Binding]
 unifyTerms = unifyTermsAux unificationBound
@@ -92,12 +170,12 @@ unifyTermsAux bound sigs flexs forbs ((t,t'):pairs)
  | not (isRigidTerm rigids t) && not (isRigidTerm rigids t') =
     let x = do i <- findIndex (\(s, s') -> isRigidTerm rigids s || isRigidTerm rigids s') pairs
                let (h, t) = splitAt i pairs
-               return (head t:h ++ tail t) 
+               return (head t:h ++ tail t)
       in case x of Just pairs' -> unifyTermsAux (bound-1) sigs flexs forbs (pairs' ++ [(t, t')])
-                   Nothing -> let freshVar = variablesToFreshVariable $ lefts(sigs ++ flexs ++ forbs)
+                   Nothing -> let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
                                   freshVarTerm = VarTerm freshVar
                                   (ts0, ts1) = unzip ((t,t'):pairs)
-                                in map (\s -> Left(varTermToVar s, freshVarTerm)) (ts0 ++ ts1)
+                                in map (\s -> Left (varTermToVar s, freshVarTerm)) (ts0 ++ ts1)
  where
     rigids = sigs++forbs
 
@@ -119,13 +197,13 @@ unifyFormulasAux bound sigs flexs forbs ((f, g):pairs)
                    (ConjForm f1 f2, ConjForm g1 g2) -> unifyFormulasAux (bound-1) sigs flexs forbs ((f1,g1):(f2,g2):pairs)
                    (DisjForm f1 f2, ConjForm g1 g2) -> unifyFormulasAux (bound-1) sigs flexs forbs ((f1,g1):(f2,g2):pairs)
                    (ForallForm v f', ForallForm u g') ->
-                    let freshVar = variablesToFreshVariable $ lefts(sigs ++ flexs ++ forbs)
+                    let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
                         freshVarTerm = VarTerm freshVar
                         f1 = termSubstitutionInFormula v freshVarTerm f'
                         g1 = termSubstitutionInFormula u freshVarTerm g'
                      in unifyFormulasAux (bound-1) sigs flexs (Left freshVar:forbs) ((f1,g1):pairs)
                    (ExistsForm v f', ExistsForm u g') ->
-                    let freshVar = variablesToFreshVariable $ lefts(sigs ++ flexs ++ forbs)
+                    let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
                         freshVarTerm = VarTerm freshVar
                         f1 = termSubstitutionInFormula v freshVarTerm f'
                         g1 = termSubstitutionInFormula u freshVarTerm g'
@@ -170,7 +248,7 @@ unifyFormulasAuxFlexRigid sigs flexs forbs (PredForm p ts) g =
                              ImpForm _ _ -> ImpForm (head newArgFlas) (last newArgFlas)
                              ConjForm _ _ -> ConjForm (head newArgFlas) (last newArgFlas)
                              DisjForm _ _ -> DisjForm (head newArgFlas) (last newArgFlas)
-        binding = Right(p, Compr newVars comprFla)
+        binding = Right (p, Compr newVars comprFla)
      in ([binding], map Right newPvars)
 
 unifyFormulasAuxFlexFlex :: [Predicate] -> Formula -> Formula -> [Binding]
@@ -184,4 +262,27 @@ unifyFormulasAuxFlexFlex knownPreds f g =
         vs2 = variablesToFreshVariables a2 []
         cmp1 = Compr vs1 (PredForm freshPredicate [])
         cmp2 = Compr vs2 (PredForm freshPredicate [])
-     in [Right(p1,cmp1), Right(p2,cmp2)]
+     in [Right (p1,cmp1), Right (p2,cmp2)]
+
+unifyFlexFlex :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> [Binding]
+unifyFlexFlex sigs flexs forbs pairs =
+    let knownPvars = rights (sigs ++ flexs ++ forbs)
+        knownVars = lefts (sigs ++ flexs ++ forbs)
+        freshPvar = predicateVariablesAndArityToFreshPredicateVariable knownPvars 0
+        freshVar = variablesToFreshVariable knownVars
+     in unifyFlexFlexAux freshVar freshPvar pairs
+
+unifyFlexFlexAux :: Variable -> Predicate -> [Either (Term, Term) (Formula, Formula)] -> [Binding]
+unifyFlexFlexAux _ _ [] = []
+unifyFlexFlexAux freshVar freshPvar (Left(VarTerm v1, VarTerm v2):pairs) =
+    let binding1 = (v1, VarTerm freshVar)
+        binding2 = (v2, VarTerm freshVar)
+        rest = unifyFlexFlexAux freshVar freshPvar pairs
+     in Left binding1:Left binding2:rest
+unifyFlexFlexAux freshVar freshPvar (Right(PredForm p1 ts1, PredForm p2 ts2):pairs) =
+    let vars1 = replicate (length ts1) (variablesToFreshVariable [freshVar])
+        vars2 = replicate (length ts2) (variablesToFreshVariable [freshVar])
+        binding1 = (p1, Compr vars1 (PredForm freshPvar []))
+        binding2 = (p2, Compr vars2 (PredForm freshPvar []))
+        rest = unifyFlexFlexAux freshVar freshPvar pairs
+     in Right binding1:Right binding2:rest

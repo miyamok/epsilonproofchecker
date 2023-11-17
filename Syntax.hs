@@ -15,7 +15,6 @@ data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsF
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
                deriving (Eq, Show)
 data Comprehension = Compr [Variable] Formula deriving (Show)
-type Binding = Either (Variable, Term) (Predicate, Comprehension)
 
 type VariableDeclaration = Name
 type ConstantDeclaration = (Name, Int)
