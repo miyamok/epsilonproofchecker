@@ -94,6 +94,13 @@ unifyAux bound sigs flexs forbs (Left (t1, t2):pairs)
                      _ -> []
  | isRigidTerm rigids t1 && not (isRigidTerm rigids t2) = unifyAux (bound-1) sigs flexs forbs (Left (t2,t1):pairs)
  | not (isRigidTerm rigids t1) && isRigidTerm rigids t2 =
+    let (bindings, flexs') = unifyTermAuxFlexRigid sigs flexs forbs t1 t2
+        VarTerm flexVar = t1
+        newFlexs = delete (Left flexVar) flexs++flexs'
+     in unifyAux (bound-1) sigs newFlexs forbs (Left (t1, t2):pairs)
+    -- case t1 of VarTerm v -> let newPair = (termSubstitutionInTerm v t2 t1, termSubstitutionInTerm v t2 t2)
+    --                           in unifyAux (bound-1) sigs flexs forbs (Left newPair:pairs)
+ | not (isRigidTerm rigids t1) && not (isRigidTerm rigids t2) =
     let x = do i <- findIndex (\pair -> case pair of Left(s1, s2) -> isRigidTerm rigids s1 || isRigidTerm rigids s2
                                                      Right(f1, f2) -> isRigidFormula rigids f1 || isRigidFormula rigids f2) pairs
                let (h, t) = splitAt i pairs
@@ -225,6 +232,15 @@ unifyFormulasAux bound sigs flexs forbs ((f, g):pairs)
                                 in concat $ map (uncurry $ unifyFormulasAuxFlexFlex knownPreds) ((f, g):pairs)
  where
     rigidPreds = [] -- additional arguments, sigPreds, flexPreds, and forbPreds, are required.
+
+unifyTermAuxFlexRigid  :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> Term -> Term -> ([Binding], [VarOrPvar])
+unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (AppTerm c ts) =
+    let arity = length ts
+        knownVars = lefts(sigs ++ flexs ++ forbs)
+        freshVars = variablesToFreshVariables arity knownVars
+        freshVarTerms = map VarTerm freshVars
+        binding = (v, AppTerm c freshVarTerms)
+     in ([Left binding], map Left freshVars)
 
 -- taking care of the imitation case.  the projection case doesn't happen and is safely ignored.
 unifyFormulasAuxFlexRigid :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> Formula -> Formula -> ([Binding], [VarOrPvar])
