@@ -21,5 +21,5 @@ f3 = comprehensionAndTermsToFormula compr1 [t2]
 
 main :: IO ()
 main = do putStrLn $ prettyPrintFormula f1
-          putStrLn f1str
+          putStrLn $ prettyPrintFormula f2
           putStrLn $ prettyPrintFormula f3
