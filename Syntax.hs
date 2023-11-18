@@ -384,7 +384,7 @@ predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
 predicateVariablesAndArityToFreshPredicateVariables :: Int -> [Predicate] -> Int -> [Predicate]
 predicateVariablesAndArityToFreshPredicateVariables _ [] _ = undefined
 predicateVariablesAndArityToFreshPredicateVariables n ps a
- | null relevantPvars = undefined
+ | null relevantPvars = map (\i -> Pvar "_" i a) [0..n-1]
  | otherwise = newPvar:newPvars
       where
             relevantPvars = filter (\p -> predicateToArity p == a) ps

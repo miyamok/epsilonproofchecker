@@ -16,3 +16,7 @@ allEqual :: Eq a => [a] -> Bool
 allEqual [] = True
 allEqual [x] = True
 allEqual (x:x':xs) = x == x' && allEqual (x':xs)
+
+isSubsetOf :: Eq a => [a] -> [a] -> Bool
+isSubsetOf [] _ = True
+isSubsetOf (x:xs) ys = if x `elem` ys then xs `isSubsetOf` ys else False
