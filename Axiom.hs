@@ -87,6 +87,7 @@ simpleTermUnificationAux (VarTerm v) (VarTerm v')
   | otherwise = [(VarTerm v', VarTerm v)]
 simpleTermUnificationAux (VarTerm v) t = [(VarTerm v, t)]
 simpleTermUnificationAux t (VarTerm v) = [(VarTerm v, t)]
+simpleTermUnificationAux (ConstTerm c) (ConstTerm c') = []
 --simpleTermUnificationAux (AppTerm c ts) (AppTerm c' ts') = concat $ map (uncurry simpleTermUnificationAux) (zip ts ts')
 simpleTermUnificationAux (AppTerm t1 t2) (AppTerm s1 s2) =
     let c1:ts = appTermToTerms (AppTerm t1 t2)
