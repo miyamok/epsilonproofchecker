@@ -330,7 +330,7 @@ comprehensionAndTermsToFormula (Compr (v:vs) kernel) (t:ts)
 
 alphaEqTerm :: Term -> Term -> Bool
 alphaEqTerm (VarTerm v1) (VarTerm v2) = v1==v2
-alphaEqTerm (AppTerm t1 t2) (AppTerm s1 s2) = alphaEqTerm t1 t2 && alphaEqTerm s1 s2
+alphaEqTerm (AppTerm t1 t2) (AppTerm s1 s2) = alphaEqTerm t1 s1 && alphaEqTerm t2 s2
 alphaEqTerm (ConstTerm c1) (ConstTerm c2) = c1 == c2
 alphaEqTerm (EpsTerm v1 f1) (EpsTerm v2 f2) = alphaEqFormula g1 g2
             where vs = termToVariables (EpsTerm v1 f1) `union` termToVariables (EpsTerm v2 f2)
@@ -397,7 +397,9 @@ predicateVariablesToFreshPredicateVariable [] = undefined
 predicateVariablesToFreshPredicateVariable (p:ps)
  | allEqual $ map predicateToArity (p:ps) = let a = predicateToArity p
                                                 n = predicateToName p
-                                                i = 1+maximum (map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps)))
+                                                is = map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps))
+                                                i = if null is then undefined else 1+maximum is
+                                                --i = 1+maximum (map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps)))
                                           in Pvar n i a
  | otherwise = undefined
 

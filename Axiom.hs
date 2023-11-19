@@ -136,7 +136,7 @@ unifyAux _ _ _ _ [] = []
 unifyAux 0 _ _ _ _ = []
 unifyAux bound sigs flexs forbs (Left (t1, t2):pairs)
  | alphaEqTerm t1 t2 = unifyAux (bound-1) sigs flexs forbs pairs
- -- rigid-rigid formulas
+ -- rigid-rigid terms
  | isRigidTerm rigids t1 && isRigidTerm rigids t2 =
     case (t1, t2) of (EpsTerm v1 f1, EpsTerm v2 f2) -> undefined
                      (AppTerm t1' t1'', AppTerm t2' t2'') ->
@@ -145,7 +145,7 @@ unifyAux bound sigs flexs forbs (Left (t1, t2):pairs)
                           in if c1 == c2 then unifyAux (bound-1) sigs flexs forbs (map Left (zip ts1 ts2)++pairs)
                                          else []
                      _ -> []
- -- rigid-flex formulas
+ -- rigid-flex terms
  | isRigidTerm rigids t1 && not (isRigidTerm rigids t2) = unifyAux (bound-1) sigs flexs forbs (Left (t2,t1):pairs)
  -- flex-rigid terms
  | not (isRigidTerm rigids t1) && isRigidTerm rigids t2 =
@@ -154,7 +154,8 @@ unifyAux bound sigs flexs forbs (Left (t1, t2):pairs)
         newFlexs = delete (Left flexVar) flexs++flexs'
         t1' = bindingsAndTermToSubstitutedTerm bindings t1
         t2' = bindingsAndTermToSubstitutedTerm bindings t2
-     in bindings++unifyAux (bound-1) sigs newFlexs forbs (Left (t1', t2'):pairs)
+        pairs' = map (bindingsAndPairToSubstitutedPair bindings) (Left (t1,t2):pairs)
+     in bindings++unifyAux (bound-1) sigs newFlexs forbs pairs'
     -- case t1 of VarTerm v -> let newPair = (termSubstitutionInTerm v t2 t1, termSubstitutionInTerm v t2 t2)
     --                           in unifyAux (bound-1) sigs flexs forbs (Left newPair:pairs)
  -- flex-flex terms
@@ -331,6 +332,9 @@ unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (AppTerm t1 t2) =
 unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (VarTerm u) =
     let binding = (v, VarTerm u)
      in ([Left binding], [])
+unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (ConstTerm c) =
+    let binding = (v, ConstTerm c)
+     in ([Left binding], [])
 
 -- -- taking care of the imitation case.  the projection case doesn't happen and is safely ignored.
 -- unifyFormulasAuxFlexRigid :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> Formula -> Formula -> ([Binding], [VarOrPvar])
@@ -358,6 +362,7 @@ unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (VarTerm u) =
 --      in ([binding], map Right newPvars)
 
 variablesAndArityToFreshVariables :: [Variable] -> Int -> Int -> [Variable]
+variablesAndArityToFreshVariables [] arity number = map (\i -> Var "_" i arity) [1..number]
 variablesAndArityToFreshVariables knownVars arity 0 = []
 variablesAndArityToFreshVariables knownVars arity number =
     let idx = 1 + maximum (map variableToIndex knownVars)
@@ -413,6 +418,7 @@ unifyFlexRigidBicon bound sigs flexs forbs [Right (PredForm p ts, g)] =
 --                                              _ -> ([Right(Pvar "_" 0 0 , Compr [] f'), Right (Pvar "_" 0 0 , Compr [] g')], [])
 --                   _ -> undefined
 
+unifyFlexRigidQuant :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> ([Binding], [VarOrPvar])
 unifyFlexRigidQuant bound sigs flexs forbs [Right (PredForm p ts, g)] =
     let knownVars = lefts (sigs ++ flexs ++ forbs)
         comprhensionAbsVars = variablesToFreshVariables (length ts) knownVars
@@ -426,7 +432,7 @@ unifyFlexRigidQuant bound sigs flexs forbs [Right (PredForm p ts, g)] =
         newKernel = PredForm newPvar (VarTerm quantVar:comprhensionAbsVarTerms)
         comprFla = case g of ForallForm v _ -> ForallForm v newKernel
                              ExistsForm v _ -> ExistsForm v newKernel
-        binding = Right (p, Compr comprhensionAbsVars ( comprFla))
+        binding = Right (p, Compr comprhensionAbsVars (comprFla))
      in ([binding], [Right newPvar])
 
 -- unifyFormulasAuxFlexFlex :: [Predicate] -> Formula -> Formula -> [Binding]
