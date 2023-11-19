@@ -24,8 +24,10 @@ formulaToSMTLibExpr (ExistsForm v f) = par ["exists", par [par [prettyPrintVaria
 
 termToSMTLibExpr :: Term -> String
 termToSMTLibExpr (VarTerm v) = prettyPrintVariable v
-termToSMTLibExpr (AppTerm c []) = prettyPrintConstant c
-termToSMTLibExpr (AppTerm c ts) = par (prettyPrintConstant c:map termToSMTLibExpr ts)
+termToSMTLibExpr (ConstTerm c) = prettyPrintConstant c
+termToSMTLibExpr (AppTerm t1 t2) = par (prettyPrintTerm t:map termToSMTLibExpr ts)
+    where t:ts = appTermToTerms (AppTerm t1 t2)
+--termToSMTLibExpr (AppTerm c ts) = par (prettyPrintConstant c:map termToSMTLibExpr ts)
 termToSMTLibExpr (EpsTerm v f) = undefined
 
 formulaToSMTLibDeclaration :: Formula -> String

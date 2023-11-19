@@ -2,6 +2,7 @@ module PrettyPrint where
 import Syntax
 import Proof
 import Data.List
+import Distribution.Compat.Lens (_1)
 
 prettyPrintPredicate :: Predicate -> String
 prettyPrintPredicate (Pvar n i a)
@@ -36,7 +37,7 @@ prettyPrintFormula (ConjForm f f') = ppFla ++ " & " ++ ppFla'
        ppFla' = if isBiconForm f' then "(" ++ ppFlaAux ++ ")" else ppFlaAux
 
 prettyPrintVariable :: Variable -> String
-prettyPrintVariable (Var n i)
+prettyPrintVariable (Var n i _)
  | i /= -1 = n ++ show i
  | otherwise = n
 
@@ -52,9 +53,12 @@ prettyPrintArgTerms ts
 
 prettyPrintTerm :: Term -> String
 prettyPrintTerm (VarTerm v) = prettyPrintVariable v
-prettyPrintTerm (AppTerm c ts)
- | null ts = prettyPrintConstant c
- | otherwise = prettyPrintConstant c ++ prettyPrintArgTerms ts
+prettyPrintTerm (AppTerm t1 t2)
+ | null ts = prettyPrintTerm t
+ | otherwise = prettyPrintTerm t ++ prettyPrintArgTerms ts
+ where
+    t:ts = appTermToTerms (AppTerm t1 t2)
+prettyPrintTerm (ConstTerm c) = prettyPrintConstant c
 prettyPrintTerm (EpsTerm v f) = concat ["eps ", prettyPrintVariable v, ppKer]
     where
         ppFla = prettyPrintFormula f

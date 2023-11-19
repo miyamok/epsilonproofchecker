@@ -110,9 +110,9 @@ var :: [VariableDeclaration] -> Parser Variable
 var [] = empty
 var (vn:vns) = do n <- string vn
                   i <- integer
-                  return (Var n i)
+                  return (Var n i 0)
            <|> do n <- string vn
-                  return (Var n (-1))
+                  return (Var n (-1) 0)
            <|> var vns
 
 variable :: [VariableDeclaration] -> Parser Variable
@@ -130,10 +130,10 @@ constant ((n, a):ds) = do name <- string n
 appterm :: Declarations -> Parser Term
 appterm (vds, cds, pds) = do c <- constant cds
                              if constantToArity c == 0
-                             then return (AppTerm c [])
+                             then return (ConstTerm c)
                              else do ts <- argterms (vds, cds, pds)
                                      if length ts == constantToArity c
-                                     then return (AppTerm c ts)
+                                     then return (termsToAppTerm (ConstTerm c:ts))
                                      else empty
 
 epsterm :: Declarations -> Parser Term
