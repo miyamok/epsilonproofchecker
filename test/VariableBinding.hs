@@ -9,12 +9,12 @@ f1 = pf "all x ex y R(h(x, y), g(z))"
 
 t1 = pt "f(x)"
 
-f2 = termSubstitutionInFormula (Var "z" (-1)) t1 f1
+f2 = termSubstitutionInFormula (Var "z" (-1) 0) t1 f1
 
 f1str = prettyPrintFormula f2
 
 
-compr1 = Compr [Var "z" (-1)] f1
+compr1 = Compr [Var "z" (-1) 0] f1
 
 t2 = pt "h1(y, x)"
 f3 = comprehensionAndTermsToFormula compr1 [t2]
