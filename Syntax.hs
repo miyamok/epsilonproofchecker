@@ -2,6 +2,7 @@ module Syntax where
 import Data.List(nub, delete, union, unionBy, intercalate, intersect)
 import Utils
 import Debug.Trace
+import Data.Either
 
 type Name = String
 type Index = Int
@@ -9,7 +10,7 @@ type Arity = Int
 
 data Variable = Var Name Index Arity deriving (Eq, Show, Ord)
 data Constant = Const Name Index Arity deriving (Eq, Show)
-data Term = VarTerm Variable | ConstTerm Constant | AppTerm Term Term | EpsTerm Variable Formula deriving (Eq, Show)
+data Term = VarTerm Variable | ConstTerm Constant | AppTerm Term Term | LamTerm [Variable] Term | EpsTerm Variable Formula deriving (Eq, Show)
 data Predicate = Falsum | Equality | Pvar Name Index Arity deriving (Eq, Show)
 data Formula = PredForm Predicate [Term] | ForallForm Variable Formula | ExistsForm Variable Formula |
                ImpForm Formula Formula | ConjForm Formula Formula  | DisjForm Formula Formula
@@ -81,12 +82,20 @@ comprehensionToArity :: Comprehension -> Arity
 comprehensionToArity (Compr vars _) = length vars
 
 comprehensionToKernel :: Comprehension -> Formula
-comprehensionToKernel (Compr vs f) = f
+comprehensionToKernel (Compr vs x) = x
+
+comprehensionToKernelFormula :: Comprehension -> Formula
+comprehensionToKernelFormula (Compr vs x) = x
+
+-- comprehensionToKernelTerm :: Comprehension -> Term
+-- comprehensionToKernelTerm (TermCompr vs x) = x
 
 comprehensionToFreeVariables :: Comprehension -> [Variable]
-comprehensionToFreeVariables (Compr vs f) = foldr delete (formulaToFreeVariables f) vs
+--comprehensionToFreeVariables (TermCompr vs x) = foldr delete (termToFreeVariables x) vs
+comprehensionToFreeVariables (Compr vs x) = foldr delete (formulaToFreeVariables x) vs
 
 comprehensionToVariables :: Comprehension -> [Variable]
+-- comprehensionToVariables (TermCompr vs x) = nub (vs ++ termToFreeVariables x)
 comprehensionToVariables (Compr vs f) = nub (vs ++ formulaToFreeVariables f)
 
 makeVariable :: Name -> Variable
@@ -134,11 +143,13 @@ termToFreeVariables :: Term -> [Variable]
 termToFreeVariables (VarTerm v) = [v]
 termToFreeVariables (AppTerm t t') = nub (concat (map termToFreeVariables [t, t']))
 termToFreeVariables (ConstTerm c) = []
+termToFreeVariables (LamTerm vs t) = foldr delete (termToFreeVariables t) vs
 termToFreeVariables (EpsTerm v f) = delete v (formulaToFreeVariables f)
 
 termToVariables :: Term -> [Variable]
 termToVariables (VarTerm v) = [v]
 termToVariables (ConstTerm c) = []
+termToVariables (LamTerm vs t) = nub $ vs ++ termToVariables t
 termToVariables (AppTerm t t') = nub (concatMap termToVariables [t, t'])
 termToVariables (EpsTerm v f) = nub (v:formulaToVariables f)
 
@@ -169,6 +180,13 @@ variablesToFreshVariables n knownVars = newVar:newVars
             newVar = variablesToFreshVariable knownVars
             newVars = variablesToFreshVariables (n-1) (newVar:knownVars)
 
+-- variablesAndArityToFreshVariables :: [Variable] -> Int -> Int -> [Variable]
+-- variablesAndArityToFreshVariables knownVars arity number
+--  | number > 0 =
+--       map (\i -> Var "_" i arity) [i..i+number-1]
+--       where
+--             i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1
+
 isPredicate :: Predicate -> Bool
 isPredicate (Pvar n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
@@ -188,6 +206,7 @@ formulaToConstants (ExistsForm v f) = formulaToConstants f
 termToConstants :: Term -> [Constant]
 termToConstants (VarTerm _) = []
 termToConstants (ConstTerm c) = [c]
+termToConstants (LamTerm vs t) = termToConstants t
 termToConstants (AppTerm t t') = concat (map termToConstants [t, t'])
 termToConstants (EpsTerm v f) = formulaToConstants f
 
@@ -229,6 +248,10 @@ termSubstitutionInTermAux :: [Variable] -> Variable -> Term -> Term -> Term
 termSubstitutionInTermAux forbVars v t (VarTerm v2) = if v==v2 then t else VarTerm v2
 termSubstitutionInTermAux forbVars v t (ConstTerm c) = ConstTerm c
 termSubstitutionInTermAux forbVars v t (AppTerm t1 t2) = AppTerm (termSubstitutionInTermAux forbVars v t t1) (termSubstitutionInTermAux forbVars v t t2)
+termSubstitutionInTermAux forbVars v t (LamTerm vs t')
+ | v `elem` vs = LamTerm vs t'
+ | otherwise = LamTerm vs (termSubstitutionInTermAux forbVars' v t t')
+ where forbVars' = nub (forbVars ++ vs)
 termSubstitutionInTermAux forbVars v t (EpsTerm v2 f)
   | v==v2 = EpsTerm v2 f
   | v2 `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable forbVars
@@ -268,7 +291,7 @@ formulaSubstitutionInFormula :: Predicate -> Comprehension -> Formula -> Formula
 formulaSubstitutionInFormula p c f
  | predicateToArity p == comprehensionToArity c = formulaSubstitutionInFormulaAux forbVars p c f
  | otherwise = undefined
- where forbVars = nub (formulaToVariables f ++ formulaToVariables (comprehensionToKernel c))
+ where forbVars = nub (formulaToVariables f ++ formulaToVariables (comprehensionToKernelFormula c))
 
 formulaSubstitutionInFormulaAux :: [Variable] -> Predicate -> Comprehension -> Formula -> Formula
 formulaSubstitutionInFormulaAux forbVars p c (PredForm p' ts) = if p == p' && length ts == comprehensionToArity c
@@ -332,6 +355,13 @@ alphaEqTerm :: Term -> Term -> Bool
 alphaEqTerm (VarTerm v1) (VarTerm v2) = v1==v2
 alphaEqTerm (AppTerm t1 t2) (AppTerm s1 s2) = alphaEqTerm t1 s1 && alphaEqTerm t2 s2
 alphaEqTerm (ConstTerm c1) (ConstTerm c2) = c1 == c2
+alphaEqTerm (LamTerm [] t) (LamTerm [] t') = alphaEqTerm t t'
+alphaEqTerm (LamTerm (v:vs) t) (LamTerm (v':vs') t') = if v == v' then alphaEqTerm (LamTerm vs t) (LamTerm vs' t')
+      else alphaEqTerm (LamTerm vs s) (LamTerm vs' s')
+      where u = variablesToFreshVariable (termToVariables (LamTerm (v:vs) t) ++ termToVariables (LamTerm (v':vs') t'))
+            uTerm = VarTerm u
+            s = termSubstitutionInTerm v uTerm (LamTerm vs t)
+            s' = termSubstitutionInTerm v' uTerm (LamTerm vs' t')
 alphaEqTerm (EpsTerm v1 f1) (EpsTerm v2 f2) = alphaEqFormula g1 g2
             where vs = termToVariables (EpsTerm v1 f1) `union` termToVariables (EpsTerm v2 f2)
                   u = variablesToFreshVariable vs
@@ -382,6 +412,7 @@ termToPredicates :: Term -> [Predicate]
 termToPredicates (VarTerm _) = []
 termToPredicates (AppTerm t1 t2) = nub $ concat $ map termToPredicates [t1, t2]
 termToPredicates (ConstTerm c) = []
+termToPredicates (LamTerm vs t) = nub $ termToPredicates t
 termToPredicates (EpsTerm v f) = formulaToPredicates f
 
 isPredicateVariable :: Predicate -> Bool
@@ -421,15 +452,15 @@ predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
             n = predicateToName pred
             i = 1+maximum (map predicateToIndex (p:ps))
 
-predicateVariablesAndArityToFreshPredicateVariables :: Int -> [Predicate] -> Int -> [Predicate]
-predicateVariablesAndArityToFreshPredicateVariables n [] a = map (\i -> Pvar "_" i a) [1..n]
-predicateVariablesAndArityToFreshPredicateVariables n ps a
+predicateVariablesAndArityToFreshPredicateVariables :: [Predicate] -> Int -> Int -> [Predicate]
+predicateVariablesAndArityToFreshPredicateVariables [] a n = map (\i -> Pvar "_" i a) [1..n]
+predicateVariablesAndArityToFreshPredicateVariables ps a n
  | null relevantPvars = map (\i -> Pvar "_" i a) [0..n-1]
  | otherwise = newPvar:newPvars
       where
             relevantPvars = filter (\p -> predicateToArity p == a) ps
             newPvar = predicateVariablesAndArityToFreshPredicateVariable ps a
-            newPvars = predicateVariablesAndArityToFreshPredicateVariables (n-1) (newPvar:ps) a
+            newPvars = predicateVariablesAndArityToFreshPredicateVariables (newPvar:ps) a (n-1)
 
 formulaToPredicateVariables :: Formula -> [Predicate]
 formulaToPredicateVariables f = filter isPredicateVariable (formulaToPredicates f)
@@ -453,6 +484,7 @@ foldNegationAux :: Term -> Term
 foldNegationAux (VarTerm v) = VarTerm v
 foldNegationAux (AppTerm t1 t2) = AppTerm (foldNegationAux t1) (foldNegationAux t2)
 foldNegationAux (ConstTerm c) = ConstTerm c
+foldNegationAux (LamTerm vs t) = LamTerm vs (foldNegationAux t)
 foldNegationAux (EpsTerm v f) = EpsTerm v (foldNegation f)
 
 unfoldNegation :: Formula -> Formula
@@ -467,6 +499,7 @@ unfoldNegationAux :: Term -> Term
 unfoldNegationAux (VarTerm v) = VarTerm v
 unfoldNegationAux (AppTerm t1 t2) = AppTerm (unfoldNegationAux t1) (unfoldNegationAux t2)
 unfoldNegationAux (ConstTerm c) = ConstTerm c
+unfoldNegationAux (LamTerm vs t) = LamTerm vs (unfoldNegationAux t)
 unfoldNegationAux (EpsTerm v f) = EpsTerm v (unfoldNegation f)
 
 epsTranslation :: Formula -> Formula
@@ -480,6 +513,10 @@ epsTranslation (PredForm p ts) = PredForm p ts
 epsTranslation (ImpForm f g) = ImpForm (epsTranslation f) (epsTranslation g)
 epsTranslation (ConjForm f g) = ConjForm (epsTranslation f) (epsTranslation g)
 epsTranslation (DisjForm f g) = DisjForm (epsTranslation f) (epsTranslation g)
+
+isPredForm :: Formula -> Bool
+isPredForm (PredForm p _) = True
+isPredForm _ = False
 
 isImpForm :: Formula -> Bool
 isImpForm (ImpForm _ _) = True
@@ -499,6 +536,28 @@ isBiconForm (ForallForm v f) = False
 isBiconForm (ExistsForm v f) = False
 isBiconForm (ImpForm f (PredForm Falsum [])) = False
 isBiconForm _ = True
+
+biconFormToSubFormulas :: Formula -> (Formula, Formula)
+biconFormToSubFormulas (ImpForm f g) = (f, g)
+biconFormToSubFormulas (ConjForm f g) = (f, g)
+biconFormToSubFormulas (DisjForm f g) = (f, g)
+
+isQuantForm :: Formula -> Bool
+isQuantForm (ExistsForm _ _) = True
+isQuantForm (ForallForm _ _) = True
+isQuantForm _ = False
+
+isForallForm :: Formula -> Bool
+isForallForm (ForallForm _ _) = True
+isForallForm _ = False
+
+isExistsForm :: Formula -> Bool
+isExistsForm (ExistsForm _ _) = True
+isExistsForm _ = False
+
+quantFormToVariableAndFormula :: Formula -> (Variable, Formula)
+quantFormToVariableAndFormula (ForallForm v f) = (v, f)
+quantFormToVariableAndFormula (ExistsForm v f) = (v, f)
 
 formulaInImpFormToPremise :: Formula -> Formula
 formulaInImpFormToPremise (ImpForm f _) = f
