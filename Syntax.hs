@@ -432,6 +432,12 @@ predicateFormToPredicate :: Formula -> Predicate
 predicateFormToPredicate (PredForm p _) = p
 predicateFormToPredicate _ = undefined
 
+variablesAndArityToFreshVariables :: [Variable] -> Int -> Int -> [Variable]
+variablesAndArityToFreshVariables knownVars arity number =
+      map (\i -> Var "_" i arity) [i..i+number-1]
+      where
+            i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1
+
 predicateVariablesToFreshPredicateVariable :: [Predicate] -> Predicate
 predicateVariablesToFreshPredicateVariable [] = undefined
 predicateVariablesToFreshPredicateVariable (p:ps)
