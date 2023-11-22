@@ -35,18 +35,17 @@ f3 = unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] [Right (pf "A", 
 f4 = unify [Right(Pvar "P" (-1) 1), Left (Var "x" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] [Right (pf "A", pf "all x P(x)")]
 
 test = do
-    putStrLn $ show $ isUnifiablePair [Left (Var "y" (-1) 0)] [Left(Var "x" (-1) 0)] [] (Left ((pt "x"),(pt "y")))
-    putStrLn $ show $ isUnifiablePair [] [Left(Var "x" (-1) 0)] [] (Left ((pt "x"),(pt "f (c)")))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "B" (-1) 0)] [Right(Pvar "A" (-1) 0)] [] (Right (pf "A", pf "B"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0),Left(Var "x" (-1) 0)] [] (Right (pf "A", pf "P(x)"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Left (Var "x" (-1) 0)] [] (Right (pf "P(x)", pf "P(c)"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] (Right (pf "A", pf "P(c)"))
-    --putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] (Right (pf "A", pf "P(x)"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0), Left(Var "x" (-1) 0)] [] (Right (pf "A", pf "P(x)"))
-    
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] (Right (pf "A", pf "all x P(x)"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] (Right (pf "A", pf "all x P(x)"))
+    putStrLn $ show $ unify [Left (Var "y" (-1) 0)] [Left(Var "x" (-1) 0)] [] [(Left (pt "x", pt "y"))]
+    putStrLn $ show $ unify [] [Left(Var "x" (-1) 0)] [] [Left ((pt "x"),(pt "f (c)"))]
+    putStrLn $ show $ unify [Right(Pvar "B" (-1) 0)] [Right(Pvar "A" (-1) 0)] [] [Right (pf "A", pf "B")]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0),Left(Var "x" (-1) 0)] [] [Right (pf "A", pf "P(x)")]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Left (Var "x" (-1) 0)] [] [Right (pf "P(x)", pf "P(c)")]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] [Right (pf "A", pf "P(c)")]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] [(Right (pf "A", pf "P(x)"))]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0), Left(Var "x" (-1) 0)] [] [Right (pf "A", pf "P(x)")]
+
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1)] [Right(Pvar "A" (-1) 0)] [] [Right (pf "A", pf "all x P(x)")]
     -- putStrLn $ prettyPrintFormula f3l
     -- putStrLn $ prettyPrintFormula f3r
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] (Right (pf "A -> B", pf "P(c) -> C"))
-    putStrLn $ show $ isUnifiablePair [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] (Right (pf "A -> B", pf "(C -> C) -> C"))
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] [Right (pf "A -> B", pf "P(c) -> C")]
+    putStrLn $ show $ unify [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] [Right (pf "A -> B", pf "(C -> C) -> C")]
