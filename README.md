@@ -452,7 +452,7 @@ Inference rule name | Note
 <code>MP</code> | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
 <code>Gen</code> | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
 
-Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
+Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>.
 
 Reason name | Example | Note
 --- | --- | ---
