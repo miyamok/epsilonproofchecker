@@ -206,7 +206,7 @@ unifyAux2 :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPai
 unifyAux2 _ _ _ _ [] _ = emptyUnificationNode
 unifyAux2 0 _ _ _ _ _ = emptyUnificationNode
 unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
- | alphaEqUnificationPair pair = Node currentNode [unifyAux2 bound sigs flexs forbs pairs []]
+ | alphaEqUnificationPair pair = Node currentNode [unifyAux2 (bound-1) sigs flexs forbs pairs []]
  -- xi case
  | isXiUnificationPair pair =
     let (newForbVar, newPair) = unifyXi sigs flexs forbs pair
@@ -228,8 +228,9 @@ unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
         newPairsList = map (\bs -> bindingsAndPairsToSubstitutedPairs bs (pair:pairs)) newBindingList
         projectionRest = zipWith3 (\newFlxs newBds newPairs -> unifyAux2 (bound-1) sigs newFlxs forbs newPairs newBds)
                             newFlexsList newBindingList newPairsList
-        projectionNodes = zipWith3 (\newFlxs newBds newPairs -> Node (sigs, newFlxs, forbs, newPairs, newBds) projectionRest) newFlexsList newBindingList newPairsList
-      in Node currentNode (imitationNode:projectionNodes) -- not right?
+        projectionNodes = zipWith3 (\newFlxs newBds newPairs -> Node (sigs, newFlxs, forbs, newPairs, newBds) projectionRest)
+                            newFlexsList newBindingList newPairsList
+      in Node currentNode (imitationNode:projectionNodes)
  -- rigid-flex case
  | isRigidFlexUnificationPair rigids pair =
     let pair' = swapUnificationPair pair

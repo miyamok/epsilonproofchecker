@@ -462,9 +462,10 @@ predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
             i = 1+maximum (map predicateToIndex (p:ps))
 
 predicateVariablesAndArityToFreshPredicateVariables :: [Predicate] -> Int -> Int -> [Predicate]
+predicateVariablesAndArityToFreshPredicateVariables _ _ 0 = []
 predicateVariablesAndArityToFreshPredicateVariables [] a n = map (\i -> Pvar "_" i a) [1..n]
 predicateVariablesAndArityToFreshPredicateVariables ps a n
- | null relevantPvars = map (\i -> Pvar "_" i a) [0..n-1]
+ | null relevantPvars = map (\i -> Pvar "_" i a) [1..n]
  | otherwise = newPvar:newPvars
       where
             relevantPvars = filter (\p -> predicateToArity p == a) ps
