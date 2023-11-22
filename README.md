@@ -464,7 +464,6 @@ Reason name | Example | Note
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Instantiation for the Lemma feature (eg. a lemma concluding <code>A | ~A</code> should be applicable to prove <code>ex x P(x) | ~ex x P(x)</code>, that is currently not the case)
 - Epsilon equality axiom to implement
 - Further examples
 - Writing a brief history of Hilbert's logic
