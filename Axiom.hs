@@ -1,7 +1,7 @@
 module Axiom where
 import Syntax
 import Utils
-import Data.List (nubBy, nub, findIndex, splitAt, delete)
+import Data.List (nubBy, nub, findIndex, findIndices, splitAt, delete)
 import Data.Maybe (catMaybes)
 import Data.Either
 import Data.Tree
@@ -124,6 +124,7 @@ alphaEqUnificationPair (Right (x, y)) = alphaEqFormula x y
 
 isRigidTerm :: [VarOrPvar] -> Term -> Bool
 isRigidTerm rigidVars (VarTerm v) = Left v `elem` rigidVars
+isRigidTerm rigidVars (AppTerm t1 t2) = isRigidTerm rigidVars (head (appTermToTerms (AppTerm t1 t2)))
 isRigidTerm _ _ = True
 
 isRigidFormula :: [VarOrPvar] -> Formula -> Bool
@@ -185,6 +186,17 @@ unificationTreeToBindingsList (Node (_, _, _, _, bs) ts) =
 -- isUnifier _ [] = True
 -- isUnifier bs ps = let substPairs = bindingsAndPairsToSubstitutedPairs ps
 
+unify :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> Bool
+unify sigs flexs forbs [] = True
+unify sigs flexs forbs pairs =
+    let utree = unifyAux2 unificationBound sigs flexs forbs pairs []
+        bindingsList = unificationTreeToBindingsList utree
+        unifiedPairsList = map (\bindings -> bindingsAndPairsToSubstitutedPairs bindings pairs) bindingsList
+        checkList = map (\unifPairs -> all (==True) $ map alphaEqUnificationPair unifPairs) unifiedPairsList
+        ids = findIndices (==True) checkList
+      in if null ids then False else True
+
+
 -- Arguments:
 -- Int for the repetition bound which is descreased by each recursive call and the procedure aborts when it became 0.
 -- Three [VarOrPvar] are signature variables, flexible variables, and forbidden variables, respectively
@@ -201,20 +213,23 @@ unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
       in Node currentNode [unifyAux2 (bound-1) sigs flexs (Left newForbVar:forbs) (newPair:pairs) []]
  -- rigid-rigid case
  | isRigidRigidUnificationPair rigids pair =
-    let newPairs = unifyRigidRigid pair
+    let newPairs = unifyRigidRigid (pair)
      in Node currentNode [unifyAux2 (bound-1) sigs flexs forbs (newPairs ++ pairs) []]
  -- flex-rigid case
  | isFlexRigidUnificationPair rigids pair =
     let (newBindings, oldFlexVar, newFlexVars) = unifyImitation (bound-1) sigs flexs forbs pair
         flexs' = delete oldFlexVar flexs ++ newFlexVars
-        imitationRest = unifyAux2 (bound-1) sigs flexs' forbs pairs newBindings
+        pairsImitation = bindingsAndPairsToSubstitutedPairs newBindings (pair:pairs)
+        imitationRest = unifyAux2 (bound-1) sigs flexs' forbs pairsImitation newBindings
+        imitationNode = Node (sigs, flexs', forbs, pairsImitation, newBindings) [imitationRest]
         projResList = unifyProjection (bound-1) sigs flexs forbs pair
         newFlexsList = map (\(bindings, oldVar, newVars) -> delete oldVar flexs ++ newVars) projResList
         newBindingList = map (\(bindings, oldVar, newVars) -> bindings) projResList
         newPairsList = map (\bs -> bindingsAndPairsToSubstitutedPairs bs (pair:pairs)) newBindingList
         projectionRest = zipWith3 (\newFlxs newBds newPairs -> unifyAux2 (bound-1) sigs newFlxs forbs newPairs newBds)
                             newFlexsList newBindingList newPairsList
-      in Node currentNode (imitationRest:projectionRest) -- not right
+        projectionNodes = zipWith3 (\newFlxs newBds newPairs -> Node (sigs, newFlxs, forbs, newPairs, newBds) projectionRest) newFlexsList newBindingList newPairsList
+      in Node currentNode (imitationNode:projectionNodes) -- not right?
  -- rigid-flex case
  | isRigidFlexUnificationPair rigids pair =
     let pair' = swapUnificationPair pair
@@ -234,17 +249,22 @@ unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
     rigids = sigs ++ forbs
 
 unifyXi :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> (Variable, UnificationPair)
-unifyXi sigs flexs forbs (Left (EpsTerm v1 f1, EpsTerm v2 f2)) = unifyXiAux sigs flexs forbs (v1, f1) (v2, f2)
-unifyXi sigs flexs forbs (Right (ForallForm v1 f1, ForallForm v2 f2)) = unifyXiAux sigs flexs forbs (v1, f1) (v2, f2)
-unifyXi sigs flexs forbs (Right (ExistsForm v1 f1, ExistsForm v2 f2)) = unifyXiAux sigs flexs forbs (v1, f1) (v2, f2)
+unifyXi sigs flexs forbs (Left (EpsTerm v1 f1, EpsTerm v2 f2)) = unifyXiAux sigs flexs forbs (v1, Right f1) (v2, Right f2)
+unifyXi sigs flexs forbs (Right (ForallForm v1 f1, ForallForm v2 f2)) = unifyXiAux sigs flexs forbs (v1, Right f1) (v2, Right f2)
+unifyXi sigs flexs forbs (Right (ExistsForm v1 f1, ExistsForm v2 f2)) = unifyXiAux sigs flexs forbs (v1, Right f1) (v2, Right f2)
+unifyXi sigs flexs forbs (Left (LamTerm vs1 t1, LamTerm vs2 t2)) =
+    unifyXiAux sigs flexs forbs (head vs1, Left $ LamTerm (tail vs1) t1) (head vs2, Left $ LamTerm (tail vs2) t2)
 
-unifyXiAux :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> (Variable, Formula) -> (Variable, Formula) -> (Variable, UnificationPair)
-unifyXiAux sigs flexs forbs (v1, f1) (v2, f2) =
-    let freshVar = variablesToFreshVariable (lefts (sigs++flexs++forbs))
-        freshVarTerm = VarTerm freshVar
-        newf1 = termSubstitutionInFormula v1 freshVarTerm f1
-        newf2 = termSubstitutionInFormula v2 freshVarTerm f2
-      in (freshVar, Right (newf1, newf2))
+unifyXiAux :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> (Variable, TermOrForm) -> (Variable, TermOrForm) -> (Variable, UnificationPair)
+unifyXiAux sigs flexs forbs (v1, e1) (v2, e2) =
+    case (e1, e2) of (Left t1, Left t2) -> let newt1 = termSubstitutionInTerm v1 freshVarTerm t1
+                                               newt2 = termSubstitutionInTerm v2 freshVarTerm t2
+                                            in (freshVar, Left (newt1, newt2))
+                     (Right f1, Right f2) -> let newf1 = termSubstitutionInFormula v1 freshVarTerm f1
+                                                 newf2 = termSubstitutionInFormula v2 freshVarTerm f2
+                                            in (freshVar, Right (newf1, newf2))
+ where freshVar = variablesToFreshVariable (lefts (sigs++flexs++forbs))
+       freshVarTerm = VarTerm freshVar
 
 unifyRigidRigid :: UnificationPair -> [UnificationPair]
 unifyRigidRigid (Left (AppTerm t1 t1', AppTerm t2 t2')) =
@@ -253,6 +273,7 @@ unifyRigidRigid (Left (AppTerm t1 t1', AppTerm t2 t2')) =
         h1 = head ts1
         h2 = head ts2
       in if alphaEqTerm h1 h2 then map Left (zip (tail ts1) (tail ts2)) else []
+unifyRigidRigid (Left (ConstTerm c1, ConstTerm c2)) = []
 unifyRigidRigid (Right (PredForm p1 ts1, PredForm p2 ts2)) =
     if p1 == p2 then map Left (zip ts1 ts2) else []
 unifyRigidRigid (Right (f, f'))
@@ -260,6 +281,8 @@ unifyRigidRigid (Right (f, f'))
     let (f1, f2) = biconFormToSubFormulas f
         (f1', f2') = biconFormToSubFormulas f'
       in [Right (f1, f1'), Right (f2, f2')]
+unifyRigidRigid (Left (LamTerm vs1 t1, LamTerm vs2 t2)) = undefined
+unifyRigidRigid _ = []
 
 -- Think what if the value type is of Maybe, since the rhs head must be a signature variable, ow, only projection works.
 unifyImitation :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> ([Binding], VarOrPvar, [VarOrPvar])
@@ -347,7 +370,26 @@ unifyImitation bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
     --  in (newBindings, lhsHead, newFlexVarsOrPvars)
 
 unifyProjection :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> [([Binding], VarOrPvar, [VarOrPvar])]
-unifyProjection = undefined
+unifyProjection bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
+    map (\compr -> ([Left(leftHeadVar, compr)], Left leftHeadVar, map Left newFlexVars)) comprs
+    where
+        leftTerms = appTermToTerms (AppTerm t1 t2)
+        leftHead = head leftTerms
+        leftHeadVar = case leftHead of VarTerm v -> v
+        leftArgs = tail leftTerms
+        (rightHead, rightHeadArity) = case t' of (AppTerm t1' t2') -> let rightTerms = appTermToTerms t'
+                                                                        in (head rightTerms, length rightTerms - 1)
+                                                 s -> (s, 0)
+        knownVars = lefts (sigs ++ flexs ++ forbs)
+        knownPvars = rights (sigs ++ flexs ++ forbs)
+        comprArity = length leftArgs
+        comprAbsVars = variablesAndArityToFreshVariables knownVars 0 comprArity
+        comprAbsVarTerms = map VarTerm comprAbsVars
+        newFlexVars = variablesAndArityToFreshVariables (knownVars ++ comprAbsVars) comprArity rightHeadArity
+        argTerms = map (\funTerm -> termsToAppTerm (funTerm:comprAbsVarTerms)) (map VarTerm newFlexVars)
+        comprs = map (\t -> LamTerm comprAbsVars (termsToAppTerm (t:argTerms))) comprAbsVarTerms
+unifyProjection bound sigs flexs forbs (Left(t, EpsTerm v f)) = undefined
+unifyProjection bound sigs flexs forbs _ = []
 
 -- unifyAux :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> [Binding]
 -- unifyAux _ _ _ _ [] = []
@@ -625,8 +667,7 @@ unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (ConstTerm c) =
 --       in map (\i -> Var "_" i arity) [idx..(idx+number-1)]
 
 variablesAndArityToFreshVariables :: [Variable] -> Int -> Int -> [Variable]
-variablesAndArityToFreshVariables knownVars arity number
- | number > 0 =
+variablesAndArityToFreshVariables knownVars arity number =
       map (\i -> Var "_" i arity) [i..i+number-1]
       where
             i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1

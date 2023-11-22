@@ -116,6 +116,7 @@ variableToArity (Var n i a) = a
 termToArity :: Term -> Arity
 termToArity (VarTerm (Var n i a)) = a
 termToArity (ConstTerm (Const n i a)) = a
+termToArity (LamTerm vs t) = length vs
 termToArity (AppTerm t1 t2) = termToArity t1 - 1
 
 isTerm :: Term -> Bool
@@ -247,6 +248,14 @@ termSubstitutionInTerm v t targetTerm = termSubstitutionInTermAux forbVars v t t
 termSubstitutionInTermAux :: [Variable] -> Variable -> Term -> Term -> Term
 termSubstitutionInTermAux forbVars v t (VarTerm v2) = if v==v2 then t else VarTerm v2
 termSubstitutionInTermAux forbVars v t (ConstTerm c) = ConstTerm c
+termSubstitutionInTermAux forbVars v (LamTerm vs t) (AppTerm t1 t2)
+ | alphaEqTerm hd (VarTerm v) = foldr (\(v, t) t' -> termSubstitutionInTerm v t t') t (zip vs args)
+ | otherwise = AppTerm (termSubstitutionInTermAux forbVars v (LamTerm vs t) t1) (termSubstitutionInTermAux forbVars v (LamTerm vs t) t2)
+      where
+            ts = appTermToTerms (AppTerm t1 t2)
+            hd = head ts
+            args = tail ts
+--(termSubstitutionInTermAux forbVars v t t1) (termSubstitutionInTermAux forbVars v t t2)
 termSubstitutionInTermAux forbVars v t (AppTerm t1 t2) = AppTerm (termSubstitutionInTermAux forbVars v t t1) (termSubstitutionInTermAux forbVars v t t2)
 termSubstitutionInTermAux forbVars v t (LamTerm vs t')
  | v `elem` vs = LamTerm vs t'
