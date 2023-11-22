@@ -1,7 +1,7 @@
 module Axiom where
 import Syntax
 import Utils
-import Data.List (nubBy, nub, findIndex, findIndices, splitAt, delete)
+import Data.List (nubBy, nub, findIndex, findIndices, splitAt, delete, intersect)
 import Data.Maybe (catMaybes)
 import Data.Either
 import Data.Tree
@@ -62,6 +62,18 @@ bindingsAndPairToSubstitutedPair (b:bs) x = bindingsAndPairToSubstitutedPair bs 
 
 bindingsAndPairsToSubstitutedPairs :: [Binding] -> [Either (Term, Term) (Formula, Formula)] -> [Either (Term, Term) (Formula, Formula)]
 bindingsAndPairsToSubstitutedPairs bs xs = map (bindingsAndPairToSubstitutedPair bs) xs
+
+termOrFormToFreeVariables :: TermOrForm -> [Variable]
+termOrFormToFreeVariables (Left x) = termToFreeVariables x
+termOrFormToFreeVariables (Right x) = formulaToFreeVariables x
+
+termOrFormToVariables :: TermOrForm -> [Variable]
+termOrFormToVariables (Left x) = termToVariables x
+termOrFormToVariables (Right x) = formulaToVariables x
+
+termOrFormToPredicateVariables :: TermOrForm -> [Predicate]
+termOrFormToPredicateVariables (Left x) = termToPredicates x
+termOrFormToPredicateVariables (Right x) = formulaToPredicateVariables x
 
 simpleFormulaUnification :: Formula -> Formula -> [(Term, Term)]
 simpleFormulaUnification f g = nubBy alphaEqTermPair (simpleFormulaUnificationAux f g)
@@ -356,6 +368,39 @@ unifyFlexFlexAux freshVar freshPvar (Right(PredForm p1 ts1, PredForm p2 ts2):pai
         binding2 = (p2, Compr vars2 (PredForm freshPvar []))
         rest = unifyFlexFlexAux freshVar freshPvar pairs
      in Right binding1:Right binding2:rest
+
+renameFreeVarsAndPvarsInTermAndNewVarsAndPvars :: [VarOrPvar] -> Term -> (Term, [VarOrPvar])
+renameFreeVarsAndPvarsInTermAndNewVarsAndPvars knowns t = (renamedTerm, map Left freshVars ++ map Right freshPvars)
+    where
+        fvars = termToFreeVariables t
+        pvars = termToPredicates t
+        varsToReplace = fvars `intersect` lefts knowns
+        pvarsToReplace = pvars `intersect` rights knowns
+        freshVars = variablesToFreshVariables (length varsToReplace) (termToVariables t ++ lefts knowns)
+        freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
+        varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
+        pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
+                                             absVarTerms = map VarTerm absVars
+                                           in Right (p, Compr absVars (PredForm p' absVarTerms)))
+                                pvarsToReplace freshPvars
+        renamedTerm = bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
+
+termOrFormToRenamedTermOrFormAndFreshVarAndPvarList :: [VarOrPvar] -> TermOrForm -> (TermOrForm, [VarOrPvar])
+termOrFormToRenamedTermOrFormAndFreshVarAndPvarList knowns e = (renamedTermOrForm, map Left freshVars ++ map Right freshPvars)
+    where
+        fvars = termOrFormToFreeVariables e
+        pvars = termOrFormToPredicateVariables e
+        varsToReplace = fvars `intersect` lefts knowns
+        pvarsToReplace = pvars `intersect` rights knowns
+        freshVars = variablesToFreshVariables (length varsToReplace) (termOrFormToVariables e ++ lefts knowns)
+        freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
+        varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
+        pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
+                                             absVarTerms = map VarTerm absVars
+                                           in Right (p, Compr absVars (PredForm p' absVarTerms)))
+                                pvarsToReplace freshPvars
+        renamedTermOrForm = case e of Left t -> Left $ bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
+                                      Right f -> Right $ bindingsAndFormulaToSubstitutedFormula (varBindings ++ pvarBindings) f
 
 -- unifyTerms :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [(Term, Term)] -> [Binding]
 -- unifyTerms = unifyTermsAux unificationBound

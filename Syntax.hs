@@ -518,6 +518,14 @@ unfoldNegationAux (ConstTerm c) = ConstTerm c
 unfoldNegationAux (LamTerm vs t) = LamTerm vs (unfoldNegationAux t)
 unfoldNegationAux (EpsTerm v f) = EpsTerm v (unfoldNegation f)
 
+formulasToImpFormula :: [Formula] -> Formula
+formulasToImpFormula [x] = x
+formulasToImpFormula (x:xs) = ImpForm x (formulasToImpFormula xs)
+
+impFormulaAndNumberToFormulas :: Formula -> Int -> [Formula]
+impFormulaAndNumberToFormulas f 0 = [f]
+impFormulaAndNumberToFormulas (ImpForm f f') n = f:(impFormulaAndNumberToFormulas f' (n-1))
+
 epsTranslation :: Formula -> Formula
 epsTranslation (ExistsForm v f) = termSubstitutionInFormula v e f'
       where e = EpsTerm v f'
@@ -623,5 +631,5 @@ formulaToFormulaWithRenamedVariablesAndPredicates f vs ps = f'
             numPreds = length commonPreds
             newPreds = predicateVariablesToFreshPredicateVariables numPreds commonPreds
             varAndTermList = zip commonVars newVarTerms
-            predAndPredList = traceShow $ zip commonPreds newPreds
+            predAndPredList = zip commonPreds newPreds
             f' = foldr (\(v, t) f -> termSubstitutionInFormula v t f) f varAndTermList

@@ -214,10 +214,20 @@ checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
             deps = proofToDependency p
 
 checkUse :: Formula -> [Formula] -> Statement -> Bool
-checkUse goalFla goalAsmFlas (lemmaAsmFlas, lemmaGoalFla) = eq && asmValid
+checkUse goalFla goalAsmFlas (lemmaAsmFlas, lemmaGoalFla) = isUnifiableGoal && allAsmValid
       where
-            eq = alphaEqFormula goalFla lemmaGoalFla
-            asmValid = all (\lemmaAsmFla -> any (alphaEqFormula lemmaAsmFla) goalAsmFlas) lemmaAsmFlas
+            sigVars = nub $ concatMap formulaToVariables (goalFla:goalAsmFlas)
+            sigPvars = nub $ concatMap formulaToPredicateVariables (goalFla:goalAsmFlas)
+            sigs = map Left sigVars++map Right sigPvars
+            lemmaStatementFormula = formulasToImpFormula (lemmaAsmFlas ++ [lemmaGoalFla])
+            (Right renamedLemmaGoalFla, freshVarAndPvars) = termOrFormToRenamedTermOrFormAndFreshVarAndPvarList sigs (Right lemmaStatementFormula)
+            renamedAsmFlas = impFormulaAndNumberToFormulas renamedLemmaGoalFla (length lemmaAsmFlas)
+            flexVars = formulaToFreeVariables renamedLemmaGoalFla
+            flexPvars = formulaToPredicateVariables renamedLemmaGoalFla
+            flexs = map Left flexVars ++ map Right flexPvars
+            isUnifiableGoal = unify sigs flexs [] [Right (renamedLemmaGoalFla, goalFla)]
+            allAsmValid = all (\goalAsmFla -> any (\lemmaAsmFla -> unify sigs flexs [] [Right (lemmaAsmFla, goalAsmFla)]) lemmaAsmFlas) goalAsmFlas
+            --asmValid = all (\lemmaAsmFla -> any (alphaEqFormula lemmaAsmFla) goalAsmFlas) lemmaAsmFlas
 
 checkRef :: Formula -> [Formula] -> Bool
 checkRef f = any (alphaEqFormula f)
