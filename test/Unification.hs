@@ -49,3 +49,5 @@ test = do
     -- putStrLn $ prettyPrintFormula f3r
     putStrLn $ show $ unify [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] [Right (pf "A -> B", pf "P(c) -> C")]
     putStrLn $ show $ unify [Right(Pvar "P" (-1) 1), Right(Pvar "C" (-1) 0)] [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [] [Right (pf "A -> B", pf "(C -> C) -> C")]
+    putStrLn $ show $ unify [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [Right(Pvar "A" 0 0), Right(Pvar "A" 1 0)] [] [Right (pf "~A0", pf "~A")]
+    putStrLn $ show $ unify [Right(Pvar "A" (-1) 0), Right(Pvar "B" (-1) 0)] [Right(Pvar "A" 0 0), Right(Pvar "A" 1 0)] [] [Right (pf "~(A0 | A1)", pf "~(A | B)")]

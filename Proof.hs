@@ -216,17 +216,19 @@ checkProof p lemma = foldl (\ x i -> x && cs!!i) (last cs) deps
 checkUse :: Formula -> [Formula] -> Statement -> Bool
 checkUse goalFla goalAsmFlas (lemmaAsmFlas, lemmaGoalFla) = isUnifiableGoal && allAsmValid
       where
-            sigVars = nub $ concatMap formulaToVariables (goalFla:goalAsmFlas)
+            sigVars = nub $ concatMap formulaToFreeVariables (goalFla:goalAsmFlas)
             sigPvars = nub $ concatMap formulaToPredicateVariables (goalFla:goalAsmFlas)
             sigs = map Left sigVars++map Right sigPvars
             lemmaStatementFormula = formulasToImpFormula (lemmaAsmFlas ++ [lemmaGoalFla])
-            (Right renamedLemmaGoalFla, freshVarAndPvars) = termOrFormToRenamedTermOrFormAndFreshVarAndPvarList sigs (Right lemmaStatementFormula)
-            renamedAsmFlas = impFormulaAndNumberToFormulas renamedLemmaGoalFla (length lemmaAsmFlas)
-            flexVars = formulaToFreeVariables renamedLemmaGoalFla
-            flexPvars = formulaToPredicateVariables renamedLemmaGoalFla
+            (Right renamedLemmaStatementFla, freshVarAndPvars) = termOrFormToRenamedTermOrFormAndFreshVarAndPvarList sigs (Right lemmaStatementFormula)
+            flas = impFormulaAndNumberToFormulas renamedLemmaStatementFla (length lemmaAsmFlas)
+            renamedAsmFlas = init flas
+            renamedLemmaGoalFla = last flas
+            flexVars = formulaToFreeVariables renamedLemmaStatementFla
+            flexPvars = formulaToPredicateVariables renamedLemmaStatementFla
             flexs = map Left flexVars ++ map Right flexPvars
             isUnifiableGoal = unify sigs flexs [] [Right (renamedLemmaGoalFla, goalFla)]
-            allAsmValid = all (\goalAsmFla -> any (\lemmaAsmFla -> unify sigs flexs [] [Right (lemmaAsmFla, goalAsmFla)]) lemmaAsmFlas) goalAsmFlas
+            allAsmValid = all (\lemmaAsmFla -> any (\goalAsmFla -> unify sigs flexs [] [Right (lemmaAsmFla, goalAsmFla)]) goalAsmFlas) lemmaAsmFlas
             --asmValid = all (\lemmaAsmFla -> any (alphaEqFormula lemmaAsmFla) goalAsmFlas) lemmaAsmFlas
 
 checkRef :: Formula -> [Formula] -> Bool

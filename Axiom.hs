@@ -177,44 +177,43 @@ unificationTreeToBindingsList (Node (_, _, _, _, bs) ts) =
 unify :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> Bool
 unify sigs flexs forbs [] = True
 unify sigs flexs forbs pairs =
-    let utree = unifyAux2 unificationBound sigs flexs forbs pairs []
+    let utree = unifyAux unificationBound sigs flexs forbs pairs []
         bindingsList = unificationTreeToBindingsList utree
         unifiedPairsList = map (\bindings -> bindingsAndPairsToSubstitutedPairs bindings pairs) bindingsList
         checkList = map (\unifPairs -> all (==True) $ map alphaEqUnificationPair unifPairs) unifiedPairsList
         ids = findIndices (==True) checkList
       in if null ids then False else True
 
-
 -- Arguments:
 -- Int for the repetition bound which is descreased by each recursive call and the procedure aborts when it became 0.
 -- Three [VarOrPvar] are signature variables, flexible variables, and forbidden variables, respectively
 -- [UnificationPair] for the list of equation pairs to unify
 -- [Binding] for the substitution which was computed in the previous step of the unification procedure
-unifyAux2 :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> [Binding] -> UnificationTree
-unifyAux2 _ _ _ _ [] _ = emptyUnificationNode
-unifyAux2 0 _ _ _ _ _ = emptyUnificationNode
-unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
- | alphaEqUnificationPair pair = Node currentNode [unifyAux2 (bound-1) sigs flexs forbs pairs []]
+unifyAux :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> [Binding] -> UnificationTree
+unifyAux _ _ _ _ [] _ = emptyUnificationNode
+unifyAux 0 _ _ _ _ _ = emptyUnificationNode
+unifyAux bound sigs flexs forbs (pair:pairs) bindings
+ | alphaEqUnificationPair pair = Node currentNode [unifyAux (bound-1) sigs flexs forbs pairs []]
  -- xi case
  | isXiUnificationPair pair =
     let (newForbVar, newPair) = unifyXi sigs flexs forbs pair
-      in Node currentNode [unifyAux2 (bound-1) sigs flexs (Left newForbVar:forbs) (newPair:pairs) []]
+      in Node currentNode [unifyAux (bound-1) sigs flexs (Left newForbVar:forbs) (newPair:pairs) []]
  -- rigid-rigid case
  | isRigidRigidUnificationPair rigids pair =
-    let newPairs = unifyRigidRigid (pair)
-     in Node currentNode [unifyAux2 (bound-1) sigs flexs forbs (newPairs ++ pairs) []]
+    let newPairs = unifyRigidRigid pair
+     in Node currentNode [unifyAux (bound-1) sigs flexs forbs (newPairs ++ pairs) []]
  -- flex-rigid case
  | isFlexRigidUnificationPair rigids pair =
     let (newBindings, oldFlexVar, newFlexVars) = unifyImitation (bound-1) sigs flexs forbs pair
         flexs' = delete oldFlexVar flexs ++ newFlexVars
         pairsImitation = bindingsAndPairsToSubstitutedPairs newBindings (pair:pairs)
-        imitationRest = unifyAux2 (bound-1) sigs flexs' forbs pairsImitation newBindings
+        imitationRest = unifyAux (bound-1) sigs flexs' forbs pairsImitation newBindings
         imitationNode = Node (sigs, flexs', forbs, pairsImitation, newBindings) [imitationRest]
         projResList = unifyProjection (bound-1) sigs flexs forbs pair
         newFlexsList = map (\(bindings, oldVar, newVars) -> delete oldVar flexs ++ newVars) projResList
         newBindingList = map (\(bindings, oldVar, newVars) -> bindings) projResList
         newPairsList = map (\bs -> bindingsAndPairsToSubstitutedPairs bs (pair:pairs)) newBindingList
-        projectionRest = zipWith3 (\newFlxs newBds newPairs -> unifyAux2 (bound-1) sigs newFlxs forbs newPairs newBds)
+        projectionRest = zipWith3 (\newFlxs newBds newPairs -> unifyAux (bound-1) sigs newFlxs forbs newPairs newBds)
                             newFlexsList newBindingList newPairsList
         projectionNodes = zipWith3 (\newFlxs newBds newPairs -> Node (sigs, newFlxs, forbs, newPairs, newBds) projectionRest)
                             newFlexsList newBindingList newPairsList
@@ -222,7 +221,7 @@ unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
  -- rigid-flex case
  | isRigidFlexUnificationPair rigids pair =
     let pair' = swapUnificationPair pair
-     in unifyAux2 (bound-1) sigs flexs forbs (pair':pairs) bindings
+     in unifyAux (bound-1) sigs flexs forbs (pair':pairs) bindings
  -- flex-flex case
  | isFlexFlexUnificationPair rigids pair =
     case findIndex (\ p -> not (isFlexFlexUnificationPair rigids p)) pairs of
@@ -232,7 +231,7 @@ unifyAux2 bound sigs flexs forbs (pair:pairs) bindings
         Just i -> let nonFlexFlex = pairs !! i
                       (l1, l2) = splitAt i pairs
                       pairs' = nonFlexFlex:init l1++l2++ [pair]
-                   in Node currentNode [unifyAux2 (bound-1) sigs flexs forbs pairs' bindings]
+                   in Node currentNode [unifyAux (bound-1) sigs flexs forbs pairs' bindings]
  where
     currentNode = (sigs, flexs, forbs, pair:pairs, bindings)
     rigids = sigs ++ forbs
@@ -266,7 +265,7 @@ unifyRigidRigid (Left (ConstTerm c1, ConstTerm c2)) = []
 unifyRigidRigid (Right (PredForm p1 ts1, PredForm p2 ts2)) =
     if p1 == p2 then map Left (zip ts1 ts2) else []
 unifyRigidRigid (Right (f, f'))
- | isBiconForm f && isBiconForm f' =
+ | (isBiconForm f || isNegFormula f) && (isBiconForm f' || isNegFormula f') =
     let (f1, f2) = biconFormToSubFormulas f
         (f1', f2') = biconFormToSubFormulas f'
       in [Right (f1, f1'), Right (f2, f2')]
@@ -369,21 +368,21 @@ unifyFlexFlexAux freshVar freshPvar (Right(PredForm p1 ts1, PredForm p2 ts2):pai
         rest = unifyFlexFlexAux freshVar freshPvar pairs
      in Right binding1:Right binding2:rest
 
-renameFreeVarsAndPvarsInTermAndNewVarsAndPvars :: [VarOrPvar] -> Term -> (Term, [VarOrPvar])
-renameFreeVarsAndPvarsInTermAndNewVarsAndPvars knowns t = (renamedTerm, map Left freshVars ++ map Right freshPvars)
-    where
-        fvars = termToFreeVariables t
-        pvars = termToPredicates t
-        varsToReplace = fvars `intersect` lefts knowns
-        pvarsToReplace = pvars `intersect` rights knowns
-        freshVars = variablesToFreshVariables (length varsToReplace) (termToVariables t ++ lefts knowns)
-        freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
-        varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
-        pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
-                                             absVarTerms = map VarTerm absVars
-                                           in Right (p, Compr absVars (PredForm p' absVarTerms)))
-                                pvarsToReplace freshPvars
-        renamedTerm = bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
+-- renameFreeVarsAndPvarsInTermAndNewVarsAndPvars :: [VarOrPvar] -> Term -> (Term, [VarOrPvar])
+-- renameFreeVarsAndPvarsInTermAndNewVarsAndPvars knowns t = (renamedTerm, map Left freshVars ++ map Right freshPvars)
+--     where
+--         fvars = termToFreeVariables t
+--         pvars = termToPredicates t
+--         varsToReplace = fvars `intersect` lefts knowns
+--         pvarsToReplace = pvars `intersect` rights knowns
+--         freshVars = variablesToFreshVariables (length varsToReplace) (termToVariables t ++ lefts knowns)
+--         freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
+--         varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
+--         pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
+--                                              absVarTerms = map VarTerm absVars
+--                                            in Right (p, Compr absVars (PredForm p' absVarTerms)))
+--                                 pvarsToReplace freshPvars
+--         renamedTerm = bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
 
 termOrFormToRenamedTermOrFormAndFreshVarAndPvarList :: [VarOrPvar] -> TermOrForm -> (TermOrForm, [VarOrPvar])
 termOrFormToRenamedTermOrFormAndFreshVarAndPvarList knowns e = (renamedTermOrForm, map Left freshVars ++ map Right freshPvars)
@@ -392,8 +391,9 @@ termOrFormToRenamedTermOrFormAndFreshVarAndPvarList knowns e = (renamedTermOrFor
         pvars = termOrFormToPredicateVariables e
         varsToReplace = fvars `intersect` lefts knowns
         pvarsToReplace = pvars `intersect` rights knowns
+        pvarArities = map predicateToArity pvarsToReplace
         freshVars = variablesToFreshVariables (length varsToReplace) (termOrFormToVariables e ++ lefts knowns)
-        freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
+        freshPvars = predicateVariablesAndAritiesToFreshPredicateVariables (pvars ++ rights knowns) pvarArities
         varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
         pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
                                              absVarTerms = map VarTerm absVars
@@ -401,115 +401,3 @@ termOrFormToRenamedTermOrFormAndFreshVarAndPvarList knowns e = (renamedTermOrFor
                                 pvarsToReplace freshPvars
         renamedTermOrForm = case e of Left t -> Left $ bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
                                       Right f -> Right $ bindingsAndFormulaToSubstitutedFormula (varBindings ++ pvarBindings) f
-
--- unifyTerms :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [(Term, Term)] -> [Binding]
--- unifyTerms = unifyTermsAux unificationBound
-
--- unifyTermsAux :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [(Term, Term)] -> [Binding]
--- unifyTermsAux 0 _ _ _ _ = []
--- unifyTermsAux bound sigs flexs forbs [] = []
--- unifyTermsAux bound sigs flexs forbs ((t,t'):pairs)
---  | alphaEqTerm t t' = unifyTermsAux (bound-1) sigs flexs forbs pairs
---  | isRigidTerm rigids t && isRigidTerm rigids t' =
---     case (t, t') of (EpsTerm v f, EpsTerm v' f') -> undefined
---                     (AppTerm t1 t2, AppTerm t1' t2') ->
---                         let c:ts = appTermToTerms (AppTerm t1 t2)
---                             c':ts' = appTermToTerms (AppTerm t1' t2')
---                           in if c == c' then unifyTermsAux (bound-1) sigs flexs forbs (zip ts ts' ++ pairs)
---                                         else []
---                     otherewise -> []
---  | isRigidTerm rigids t && not (isRigidTerm rigids t') = unifyTermsAux (bound-1) sigs flexs forbs ((t',t):pairs)
---  | not (isRigidTerm rigids t) && isRigidTerm rigids t' =
---     case t of VarTerm v -> let newPair = (termSubstitutionInTerm v t' t, termSubstitutionInTerm v t' t')
---                                 in unifyTermsAux (bound-1) sigs flexs forbs (newPair:pairs)
---  | not (isRigidTerm rigids t) && not (isRigidTerm rigids t') =
---     let x = do i <- findIndex (\(s, s') -> isRigidTerm rigids s || isRigidTerm rigids s') pairs
---                let (h, t) = splitAt i pairs
---                return (head t:h ++ tail t)
---       in case x of Just pairs' -> unifyTermsAux (bound-1) sigs flexs forbs (pairs' ++ [(t, t')])
---                    Nothing -> let freshVar = variablesToFreshVariable $ lefts (sigs ++ flexs ++ forbs)
---                                   freshVarTerm = VarTerm freshVar
---                                   (ts0, ts1) = unzip ((t,t'):pairs)
---                                 in map (\s -> Left (varTermToVar s, LamTerm [] freshVarTerm)) (ts0 ++ ts1)
---  where
---     rigids = sigs++forbs
-
--- unificationPairToTerms :: UnificationPair -> [Term]
--- unificationPairToTerms (Left (t1, t2)) = [t1, t2]
--- unificationPairToTerms (Right _) = []
-
--- unificationPairToFormulas :: UnificationPair -> [Formula]
--- unificationPairToFormulas (Left _) = []
--- unificationPairToFormulas (Right (f1, f2)) = [f1, f2]
-
--- unificationPairsToTerms :: [UnificationPair] -> [Term]
--- unificationPairsToTerms [] = []
--- unificationPairsToTerms (pair:pairs) = xs ++ unificationPairsToTerms pairs
---     where xs = unificationPairToTerms pair
-
--- unificationPairsToFormulas :: [UnificationPair] -> [Formula]
--- unificationPairsToFormulas [] = []
--- unificationPairsToFormulas (pair:pairs) = xs ++ unificationPairsToFormulas pairs
---     where xs = unificationPairToFormulas pair
-
--- unificationPairToVariables :: UnificationPair -> [Variable]
--- unificationPairToVariables (Left (x1, x2)) = concat $ map termToVariables [x1, x2]
--- unificationPairToVariables (Right (x1, x2)) = concat $ map formulaToVariables [x1, x2]
-
--- unificationPairsToVariables :: [UnificationPair] -> [Variable]
--- unificationPairsToVariables [] = []
--- unificationPairsToVariables (x:xs) = vs ++ unificationPairsToVariables xs
---     where vs = unificationPairToVariables x
-
--- unifyTermAuxFlexRigid  :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> Term -> Term -> ([Binding], [VarOrPvar])
--- unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (AppTerm t1 t2) =
---     let c:ts = appTermToTerms (AppTerm t1 t2)
---         arity = length ts
---         knownVars = lefts (sigs ++ flexs ++ forbs)
---         freshVars = variablesToFreshVariables arity knownVars
---         freshVarTerms = map VarTerm freshVars
---         binding = (v, LamTerm [] $ termsToAppTerm (c:freshVarTerms))
---      in ([Left binding], map Left freshVars)
--- unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (VarTerm u) =
---     let binding = (v, LamTerm [] $ VarTerm u)
---      in ([Left binding], [])
--- unifyTermAuxFlexRigid sigs flexs forbs (VarTerm v) (ConstTerm c) =
---     let binding = (v, LamTerm [] $ ConstTerm c)
---      in ([Left binding], [])
-
--- unifyFlexRigidBicon :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> ([Binding], [VarOrPvar])
--- unifyFlexRigidBicon bound sigs flexs forbs [Right (PredForm p ts, g)] =
---     let pArity = length ts
---         rigids = sigs ++ forbs
---         newVars = variablesToFreshVariables pArity []
---         newVarTerms = map VarTerm newVars
---         knownPvars = rights (sigs ++ flexs ++ forbs)
---         newPvars = predicateVariablesAndArityToFreshPredicateVariables (p:knownPvars) 0 2
---         newArgFlas = map (\newPvar -> PredForm newPvar newVarTerms) newPvars
---         comprFla = case g of ImpForm _ _ -> ImpForm (head newArgFlas) (last newArgFlas)
---                              ConjForm _ _ -> ConjForm (head newArgFlas) (last newArgFlas)
---                              DisjForm _ _ -> DisjForm (head newArgFlas) (last newArgFlas)
---         binding = Right (p, Compr newVars comprFla)
---      in ([binding], map Right newPvars)
-
--- unifyFlexRigidQuant :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [Either (Term, Term) (Formula, Formula)] -> ([Binding], [VarOrPvar])
--- unifyFlexRigidQuant bound sigs flexs forbs [Right (PredForm p ts, g)] =
---     let knownVars = lefts (sigs ++ flexs ++ forbs)
---         comprhensionAbsVars = variablesToFreshVariables (length ts) knownVars
---         rigids = sigs ++ forbs
---         comprhensionAbsVarTerms = map VarTerm comprhensionAbsVars
---         --newPvars = predicateVariablesAndArityToFreshPredicateVariables (p:rigidPreds ++ flexPvars) gArity
---         --newArgFla = PredForm newPvar []
---         quantVar = case g of ForallForm v _ -> v
---                              ExistsForm v _ -> v
---         newPvarArity = length ts + 1 -- +1 for the quantVar
---         newPvar = predicateVariablesAndArityToFreshPredicateVariable (p:rights (rigids ++ flexs)) newPvarArity
---         maxIdx = maximum (0:map variableToIndex (knownVars ++ concatMap termToVariables ts ++ concatMap termToVariables (formulaToSubterms g)))
---         funVars = map (\i -> Var "_" (i+maxIdx) (length ts+1)) [1..newPvarArity]
---         newPredArgTerms = map (\funVar -> termsToAppTerm (VarTerm funVar:VarTerm quantVar:comprhensionAbsVarTerms)) funVars
---         newKernel = PredForm newPvar newPredArgTerms
---         comprFla = case g of ForallForm v _ -> ForallForm v newKernel
---                              ExistsForm v _ -> ExistsForm v newKernel
---         binding = Right (p, Compr comprhensionAbsVars comprFla)
---      in ([binding], (Right newPvar):(map Left funVars))
-

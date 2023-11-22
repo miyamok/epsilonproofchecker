@@ -438,23 +438,21 @@ variablesAndArityToFreshVariables knownVars arity number =
       where
             i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1
 
-predicateVariablesToFreshPredicateVariable :: [Predicate] -> Predicate
-predicateVariablesToFreshPredicateVariable [] = undefined
-predicateVariablesToFreshPredicateVariable (p:ps)
- | allEqual $ map predicateToArity (p:ps) = let a = predicateToArity p
-                                                n = predicateToName p
-                                                is = map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps))
-                                                i = if null is then undefined else 1+maximum is
-                                                --i = 1+maximum (map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps)))
-                                          in Pvar n i a
- | otherwise = undefined
+-- predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
+-- predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "*" (-1) a
+-- predicateVariablesAndArityToFreshPredicateVariable (p:ps) a = Pvar n i a
+--       where
+--             preds = filter (\p -> predicateToArity p == a) (p:ps)
+--             n = if null preds then "*" else predicateToName (head preds)
+--             is = map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps))
+--             i = if null is then (-1) else 1+maximum is
 
-predicateVariablesToFreshPredicateVariables :: Int -> [Predicate] -> [Predicate]
-predicateVariablesToFreshPredicateVariables 0 _ = []
-predicateVariablesToFreshPredicateVariables n ps = newPred:newPreds
-      where
-            newPred = predicateVariablesToFreshPredicateVariable ps
-            newPreds = predicateVariablesToFreshPredicateVariables (n-1) (newPred:ps)
+-- predicateVariablesAndArityToFreshPredicateVariables :: [Predicate] -> Int -> Int -> [Predicate]
+-- predicateVariablesAndArityToFreshPredicateVariables _ _ 0 = []
+-- predicateVariablesAndArityToFreshPredicateVariables ps a n = newPred:newPreds
+--       where
+--             newPred = predicateVariablesAndArityToFreshPredicateVariable ps a
+--             newPreds = predicateVariablesAndArityToFreshPredicateVariables (newPred:ps) a (n-1)
 
 predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
 predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "_" (-1) a
@@ -477,6 +475,13 @@ predicateVariablesAndArityToFreshPredicateVariables ps a n
             relevantPvars = filter (\p -> predicateToArity p == a) ps
             newPvar = predicateVariablesAndArityToFreshPredicateVariable ps a
             newPvars = predicateVariablesAndArityToFreshPredicateVariables (newPvar:ps) a (n-1)
+
+predicateVariablesAndAritiesToFreshPredicateVariables :: [Predicate] -> [Int] -> [Predicate]
+predicateVariablesAndAritiesToFreshPredicateVariables _ [] = []
+predicateVariablesAndAritiesToFreshPredicateVariables ps (a:as) = freshPvar:freshPvars
+      where
+            freshPvar = predicateVariablesAndArityToFreshPredicateVariable ps a
+            freshPvars = predicateVariablesAndAritiesToFreshPredicateVariables (freshPvar:ps) as
 
 formulaToPredicateVariables :: Formula -> [Predicate]
 formulaToPredicateVariables f = filter isPredicateVariable (formulaToPredicates f)
@@ -618,18 +623,18 @@ formulaToFormulaWithFreshBoundVariables (ExistsForm v f) forbVars =
       where u = variablesToFreshVariable (v:forbVars)
             f' = termSubstitutionInFormula v (VarTerm u) f
 
-formulaToFormulaWithRenamedVariablesAndPredicates :: Formula -> [Variable] -> [Predicate] -> Formula
-formulaToFormulaWithRenamedVariablesAndPredicates f vs ps = f'
-      where
-            preds = formulaToPredicates f
-            commonPreds = preds `intersect` ps
-            vars = formulaToFreeVariables f
-            commonVars = vars `intersect` vs
-            numVars = length commonVars
-            newVars = variablesToFreshVariables numVars commonVars
-            newVarTerms = map VarTerm newVars
-            numPreds = length commonPreds
-            newPreds = predicateVariablesToFreshPredicateVariables numPreds commonPreds
-            varAndTermList = zip commonVars newVarTerms
-            predAndPredList = zip commonPreds newPreds
-            f' = foldr (\(v, t) f -> termSubstitutionInFormula v t f) f varAndTermList
+-- formulaToFormulaWithRenamedVariablesAndPredicates :: Formula -> [Variable] -> [Predicate] -> Formula
+-- formulaToFormulaWithRenamedVariablesAndPredicates f vs ps = f'
+--       where
+--             preds = formulaToPredicates f
+--             commonPreds = preds `intersect` ps
+--             vars = formulaToFreeVariables f
+--             commonVars = vars `intersect` vs
+--             numVars = length commonVars
+--             newVars = variablesToFreshVariables numVars commonVars
+--             newVarTerms = map VarTerm newVars
+--             numPreds = length commonPreds
+--             newPreds = predicateVariablesAndArityToFreshPredicateVariables commonPreds numPreds
+--             varAndTermList = zip commonVars newVarTerms
+--             predAndPredList = zip commonPreds newPreds
+--             f' = foldr (\(v, t) f -> termSubstitutionInFormula v t f) f varAndTermList
