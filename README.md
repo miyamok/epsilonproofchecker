@@ -361,7 +361,7 @@ The proof transformation feature does not maintain the tagged inference rules.  
 The next section provides sufficient information to start writing your own proofs.
 ### Syntax for proof scripts
 The proof assistant epsilon processes a proof script which is stored as a file in the system.
-A proof script is a list of proof steps, each of which consists of the following ingredients.
+The main content of a proof script is a proof, which is a list of proof steps, each of which consists of the following ingredients.
 1. A formula to claim
 2. A reason of claiming the formula
 3. Optional tag for future reference to this proof step
@@ -400,6 +400,7 @@ For any natural number _n_, a declarations starts with _n_<code>ary-predicates</
 0ary-constants c a
 1ary-constants f g
 ```
+All the declarations in a proof script must precede any proofs, namely, it is not allowed to put a declaration below the first proof step in a proof script.
 A custom declaration makes the default names unavailable.  For example, assume one made a custom declaration for variables and didn't make any custom declarations for constants names nor predicate names.  In this case, the default variable names are gone, while the default constant names and predicate names are still there.
 
 Command name | Example | Note
@@ -452,7 +453,7 @@ Inference rule name | Note
 <code>MP</code> | Infers <code>Γ ⊢ B</code> from <code>Γ ⊢ A -> B</code> and <code>Γ ⊢ A</code>
 <code>Gen</code> | Infers <code>Γ ⊢ all x A(x)</code> from <code>Γ ⊢ A(x)</code>, provided <code>x∉FV(Γ)</code>
 
-Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>, and commands which should occupy one line.
+Other than the axioms and inference rules, there are the following reasons which can be given after <code>by</code>.
 
 Reason name | Example | Note
 --- | --- | ---
@@ -464,7 +465,6 @@ Reason name | Example | Note
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Instantiation for the Lemma feature (eg. a lemma concluding <code>A | ~A</code> should be applicable to prove <code>ex x P(x) | ~ex x P(x)</code>, that is currently not the case)
 - Epsilon equality axiom to implement
 - Further examples
 - Writing a brief history of Hilbert's logic
