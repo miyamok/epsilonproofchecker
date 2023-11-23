@@ -126,6 +126,10 @@ isTerm (ConstTerm c) = isConstant c
 isTerm (AppTerm t1 t2) = termToArity t1 >= 1 && isGroundTerm t2
 isTerm (EpsTerm v f) = isFormula f
 
+isVarTerm :: Term -> Bool
+isVarTerm (VarTerm _) = True
+isVarTerm _ = False
+
 isGroundTerm :: Term -> Bool
 isGroundTerm (VarTerm v) = variableToArity v == 0
 isGroundTerm (ConstTerm c) = constantToArity c == 0
@@ -181,13 +185,6 @@ variablesToFreshVariables n knownVars = newVar:newVars
             newVar = variablesToFreshVariable knownVars
             newVars = variablesToFreshVariables (n-1) (newVar:knownVars)
 
--- variablesAndArityToFreshVariables :: [Variable] -> Int -> Int -> [Variable]
--- variablesAndArityToFreshVariables knownVars arity number
---  | number > 0 =
---       map (\i -> Var "_" i arity) [i..i+number-1]
---       where
---             i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1
-
 isPredicate :: Predicate -> Bool
 isPredicate (Pvar n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
@@ -212,9 +209,8 @@ termToConstants (AppTerm t t') = concat (map termToConstants [t, t'])
 termToConstants (EpsTerm v f) = formulaToConstants f
 
 appTermToTerms :: Term -> [Term]
-appTermToTerms (AppTerm t1 t2)
- | termToArity t1 == 1 = [t1,t2]
- | otherwise = appTermToTerms t1 ++ [t2]
+appTermToTerms (AppTerm t1 t2) = appTermToTerms t1 ++ [t2]
+appTermToTerms t = [t]
 
 termsToAppTerm :: [Term] -> Term
 termsToAppTerm [t] = t
@@ -438,21 +434,81 @@ variablesAndArityToFreshVariables knownVars arity number =
       where
             i = if null knownVars then 1 else maximum (map variableToIndex knownVars) + 1
 
--- predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
--- predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "*" (-1) a
--- predicateVariablesAndArityToFreshPredicateVariable (p:ps) a = Pvar n i a
---       where
---             preds = filter (\p -> predicateToArity p == a) (p:ps)
---             n = if null preds then "*" else predicateToName (head preds)
---             is = map predicateToIndex (filter (\p -> predicateToName p == n) (p:ps))
---             i = if null is then (-1) else 1+maximum is
+formulaToImmediateSubTerms :: Formula -> [Term]
+formulaToImmediateSubTerms = formulaToImmediateSubTermsAux []
 
--- predicateVariablesAndArityToFreshPredicateVariables :: [Predicate] -> Int -> Int -> [Predicate]
--- predicateVariablesAndArityToFreshPredicateVariables _ _ 0 = []
--- predicateVariablesAndArityToFreshPredicateVariables ps a n = newPred:newPreds
---       where
---             newPred = predicateVariablesAndArityToFreshPredicateVariable ps a
---             newPreds = predicateVariablesAndArityToFreshPredicateVariables (newPred:ps) a (n-1)
+formulaToImmediateSubTermsAux :: [Variable] -> Formula -> [Term]
+formulaToImmediateSubTermsAux bvs (PredForm _ ts) =
+      concatMap (\t -> if null $ bvs `intersect` termToFreeVariables t then [t] else termToImmediateSubTermsAux bvs t) ts
+formulaToImmediateSubTermsAux bvs (ImpForm f g) = formulaToImmediateSubTermsAux bvs f ++ formulaToImmediateSubTermsAux bvs g
+formulaToImmediateSubTermsAux bvs (ConjForm f g) = formulaToImmediateSubTermsAux bvs f ++ formulaToImmediateSubTermsAux bvs g
+formulaToImmediateSubTermsAux bvs (DisjForm f g) = formulaToImmediateSubTermsAux bvs f ++ formulaToImmediateSubTermsAux bvs g
+formulaToImmediateSubTermsAux bvs (ForallForm v f) = formulaToImmediateSubTermsAux [v] f
+formulaToImmediateSubTermsAux bvs (ExistsForm v f) = formulaToImmediateSubTermsAux [v] f
+
+termToImmediateSubTerms :: Term -> [Term]
+termToImmediateSubTerms = termToImmediateSubTermsAux []
+
+termToImmediateSubTermsAux :: [Variable] -> Term -> [Term]
+termToImmediateSubTermsAux bvs (VarTerm v) = []
+termToImmediateSubTermsAux bvs (ConstTerm c) = []
+--termToImmediateSubTermsAux bvs (LamTerm vs t) =
+termToImmediateSubTermsAux bvs (AppTerm t1 t2) =
+      filter (\ t -> termToArity t == 0) ts'
+      where
+            ts = appTermToTerms (AppTerm t1 t2)
+            ts' = concatMap (\t -> if null $ bvs `intersect` termToFreeVariables t then [t] else termToImmediateSubTermsAux bvs t) ts
+termToImmediateSubTermsAux bvs (EpsTerm v f) = formulaToImmediateSubTermsAux (v:bvs) f
+
+epsTermToEpsMatrixAuxFormula :: [Variable] -> Int -> Formula -> (Formula, Int)
+epsTermToEpsMatrixAuxFormula bvs i (PredForm p ts) = (PredForm p ts', i')
+      where f bvs i [] = ([], i)
+            f bvs i (t:ts) = let (t', i') = epsTermToEpsMatrixAux bvs i t
+                                 (rest, j) = f bvs i' ts
+                              in (t':rest, j)
+            (ts', i') = f bvs i ts
+epsTermToEpsMatrixAuxFormula bvs i (ImpForm f g) = (ImpForm f' g', i'')
+      where (f', i') = epsTermToEpsMatrixAuxFormula bvs i f
+            (g', i'') = epsTermToEpsMatrixAuxFormula bvs i' g
+epsTermToEpsMatrixAuxFormula bvs i (ConjForm f g) = (ConjForm f' g', i'')
+      where (f', i') = epsTermToEpsMatrixAuxFormula bvs i f
+            (g', i'') = epsTermToEpsMatrixAuxFormula bvs i' g
+epsTermToEpsMatrixAuxFormula bvs i (DisjForm f g) = (DisjForm f' g', i'')
+      where (f', i') = epsTermToEpsMatrixAuxFormula bvs i f
+            (g', i'') = epsTermToEpsMatrixAuxFormula bvs i' g
+epsTermToEpsMatrixAuxFormula bvs i (ForallForm v f) = (ForallForm v f', i')
+      where (f', i') = epsTermToEpsMatrixAuxFormula (v:bvs) i f
+epsTermToEpsMatrixAuxFormula bvs i (ExistsForm v f) = (ForallForm v f', i')
+      where (f', i') = epsTermToEpsMatrixAuxFormula (v:bvs) i f
+
+epsTermToEpsMatrix :: Term -> Term
+epsTermToEpsMatrix (EpsTerm v f) = EpsTerm v f'
+      where (f', i) = epsTermToEpsMatrixAuxFormula [v] (1+ (maximum $ map variableToIndex $ termToVariables (EpsTerm v f))) f
+
+epsMatrixToClosedEpsMatrix :: Term -> Term
+epsMatrixToClosedEpsMatrix e
+ | isEpsTerm e && all isVarTerm iSubTerms && all (\t -> 0 == termToArity t) iSubTerms = LamTerm absVars e
+ where
+      iSubTerms = termToImmediateSubTerms e
+      absVars = map varTermToVar iSubTerms
+
+epsTermToEpsMatrixAux :: [Variable] -> Int -> Term -> (Term, Int)
+epsTermToEpsMatrixAux bvs i (VarTerm v) = if v `elem` bvs then (VarTerm v, i) else (VarTerm (Var "_" i 0), i+1)
+epsTermToEpsMatrixAux bvs i (ConstTerm c) = if constantToArity c == 0 then (VarTerm (Var "_" i 0), i+1) else (ConstTerm c, i)
+--epsTermToEpsMatrixAux bvs (LamTerm vs t) =
+epsTermToEpsMatrixAux bvs i (AppTerm t1 t2) = if null $ bvs `intersect` termToFreeVariables (AppTerm t1 t2)
+                                                then (VarTerm (Var "_" i 0), i+1) else (termsToAppTerm ts', j)
+      where
+            f bvs i [] = ([], i)
+            f bvs i (t:ts) = let (t', i') = epsTermToEpsMatrixAux bvs i t
+                                 (rest, i'') = f bvs i' ts
+                              in (t':rest, i'')
+            ts = appTermToTerms (AppTerm t1 t2)
+            (ts', j) = f bvs i ts
+epsTermToEpsMatrixAux bvs i (EpsTerm v f) = if null $ bvs `intersect` termToFreeVariables (EpsTerm v f)
+                                                then (VarTerm (Var "_" i 0), i+1) else (EpsTerm v f', i')
+      where (f', i') = epsTermToEpsMatrixAuxFormula (v:bvs) i f
+
 
 predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
 predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "_" (-1) a
@@ -622,19 +678,3 @@ formulaToFormulaWithFreshBoundVariables (ExistsForm v f) forbVars =
       ExistsForm u (formulaToFormulaWithFreshBoundVariables f' (u:v:forbVars))
       where u = variablesToFreshVariable (v:forbVars)
             f' = termSubstitutionInFormula v (VarTerm u) f
-
--- formulaToFormulaWithRenamedVariablesAndPredicates :: Formula -> [Variable] -> [Predicate] -> Formula
--- formulaToFormulaWithRenamedVariablesAndPredicates f vs ps = f'
---       where
---             preds = formulaToPredicates f
---             commonPreds = preds `intersect` ps
---             vars = formulaToFreeVariables f
---             commonVars = vars `intersect` vs
---             numVars = length commonVars
---             newVars = variablesToFreshVariables numVars commonVars
---             newVarTerms = map VarTerm newVars
---             numPreds = length commonPreds
---             newPreds = predicateVariablesAndArityToFreshPredicateVariables commonPreds numPreds
---             varAndTermList = zip commonVars newVarTerms
---             predAndPredList = zip commonPreds newPreds
---             f' = foldr (\(v, t) f -> termSubstitutionInFormula v t f) f varAndTermList

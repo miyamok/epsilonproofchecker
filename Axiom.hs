@@ -270,7 +270,7 @@ unifyRigidRigid (Right (f, f'))
         (f1', f2') = biconFormToSubFormulas f'
       in [Right (f1, f1'), Right (f2, f2')]
 unifyRigidRigid (Left (LamTerm vs1 t1, LamTerm vs2 t2)) = undefined
-unifyRigidRigid _ = []
+unifyRigidRigid t = []
 
 -- Think what if the value type is of Maybe, since the rhs head must be a signature variable, ow, only projection works.
 unifyImitation :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> ([Binding], VarOrPvar, [VarOrPvar])
@@ -302,7 +302,6 @@ unifyImitation bound sigs flexs forbs (Right(PredForm p ts, f))
     knownPvars = rights (sigs ++ flexs ++ forbs)
     comprAbsVars = variablesAndArityToFreshVariables knownVars 0 comprArity
     comprAbsVarTerms = map VarTerm comprAbsVars
-unifyImitation bound sigs flexs forbs (Left(t, EpsTerm v f)) = undefined
 unifyImitation bound sigs flexs forbs (Left(VarTerm v, t)) = ([Left (v, t)], Left v, [])
 unifyImitation bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
     ([Left(leftHeadVar, compr)], Left leftHeadVar, map Left newFlexVars)
@@ -313,6 +312,9 @@ unifyImitation bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
         leftArgs = tail leftTerms
         (rightHead, rightHeadArity) = case t' of (AppTerm t1' t2') -> let rightTerms = appTermToTerms t'
                                                                         in (head rightTerms, length rightTerms - 1)
+                                                 (EpsTerm v f) -> let epsMatrix = epsTermToEpsMatrix (EpsTerm v f)
+                                                                      matrixVars = map varTermToVar (termToImmediateSubTerms epsMatrix)
+                                                                    in (epsMatrixToClosedEpsMatrix epsMatrix, length matrixVars)
                                                  s -> (s, 0)
         knownVars = lefts (sigs ++ flexs ++ forbs)
         knownPvars = rights (sigs ++ flexs ++ forbs)
@@ -367,22 +369,6 @@ unifyFlexFlexAux freshVar freshPvar (Right(PredForm p1 ts1, PredForm p2 ts2):pai
         binding2 = (p2, Compr vars2 (PredForm freshPvar []))
         rest = unifyFlexFlexAux freshVar freshPvar pairs
      in Right binding1:Right binding2:rest
-
--- renameFreeVarsAndPvarsInTermAndNewVarsAndPvars :: [VarOrPvar] -> Term -> (Term, [VarOrPvar])
--- renameFreeVarsAndPvarsInTermAndNewVarsAndPvars knowns t = (renamedTerm, map Left freshVars ++ map Right freshPvars)
---     where
---         fvars = termToFreeVariables t
---         pvars = termToPredicates t
---         varsToReplace = fvars `intersect` lefts knowns
---         pvarsToReplace = pvars `intersect` rights knowns
---         freshVars = variablesToFreshVariables (length varsToReplace) (termToVariables t ++ lefts knowns)
---         freshPvars = predicateVariablesToFreshPredicateVariables (length pvarsToReplace) (pvars ++ rights knowns)
---         varBindings = zipWith (\v v' -> Left (v, VarTerm v')) varsToReplace freshVars
---         pvarBindings = zipWith (\p p' -> let absVars = variablesToFreshVariables (predicateToArity p') []
---                                              absVarTerms = map VarTerm absVars
---                                            in Right (p, Compr absVars (PredForm p' absVarTerms)))
---                                 pvarsToReplace freshPvars
---         renamedTerm = bindingsAndTermToSubstitutedTerm (varBindings ++ pvarBindings) t
 
 termOrFormToRenamedTermOrFormAndFreshVarAndPvarList :: [VarOrPvar] -> TermOrForm -> (TermOrForm, [VarOrPvar])
 termOrFormToRenamedTermOrFormAndFreshVarAndPvarList knowns e = (renamedTermOrForm, map Left freshVars ++ map Right freshPvars)
