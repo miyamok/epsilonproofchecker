@@ -1,4 +1,4 @@
-module Axiom where
+module Unification where
 import Syntax
 import Utils
 import Data.List (nubBy, nub, findIndex, findIndices, splitAt, delete, intersect)

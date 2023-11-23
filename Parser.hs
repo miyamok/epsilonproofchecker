@@ -5,7 +5,7 @@ import Data.List
 import Syntax
 import Proof
 import Script
-import Axiom
+import Unification
 
 newtype Parser a = P(String -> [(a, String)])
 

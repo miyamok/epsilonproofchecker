@@ -2,7 +2,7 @@ module Proof where
 import Syntax
 import Data.List
 import Data.Maybe
-import Axiom
+import Unification
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Debug.Trace
