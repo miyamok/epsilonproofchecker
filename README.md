@@ -51,7 +51,7 @@ Elementary calculus is a common basis of richer calculi such as predicate calcul
 Predicate calculus, first-order logic in other words, is elementary calculus with term variables, quantifiers, and additional logical reasoning methods concerning the quantifiers.
 An example statement involving quantification is "there exists a white pigeon." where there is a quantification over pigeons.
 Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional reasoning method is available.
-Epsilon operator is a term forms a term from a formula.  For example, assume we have a formula claiming that "x is a white pegion," then epsilon operator allows to make a term meaning "an object which is a white pegion," namely, a white pegion.
+Epsilon operator is a term which forms a term from a formula.  For example, assume we have a formula claiming that "x is a white pegion," then epsilon operator allows to make a term meaning "an object which is a white pegion," namely, a white pegion.
 See the difference between "there exists a white pigeon" and "an object which is a white pegion," where the former one is a claim of the existence of such a pigeon, that is definitely different from such a pigeon denoted by epsilon operator.
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
