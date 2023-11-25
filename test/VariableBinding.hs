@@ -19,6 +19,8 @@ compr1 = Compr [Var "z" (-1) 0] f1
 t2 = pt "h1(y, x)"
 f3 = comprehensionAndTermsToFormula compr1 [t2]
 
+f4 = formulaSubstitutionInFormula (Pvar "P" (-1) 1) (Compr [Var "x" (-1) 0] (pf "Q(x)")) (pf "P(eps x P(x))")
+
 main :: IO ()
 main = do putStrLn $ prettyPrintFormula f1
           putStrLn $ prettyPrintFormula f2

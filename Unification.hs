@@ -188,8 +188,8 @@ unify sigs flexs forbs pairs =
     let utree = unifyAux unificationBound sigs flexs forbs pairs []
         bindingsList = unificationTreeToBindingsList utree
         unifiedPairsList = map (\bindings -> bindingsAndPairsToSubstitutedPairs bindings pairs) bindingsList
-        --checkList = traceShowId $ map (\unifPairs -> and $ map alphaEqUnificationPair unifPairs) unifiedPairsList
-        bs = traceShowId $ map (\unifPairs -> foldr (\x b -> alphaEqUnificationPair x && b) True unifPairs) unifiedPairsList
+        --checkList = map (\unifPairs -> and $ map alphaEqUnificationPair unifPairs) unifiedPairsList
+        bs = map (\unifPairs -> foldr (\x b -> alphaEqUnificationPair x && b) True unifPairs) unifiedPairsList
       in or bs
 
 -- Arguments:
@@ -333,7 +333,6 @@ unifyImitation bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
         newFlexVars = variablesAndArityToFreshVariables (knownVars ++ comprAbsVars) comprArity rightHeadArity
         argTerms = map (\funTerm -> termsToAppTerm (funTerm:comprAbsVarTerms)) (map VarTerm newFlexVars)
         compr = LamTerm comprAbsVars (termsToAppTerm (rightHead:argTerms))
-unifyImitation _ _ _ _ p = trace (show p) undefined
 
 unifyProjection :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> [([Binding], VarOrPvar, [VarOrPvar])]
 unifyProjection bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
