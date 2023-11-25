@@ -2,7 +2,7 @@ module PrettyPrint where
 import Syntax
 import Proof
 import Data.List
-import Distribution.Compat.Lens (_1)
+import Unification
 
 prettyPrintPredicate :: Predicate -> String
 prettyPrintPredicate (Pvar n i a)
@@ -91,3 +91,7 @@ prettyPrintJudgment asms concl = prettyPrintAssumptions asms ++ " ⊢ " ++ prett
 
 prettyPrintAssumptions :: [Formula] -> String
 prettyPrintAssumptions fs = intercalate ", " (map prettyPrintFormula fs)
+
+prettyPrintUnificationPair :: UnificationPair -> String
+prettyPrintUnificationPair (Left (x,y)) = prettyPrintTerm x ++ " ?=? " ++ prettyPrintTerm y
+prettyPrintUnificationPair (Right (x,y)) = prettyPrintFormula x ++ " ?=? " ++ prettyPrintFormula y

@@ -14,19 +14,23 @@ type UnificationPair = Either (Term, Term) (Formula, Formula)
 type UnificationTree = Tree ([VarOrPvar], [VarOrPvar], [VarOrPvar], [UnificationPair], [Binding])
 
 unificationBound :: Int
-unificationBound = 100
+unificationBound = 10000
 
 emptyUnificationNode :: Tree ([VarOrPvar], [VarOrPvar], [VarOrPvar], [UnificationPair], [Binding])
 emptyUnificationNode = Node ([], [], [], [], []) []
 
 isCriticalFormula :: Formula -> Bool
-isCriticalFormula (ImpForm premise conclusion) = any (alphaEqFormula conclusion) concl'
+isCriticalFormula f = unify knowns flexs [] [Right (pvarAndTermToCriticalFormula freshPvar t, f)]
     where
-        epsKernels = catMaybes $ map epsTermToKernel (formulaToSubterms conclusion)
-        substs = map (\kernel -> simpleFormulaUnification premise kernel) epsKernels
-        infos = filter (\(subst, epsKernel) -> length subst == 1) (zip substs epsKernels)
-        concl' = map (\pair -> let ([(VarTerm v, t)], f) = pair in epsTranslation $ ExistsForm v f) infos
-isCriticalFormula _ = False
+        knownPvars = formulaToPredicateVariables f
+        knownVars = formulaToFreeVariables f
+        knowns = map Left knownVars ++ map Right knownPvars
+        i = if null knownPvars then 0 else maximum (map predicateToIndex knownPvars) + 1
+        freshPvar = Pvar "*" i 1
+        j = if null knownVars then 0 else maximum (map variableToIndex knownVars) +1
+        v = Var "_" j 0
+        t = VarTerm v
+        flexs = [Right freshPvar, Left v]
 
 bindingAndTermToSubstitutedTerm :: Binding -> Term -> Term
 bindingAndTermToSubstitutedTerm (Left (v, t)) t' = termSubstitutionInTerm v t t'
@@ -109,7 +113,6 @@ simpleTermUnificationAux (VarTerm v) (VarTerm v')
 simpleTermUnificationAux (VarTerm v) t = [(VarTerm v, t)]
 simpleTermUnificationAux t (VarTerm v) = [(VarTerm v, t)]
 simpleTermUnificationAux (ConstTerm c) (ConstTerm c') = []
---simpleTermUnificationAux (AppTerm c ts) (AppTerm c' ts') = concat $ map (uncurry simpleTermUnificationAux) (zip ts ts')
 simpleTermUnificationAux (AppTerm t1 t2) (AppTerm s1 s2) =
     let c1:ts = appTermToTerms (AppTerm t1 t2)
         c2:ss = appTermToTerms (AppTerm s1 s2)
@@ -174,15 +177,20 @@ unificationTreeToBindingsList (Node (_, _, _, _, bs) []) = [bs]
 unificationTreeToBindingsList (Node (_, _, _, _, bs) ts) =
     map (bs ++) (concat $ map unificationTreeToBindingsList ts)
 
+unificationTreeToUnificationPairsList :: UnificationTree -> [[[UnificationPair]]]
+unificationTreeToUnificationPairsList (Node (_, _, _, pairs, _) []) = [[pairs]]
+unificationTreeToUnificationPairsList (Node (_, _, _, pairs, _) ts) =
+    map (pairs:) (concat $ map unificationTreeToUnificationPairsList ts)
+
 unify :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> Bool
 unify sigs flexs forbs [] = True
 unify sigs flexs forbs pairs =
     let utree = unifyAux unificationBound sigs flexs forbs pairs []
         bindingsList = unificationTreeToBindingsList utree
         unifiedPairsList = map (\bindings -> bindingsAndPairsToSubstitutedPairs bindings pairs) bindingsList
-        checkList = map (\unifPairs -> all (==True) $ map alphaEqUnificationPair unifPairs) unifiedPairsList
-        ids = findIndices (==True) checkList
-      in if null ids then False else True
+        --checkList = traceShowId $ map (\unifPairs -> and $ map alphaEqUnificationPair unifPairs) unifiedPairsList
+        bs = traceShowId $ map (\unifPairs -> foldr (\x b -> alphaEqUnificationPair x && b) True unifPairs) unifiedPairsList
+      in or bs
 
 -- Arguments:
 -- Int for the repetition bound which is descreased by each recursive call and the procedure aborts when it became 0.
@@ -282,13 +290,14 @@ unifyImitation bound sigs flexs forbs (Right(PredForm p ts, f))
                       newComprKernelFormula = PredForm p' argTerms
                       newCompr = Compr comprAbsVars newComprKernelFormula
                     in ([Right (p, newCompr)], Right p, map Left newFlexVars)
- | isBiconForm f = let newFlexPvars = predicateVariablesAndArityToFreshPredicateVariables knownPvars comprArity 2
-                       newSubFormula = PredForm (head newFlexPvars) comprAbsVarTerms
-                       newSubFormula' = PredForm (last newFlexPvars) comprAbsVarTerms
-                       newComprKernelFormula = case f of (ImpForm _ _) -> ImpForm newSubFormula newSubFormula'
-                                                         (ConjForm _ _) -> ConjForm newSubFormula newSubFormula'
-                                                         (DisjForm _ _) -> DisjForm newSubFormula newSubFormula'
-                    in ([Right(p, Compr comprAbsVars newComprKernelFormula)], Right p, map Right newFlexPvars)
+ | isBiconForm f || isNegFormula f =
+    let newFlexPvars = predicateVariablesAndArityToFreshPredicateVariables knownPvars comprArity 2
+        newSubFormula = PredForm (head newFlexPvars) comprAbsVarTerms
+        newSubFormula' = PredForm (last newFlexPvars) comprAbsVarTerms
+        newComprKernelFormula = case f of (ImpForm _ _) -> ImpForm newSubFormula newSubFormula'
+                                          (ConjForm _ _) -> ConjForm newSubFormula newSubFormula'
+                                          (DisjForm _ _) -> DisjForm newSubFormula newSubFormula'
+     in ([Right(p, Compr comprAbsVars newComprKernelFormula)], Right p, map Right newFlexPvars)
  | isQuantForm f = let (quantVar, kernelFormula) = quantFormToVariableAndFormula f
                        quantVarTerm = VarTerm quantVar
                        newFlexPvar = predicateVariablesAndArityToFreshPredicateVariable knownPvars (comprArity+1)
@@ -324,6 +333,7 @@ unifyImitation bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
         newFlexVars = variablesAndArityToFreshVariables (knownVars ++ comprAbsVars) comprArity rightHeadArity
         argTerms = map (\funTerm -> termsToAppTerm (funTerm:comprAbsVarTerms)) (map VarTerm newFlexVars)
         compr = LamTerm comprAbsVars (termsToAppTerm (rightHead:argTerms))
+unifyImitation _ _ _ _ p = trace (show p) undefined
 
 unifyProjection :: Int -> [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> UnificationPair -> [([Binding], VarOrPvar, [VarOrPvar])]
 unifyProjection bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
@@ -335,6 +345,9 @@ unifyProjection bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
         leftArgs = tail leftTerms
         (rightHead, rightHeadArity) = case t' of (AppTerm t1' t2') -> let rightTerms = appTermToTerms t'
                                                                         in (head rightTerms, length rightTerms - 1)
+                                                 (EpsTerm v f) -> let epsMatrix = epsTermToEpsMatrix (EpsTerm v f)
+                                                                      argVarTerms = termToImmediateSubTerms epsMatrix
+                                                                    in (epsMatrixToClosedEpsMatrix epsMatrix, length argVarTerms)
                                                  s -> (s, 0)
         knownVars = lefts (sigs ++ flexs ++ forbs)
         knownPvars = rights (sigs ++ flexs ++ forbs)
@@ -344,7 +357,23 @@ unifyProjection bound sigs flexs forbs (Left(AppTerm t1 t2, t')) =
         newFlexVars = variablesAndArityToFreshVariables (knownVars ++ comprAbsVars) comprArity rightHeadArity
         argTerms = map (\funTerm -> termsToAppTerm (funTerm:comprAbsVarTerms)) (map VarTerm newFlexVars)
         comprs = map (\t -> LamTerm comprAbsVars (termsToAppTerm (t:argTerms))) comprAbsVarTerms
-unifyProjection bound sigs flexs forbs (Left(t, EpsTerm v f)) = undefined
+unifyProjection bound sigs flexs forbs (Left(VarTerm v, t)) = [([Left (v, t)], Left v, [])]
+-- unifyProjection bound sigs flexs forbs (Left(t, EpsTerm v f)) =
+--     where
+--         e = EpsTerm v f
+--         epsMatrix = epsTermToEpsMatrix e
+--         argVarTerms = termToImmediateSubTerms epsMatrix
+
+
+
+    -- trace (show (t, EpsTerm v f)) undefined
+    -- --unifyProjection (bound-1) sigs flexs forbs (Left(t, appTerm))
+    -- where
+    --     e = EpsTerm v f
+    --     epsMatrix = epsTermToEpsMatrix e
+    --     closedEpsMatrix = epsMatrixToClosedEpsMatrix epsMatrix
+    --     argTerms = termToImmediateSubTerms e
+    --     appTerm = termsToAppTerm (closedEpsMatrix:argTerms)
 unifyProjection bound sigs flexs forbs _ = []
 
 unifyFlexFlex :: [VarOrPvar] -> [VarOrPvar] -> [VarOrPvar] -> [UnificationPair] -> [Binding]

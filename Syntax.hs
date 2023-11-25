@@ -50,10 +50,6 @@ reservedNames = ["Falsum", "Equality"]
 --                  "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
 --                  "deduction-translation", "end-proof", "variables", "constants", "predicates"]
 
--- numberToArrowType :: Int -> ObjType
--- numberToArrowType 0 = GroundType
--- numberToArrowType n = ArrowType (numberToArrowType (n-1)) GroundType
-
 variableToIndex :: Variable -> Index
 variableToIndex (Var n i a) = i
 
@@ -190,6 +186,12 @@ isPredicate (Pvar n i a) = not (null n) && i >= -1 && a >= 0
 isPredicate Falsum = True
 isPredicate Equality = True
 
+pvarAndTermToCriticalFormula :: Predicate -> Term -> Formula
+pvarAndTermToCriticalFormula (Pvar n i 1) t = ImpForm (PredForm p [t]) (PredForm p [e])
+      where p = Pvar n i 1
+            v = Var "_" (-1) 0
+            e = EpsTerm v (PredForm p [VarTerm v])
+
 makePredicateVariable :: Name -> Arity -> Predicate
 makePredicateVariable n a = Pvar n (-1) a
 
@@ -236,6 +238,16 @@ isFormula (ImpForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (ConjForm f1 f2) = isFormula f1 && isFormula f2
 isFormula (DisjForm f1 f2) = isFormula f1 && isFormula f2
 
+lamTermAndArgsToTerm :: [Variable] -> Term -> [Term] -> Term
+lamTermAndArgsToTerm forbVars (LamTerm [] kernel) [] = kernel
+lamTermAndArgsToTerm forbVars (LamTerm (v:vs) kernel) (t:ts) =
+      foldr (\(v, t) s -> termSubstitutionInTerm v t s) renamedKernel (zip freshVars (t:ts))
+      where
+            tFreeVars = termToFreeVariables t
+            sFreeVars = termToFreeVariables kernel
+            freshVars = variablesToFreshVariables (length (v:vs)) (filter (\v -> variableToArity v == 0) forbVars ++ sFreeVars ++ tFreeVars)
+            renamedKernel = foldr (\(v, vt) s -> termSubstitutionInTerm v vt s) kernel (zip (v:vs) (map VarTerm freshVars))
+
 termSubstitutionInTerm :: Variable -> Term -> Term -> Term
 termSubstitutionInTerm v t targetTerm = termSubstitutionInTermAux forbVars v t targetTerm
       where
@@ -245,7 +257,8 @@ termSubstitutionInTermAux :: [Variable] -> Variable -> Term -> Term -> Term
 termSubstitutionInTermAux forbVars v t (VarTerm v2) = if v==v2 then t else VarTerm v2
 termSubstitutionInTermAux forbVars v t (ConstTerm c) = ConstTerm c
 termSubstitutionInTermAux forbVars v (LamTerm vs t) (AppTerm t1 t2)
- | alphaEqTerm hd (VarTerm v) = foldr (\(v, t) t' -> termSubstitutionInTerm v t t') t (zip vs args)
+-- | alphaEqTerm hd (VarTerm v) = foldr (\(v, t) t' -> termSubstitutionInTerm v t t') t (zip vs args)
+ | alphaEqTerm hd (VarTerm v) = lamTermAndArgsToTerm forbVars (LamTerm vs t) args
  | otherwise = AppTerm (termSubstitutionInTermAux forbVars v (LamTerm vs t) t1) (termSubstitutionInTermAux forbVars v (LamTerm vs t) t2)
       where
             ts = appTermToTerms (AppTerm t1 t2)
@@ -255,11 +268,14 @@ termSubstitutionInTermAux forbVars v (LamTerm vs t) (AppTerm t1 t2)
 termSubstitutionInTermAux forbVars v t (AppTerm t1 t2) = AppTerm (termSubstitutionInTermAux forbVars v t t1) (termSubstitutionInTermAux forbVars v t t2)
 termSubstitutionInTermAux forbVars v t (LamTerm vs t')
  | v `elem` vs = LamTerm vs t'
- | otherwise = LamTerm vs (termSubstitutionInTermAux forbVars' v t t')
- where forbVars' = nub (forbVars ++ vs)
+ | otherwise = LamTerm freshVs (termSubstitutionInTermAux forbVars' v t t'')
+ where
+      forbVars' = nub (forbVars ++ vs)
+      freshVs = variablesToFreshVariables (length vs) (v:vs ++ forbVars' ++ termToFreeVariables t ++ termToFreeVariables t')
+      t'' = foldr (\(v', s') s'' -> termSubstitutionInTerm v' s' s'') t' (zip vs (map VarTerm freshVs))
 termSubstitutionInTermAux forbVars v t (EpsTerm v2 f)
   | v==v2 = EpsTerm v2 f
-  | v2 `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable forbVars
+  | v2 `elem` termToFreeVariables t = let freshVar = variablesToFreshVariable (filter (\v -> variableToArity v == variableToArity v2) forbVars)
                                           freshVarTerm = VarTerm freshVar
                                           forbVars' = freshVar:forbVars
                                           f' = termSubstitutionInFormula v2 freshVarTerm f
@@ -300,8 +316,10 @@ formulaSubstitutionInFormula p c f
 
 formulaSubstitutionInFormulaAux :: [Variable] -> Predicate -> Comprehension -> Formula -> Formula
 formulaSubstitutionInFormulaAux forbVars p c (PredForm p' ts) = if p == p' && length ts == comprehensionToArity c
-      then comprehensionAndTermsToFormula c ts
-      else PredForm p' (map (\t -> formulaSubstitutionInTermAux forbVars p c t) ts)
+      then comprehensionAndTermsToFormula c ts'
+      else PredForm p' (map (\t -> formulaSubstitutionInTermAux forbVars p c t) ts')
+      where
+            ts' = map (formulaSubstitutionInTermAux forbVars p c) ts
 formulaSubstitutionInFormulaAux forbVars p c (ImpForm f g) = ImpForm f' g'
       where f' = formulaSubstitutionInFormulaAux forbVars p c f
             g' = formulaSubstitutionInFormulaAux forbVars p c g
@@ -339,11 +357,19 @@ formulaSubstitutionInTermAux forbVars p c (AppTerm t1 t2) =
       AppTerm (formulaSubstitutionInTermAux forbVars p c t1) (formulaSubstitutionInTermAux forbVars p c t2)
 formulaSubstitutionInTermAux forbVars p c (EpsTerm v f)
  | v `elem` comprehensionToFreeVariables c = let forbVars' = v:forbVars
-                                                 freshVar = variablesToFreshVariable forbVars'
+                                                 freshVar = variablesToFreshVariable (filter (\u ->  variableToArity u == variableToArity v) forbVars')
                                                  freshVarTerm = VarTerm freshVar
                                                  f' = termSubstitutionInFormulaAux forbVars' v freshVarTerm f
                                               in EpsTerm freshVar (formulaSubstitutionInFormulaAux forbVars' p c f')
  | otherwise = EpsTerm v (formulaSubstitutionInFormulaAux (v:forbVars) p c f)
+formulaSubstitutionInTermAux forbVars p c (LamTerm vs t)
+ | null $ vs `intersect` comprehensionToFreeVariables c =
+      let forbVars' = vs ++ forbVars
+          freshVars = variablesToFreshVariables (length vs) forbVars'
+          freshVarTerms = map VarTerm freshVars
+          t' = foldr (\(v, s) s' -> termSubstitutionInTermAux forbVars' v s s') t (zip vs freshVarTerms)
+        in LamTerm freshVars (formulaSubstitutionInTermAux forbVars' p c t')
+ | otherwise = LamTerm vs (formulaSubstitutionInTermAux (vs++forbVars) p c t)
 
 comprehensionAndTermsToFormula :: Comprehension -> [Term] -> Formula
 comprehensionAndTermsToFormula (Compr [] kernel) [] = kernel
@@ -487,7 +513,8 @@ epsTermToEpsMatrix (EpsTerm v f) = EpsTerm v f'
 
 epsMatrixToClosedEpsMatrix :: Term -> Term
 epsMatrixToClosedEpsMatrix e
- | isEpsTerm e && all isVarTerm iSubTerms && all (\t -> 0 == termToArity t) iSubTerms = LamTerm absVars e
+ | isEpsTerm e && all isVarTerm iSubTerms && all (\t -> 0 == termToArity t) iSubTerms =
+      if null absVars then e else LamTerm absVars e
  where
       iSubTerms = termToImmediateSubTerms e
       absVars = map varTermToVar iSubTerms
@@ -509,11 +536,10 @@ epsTermToEpsMatrixAux bvs i (EpsTerm v f) = if null $ bvs `intersect` termToFree
                                                 then (VarTerm (Var "_" i 0), i+1) else (EpsTerm v f', i')
       where (f', i') = epsTermToEpsMatrixAuxFormula (v:bvs) i f
 
-
 predicateVariablesAndArityToFreshPredicateVariable :: [Predicate] -> Int -> Predicate
-predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "_" (-1) a
+predicateVariablesAndArityToFreshPredicateVariable [] a = Pvar "*" (-1) a
 predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
- | null preds = Pvar "_" (-1) a
+ | null preds = Pvar "*" (-1) a
  | otherwise = Pvar n i a
       where
             preds = filter (\p' -> predicateToArity p' == a) (p:ps)
@@ -523,9 +549,9 @@ predicateVariablesAndArityToFreshPredicateVariable (p:ps) a
 
 predicateVariablesAndArityToFreshPredicateVariables :: [Predicate] -> Int -> Int -> [Predicate]
 predicateVariablesAndArityToFreshPredicateVariables _ _ 0 = []
-predicateVariablesAndArityToFreshPredicateVariables [] a n = map (\i -> Pvar "_" i a) [1..n]
+predicateVariablesAndArityToFreshPredicateVariables [] a n = map (\i -> Pvar "*" i a) [1..n]
 predicateVariablesAndArityToFreshPredicateVariables ps a n
- | null relevantPvars = map (\i -> Pvar "_" i a) [1..n]
+ | null relevantPvars = map (\i -> Pvar "*" i a) [1..n]
  | otherwise = newPvar:newPvars
       where
             relevantPvars = filter (\p -> predicateToArity p == a) ps
