@@ -6,3 +6,4 @@ B by MP
 B -> A -> B & A by ConjI
 A -> B & A by MP
 B & A by MP
+deduction-transformation
