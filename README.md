@@ -327,10 +327,7 @@ The outcome consists of 64 lines, and would be hard without relying on the proof
 A proof script (it is exaxtly one file on the computer) may contain multiple proofs.
 Completed proofs can be later used in other proofs.
 By <code>end-proof</code>, the current proof is concluded and a new proof can start from the next line.
-If you give also a name, <code>end-proof Lemma1</code> for example, this proof will be available in the future work via <code>Use</code> with the specified name, <code>by Use(Lemma1)</code> for example.
-
-Currently, the Use feature is limited to show exactly the same formula as the lemma claims.
-It means that a previously proven formula <code>A | ~A</code> is applicable to prove exactly the same formula in the later proof, but not yet applicable to prove <code>ex x P(x) | ~ex x P(x)</code> for this moment.
+If you give also a name, <code>end-proof Lemma1</code> for example, this proof will be available in the future work via <code>Use</code> with the specified name, <code>by Use(Lemma1)</code> for example.  Use command makes the proven formula fit the target formula.  It means that a previously proven formula <code>A | ~A</code> is applicable to prove <code>ex x P(x) | ~ex x P(x)</code> via Use which finds and applies the suibstitution of <code>ex x P(x)</code> for <code>A</code>.
 
 If the last step of the proof is <code>Asm</code>, the assumed formula is the conclusion of the proof.  If one wants to write a proof whose conclusion is directly from an assumption which is not the last <code>Asm</code>, one can use <code>Ref</code> to make a claim referring to an assumption.  An example is found in <code>examples/ex07_assumption.proof</code> which generates a proof of <code>⊢ A -> B -> A</code> from another proof of <code>A, B ⊢ A</code>.
 ```
