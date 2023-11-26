@@ -47,7 +47,7 @@ declarationsToDeclarationsFilledWithDefaults (vds, cds, pds) = (vds', cds', pds'
 reservedNames :: [String]
 reservedNames = ["Falsum", "Equality"]
 -- reservedNames = ["by", "S", "K", "MP", "Gen", "ConjI", "ConjE1", "ConjE2", "DisjI1", "DisjI2", "DisjE",
---                  "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExShift", "Auto", "Asm", "Ref", "C", "Use",
+--                  "AllE", "ExI", "DNE", "EFQ", "AllShift", "ExE", "Auto", "Asm", "Ref", "C", "Use",
 --                  "deduction-translation", "end-proof", "variables", "constants", "predicates"]
 
 variableToIndex :: Variable -> Index

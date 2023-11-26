@@ -264,8 +264,8 @@ ruleAux = do symbol "K"
               return ExI
        <|> do symbol "AllShift"
               return AllShift
-       <|> do symbol "ExShift"
-              return ExShift
+       <|> do symbol "ExE"
+              return ExE
        <|> do symbol "Gen"
               symbol "("
               arg <- tag

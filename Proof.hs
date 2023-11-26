@@ -8,7 +8,7 @@ import qualified Data.Map as Map
 import Debug.Trace
 
 data Rule = K | S | ConjI | ConjE1 | ConjE2 | DisjI1 | DisjI2 | DisjE | C
-             | AllE | ExI | AllShift | ExShift | Auto | MP Tag Tag
+             | AllE | ExI | AllShift | ExE | Auto | MP Tag Tag
              | Gen Tag | EFQ | DNE | LEM | Asm | Ref | Use String deriving (Show, Eq)
 type Step = (Formula, Rule, Tag)
 type Proof = [Step]
@@ -80,8 +80,8 @@ checkAllShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm f' (ForallForm v' g
             alphaEqFormula g' (termSubstitutionInFormula v (VarTerm v') g)
 checkAllShift _ = False
 
-checkExShift :: Formula -> Bool
-checkExShift (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g')) =
+checkExE :: Formula -> Bool
+checkExE (ImpForm (ForallForm v (ImpForm f g)) (ImpForm (ExistsForm v' f') g')) =
       alphaEqFormula g g' && not (v `elem` formulaToFreeVariables g) &&
             (v == v' || not (v' `elem` formulaToFreeVariables f)) &&
             alphaEqFormula f' (termSubstitutionInFormula v (VarTerm v') f)
@@ -259,7 +259,7 @@ checkClaimsAux offset p lemmas = if length p <= offset
                         AllE -> checkAllE f
                         ExI -> checkExI f
                         AllShift -> checkAllShift f
-                        ExShift -> checkExShift f
+                        ExE -> checkExE f
                         --Gen Nothing -> checkGen p offset Nothing
                         Gen Nothing -> checkGen (take (offset+1) p)
                         MP (Just s1) (Just s2) ->
@@ -411,7 +411,7 @@ isPredicateCalculusRule :: Rule -> Bool
 isPredicateCalculusRule AllE = True
 isPredicateCalculusRule ExI = True
 isPredicateCalculusRule AllShift = True
-isPredicateCalculusRule ExShift = True
+isPredicateCalculusRule ExE = True
 isPredicateCalculusRule (Gen _) = True
 isPredicateCalculusRule _ = False
 

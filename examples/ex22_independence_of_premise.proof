@@ -7,7 +7,7 @@ A -> P(x) by MP
 (A -> P(x)) -> ex x(A -> P(x)) by ExI
 ex x(A -> P(x)) by MP
 deduction-transformation
-all x(P(x) -> ex x (A -> P(x))) -> ex x P(x) -> ex x(A -> P(x)) by ExShift
+all x(P(x) -> ex x (A -> P(x))) -> ex x P(x) -> ex x(A -> P(x)) by ExE
 all x(P(x) -> ex x (A -> P(x))) by Gen
 ex x P(x) -> ex x(A -> P(x)) by MP
 ex x P(x) by MP

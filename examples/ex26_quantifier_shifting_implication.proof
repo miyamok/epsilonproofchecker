@@ -6,7 +6,7 @@ A by MP
 deduction-transformation
 deduction-transformation
 all x((P(x) -> A) -> (all x P(x) -> A)) by Gen
-all x((P(x) -> A) -> (all x P(x) -> A)) -> ex x(P(x) -> A) -> (all x P(x) -> A) by ExShift
+all x((P(x) -> A) -> (all x P(x) -> A)) -> ex x(P(x) -> A) -> (all x P(x) -> A) by ExE
 ex x(P(x) -> A) -> (all x P(x) -> A) by MP
 end-proof Lemma1
 all x P(x) -> A by Asm
