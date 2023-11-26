@@ -463,6 +463,7 @@ Reason name | Example | Note
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Epsilon equality axiom to implement
+- Implementing equality predicate and the epsilon equality axiom
+- Supporting theorem prover E (https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html)
 - Further examples
 - Writing a brief history of Hilbert's logic
