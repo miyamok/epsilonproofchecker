@@ -454,7 +454,7 @@ Other than the axioms and inference rules, there are the following reasons which
 
 Reason name | Example | Note
 --- | --- | ---
-<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
+<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.<br />Taken as a claim if a proof ends with it.
 <code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
 <code>Auto</code> | | Requires Microsoft's Z3
 <code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
