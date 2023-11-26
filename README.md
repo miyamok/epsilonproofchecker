@@ -159,7 +159,7 @@ By means of the quantifiers, it is possible to form the following quantified for
 ex x E(x)
 all x E(x)
 ```
-which are commonly witten as <code>∃x E(x)</code> and <code>∀x E(x)</code>, respectively.
+which are commonly written as <code>∃x E(x)</code> and <code>∀x E(x)</code>, respectively.
 They denote that there is some <code>x</code> such that <code>E(x)</code> holds, and that for any <code>x</code>, <code>E(x)</code> holds.
 
 We have two kinds of variable occurrences due to the presence of the quantifiers.
