@@ -154,11 +154,12 @@ t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
 ```
 Assume <code>E(x)</code> is a formula containing a free variable x.  One interpretation of this formula is that it states some property of <code>x</code>.
-By means of the quantifiers, it is possible to form the following quantified formulas.
+By means of the quantifiers, it is possible to form the following quantified formulas
 ```
 ex x E(x)
 all x E(x)
 ```
+which are commonly witten as <code>∃x E(x)</code> and <code>∀x E(x)</code>, respectively.
 They denote that there is some <code>x</code> such that <code>E(x)</code> holds, and that for any <code>x</code>, <code>E(x)</code> holds.
 
 We have two kinds of variable occurrences due to the presence of the quantifiers.
