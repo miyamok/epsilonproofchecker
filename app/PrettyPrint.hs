@@ -63,6 +63,8 @@ prettyPrintTerm (EpsTerm v f) = concat ["eps ", prettyPrintVariable v, ppKer]
     where
         ppFla = prettyPrintFormula f
         ppKer = if isBiconForm f then "(" ++ ppFla ++ ")" else " " ++ ppFla
+prettyPrintTerm (LamTerm [] t) = "lam[] "++prettyPrintTerm t
+prettyPrintTerm (LamTerm vs t) = concat ["lam ", intercalate " " (map prettyPrintVariable vs), " ", prettyPrintTerm t]
 
 prettyPrintReason :: Rule -> String
 prettyPrintReason r = case r of (MP Nothing Nothing) -> "MP"
