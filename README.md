@@ -12,9 +12,11 @@ The proof scripting language is simple, and there are useful features such as pr
   - [Syntax for proof scripts](#syntax-for-proof-scripts)
 - [To do list](#to-do-list)
 ```
-## ghc-9.2.8 used
-% ghc Main
-% ./Main examples/ex03_identity.proof
+% git clone https://github.com/miyamok/epsilonproofchecker
+% cd epsilonproofchecker
+## ghc-9.2.8 and cabal used
+% cabal install
+% epsilonproofchecker examples/ex03_identity.proof
 -- Correct proof of ⊢ A -> A
 % cat examples/ex03_identity.proof 
 A -> (A -> A) -> A by K
@@ -22,22 +24,22 @@ A -> A -> A by K
 (A -> (A -> A) -> A) -> (A -> A -> A) -> A -> A by S
 (A -> A -> A) -> A -> A by MP
 A -> A by MP
-% ./Main examples/ex24_drinkers_paradox.proof
+% epsilonproofchecker examples/ex24_drinkers_paradox.proof
 -- Correct proof of ⊢ ex x(P(x) -> all x P(x))
-% ./Main examples/ex25_drinkers_paradox_eps.proof
+% epsilonproofchecker examples/ex25_drinkers_paradox_eps.proof
 -- Correct proof of ⊢ P(eps x(P(x) -> P(eps x ~P(x)))) -> P(eps x ~P(x))
-% ./Main examples/ex05_wrong.proof
+% epsilonproofchecker examples/ex05_wrong.proof
 Error at line 1: A -> B by K
 % cat examples/ex05_wrong.proof
 A -> B by K
-% ./Main examples/ex07_assumption.proof 
+% epsilonproofchecker examples/ex07_assumption.proof 
 -- Correct proof of ⊢ A -> A
 % cat examples/ex07_assumption.proof 
 A by Asm
 deduction-transformation
 % z3 -version ## assume Microsoft's Z3 is installed
 Z3 version 4.12.3 - 64 bit
-% ./Main examples/ex18_inverse_AllShift_auto.proof
+% epsilonproofchecker examples/ex18_inverse_AllShift_auto.proof
 -- Correct proof of ⊢ (B -> all x P(x)) -> all y (B -> P(y))
 % cat examples/ex18_inverse_AllShift_auto.proof
 (B -> all x P(x)) -> all y (B -> P(y)) by Auto
@@ -264,7 +266,7 @@ Get the source code and compile the code in the following way.
 ```
 Then you can try examples in the <code>examples</code> directory.
 ```
-% ./Main examples/ex22_independence_of_premise.proof
+% epsilonproofchecker examples/ex22_independence_of_premise.proof
 -- Correct proof of ⊢ (A -> ex x P(x)) -> ex x(A -> P(x))
 % cat examples/ex22_independence_of_premise.proof
 A -> ex x P(x) by Asm
@@ -279,7 +281,7 @@ deduction-transformation
 ```
 The oprion <code>-p</code> is to display the proof.
 ```
-% ./Main -p examples/ex03_identity.proof
+% epsilonproofchecker -p examples/ex03_identity.proof
 -- Correct proof of ⊢ A -> A
 A -> (A -> A) -> A by K
 A -> A -> A by K
@@ -316,12 +318,12 @@ The command line option <code>-p</code> may be helpful to get to know how the ge
 
 By issueing the following command, it shows the following output, which means that the proof of <code>A | ~A</code> has been checked.
 ```
-% ./Main examples/ex16_excluded_middle.proof
+% epsilonproofchecker examples/ex16_excluded_middle.proof
 -- Correct proof of ⊢ A | ~A
 ```
 It is also possible to print out the final proof by the option <code>-p</code>.
 ```
-% ./Main -p examples/ex16_excluded_middle.proof
+% epsilonproofchecker -p examples/ex16_excluded_middle.proof
 ```
 The outcome consists of 64 lines, and would be hard without relying on the proof transformation, although there can be a clever idea for a shorter proof.
 
@@ -346,7 +348,7 @@ Microsoft's Z3 is supposed to be installed and be avaialble from your command li
 ```
 % z3 -version
 Z3 version 4.12.3 - 64 bit
-% ./Main -p examples/ex15_peirce_auto.proof 
+% epsilonproofchecker -p examples/ex15_peirce_auto.proof 
 -- Correct proof of ⊢ ((A -> B) -> A) -> A
 ((A -> B) -> A) -> A by Auto
 ```
@@ -463,7 +465,6 @@ Reason name | Example | Note
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Packaging via cabal
 - Implementing equality predicate and the epsilon equality axiom
 - Supporting theorem prover E (https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html)
 - Further examples
