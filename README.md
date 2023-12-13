@@ -1,6 +1,6 @@
 # Proof assistant for Hilbert's epsilon calculus and predicate calculus
 _Epsilon_ is a proof assistant system for Hilbert's epsilon calculus and predicate calculus.  It supports Hilbert style proofs in epsilon calculus as well as in first order predicate calculus.
-The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, and proof automation.  Automated theorem proving is due to an external tool Microsoft Z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
+The proof scripting language is simple, and there are useful features such as proof transformation due to deduction theorem, which makes proof scripting in Hilbert style system easier, the lemma feature to use a previously proven lemma, and proof automation.  Automated theorem proving is due to an external tool Microsoft Z3 (https://github.com/Z3Prover/z3), and formulas in predicate logic and it's subsystems are supported.
 ##### Table of contents
 - [Logic](#logic)
   - [Propositional calculus](#propositional-calculus)
@@ -48,10 +48,10 @@ This section describes propositional calculus first, and then extends this calcu
 Propositional calculus is a simple logic whose language consists of atomic propositions and logical connectives such as implication, negation, conjunction and disjunction which all appear even in our daily life.
 Elementary calculus is an extension of propositional calculus.  It is obtained by extending propositional calculus by predicates and term constants.
 Elementary calculus is a common basis of richer calculi such as predicate calculus and epsilon calculus.
-Predicate calculus, first-order logic in other words, is elementary calculus with term variables, quantifiers, and additional logical reasoning methods concerning the quantifiers.
+Predicate calculus, first-order logic in other words, is elementary calculus with quantifiers and additional logical reasoning methods concerning the quantifiers.
 An example statement involving quantification is "there exists a white pigeon." where there is a quantification over pigeons.
-Epsilon calculus is an extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional reasoning method is available.
-Epsilon operator is a term which forms a term from a formula.  For example, assume we have a formula claiming that "x is a white pegion," then epsilon operator allows to make a term meaning "an object which is a white pegion," namely, a white pegion.
+Epsilon calculus is another extension of elementary calculus.  The language is enriched by the epsilon operator, and an additional reasoning method is available.
+Epsilon operator forms a term from a formula.  Consider a formula with a free variable, say <code>x</code>, then the formula is supposed to state a property of <code>x</code>.  Feeding this formula to epsilon operator, a variable in the given formula is bound, let's choose <code>x</code> for this case, and forms a term.  Informally speaking, a term formed by epsilon operator is meant to be an object which satisfies the property the fed formula describes.  For example, assume we have a formula claiming that "x is a white pegion," then epsilon operator allows to make a term meaning "an object which is a white pegion," namely, a white pegion.  The epsilon operator is often explained as a choice operator.
 See the difference between "there exists a white pigeon" and "an object which is a white pegion," where the former one is a claim of the existence of such a pigeon, that is definitely different from such a pigeon denoted by epsilon operator.
 ### Propositional calculus
 For this moment, we restrict our base logic to the fragment of negation and implication.
@@ -154,11 +154,12 @@ t ::= x | c | f(t)
 F ::= A | bot | F -> F | F & F | (F | F) | Q(t) | ex x F | all x F
 ```
 Assume <code>E(x)</code> is a formula containing a free variable x.  One interpretation of this formula is that it states some property of <code>x</code>.
-By means of the quantifiers, it is possible to form the following quantified formulas.
+By means of the quantifiers, it is possible to form the following quantified formulas
 ```
 ex x E(x)
 all x E(x)
 ```
+which are commonly written as <code>∃x E(x)</code> and <code>∀x E(x)</code>, respectively.
 They denote that there is some <code>x</code> such that <code>E(x)</code> holds, and that for any <code>x</code>, <code>E(x)</code> holds.
 
 We have two kinds of variable occurrences due to the presence of the quantifiers.
@@ -429,10 +430,10 @@ Axiom name | Scheme | Note
 <code>DisjI1</code> | <code>A -> A \| B</code> | <code>\|</code> associates to the left and has a priority<br /> between <code>-></code> and <code>&</code>
 <code>DisjI2</code> | <code>B -> A \| B</code>
 <code>DisjE</code> | <code>A \| B -> (A -> C) -> (B -> C) -> C</code>
-<code>AllE</code> | <code>all x E(x) -> E(t)</code>
 <code>ExI</code> | <code>E(t) -> ex x E(x)</code>
-<code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>ExE</code> | <code>all x(A(x) -> B) -> (ex y A(y) -> B)</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
+<code>AllE</code> | <code>all x E(x) -> E(t)</code>
+<code>AllShift</code> | <code>all x(B -> A(x)) -> (B -> all y A(y))</code> | <code>x ∉ FV(B)</code> and (<code>x=y</code> or <code>y ∉ FV(A(x))</code>)
 <code>EFQ</code> | <code>bot -> A</code>
 <code>DNE</code> | <code>~~A -> A</code> | <code>~</code> has a higher priority than any of <code>-></code>,<br /> <code>\|</code> and <code>&</code>
 
@@ -454,7 +455,7 @@ Other than the axioms and inference rules, there are the following reasons which
 
 Reason name | Example | Note
 --- | --- | ---
-<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.  Taken as a claim if a proof ends with it.
+<code>Asm</code> | <code>A -> A by Asm</code> | Makes an assumption.<br />Taken as a claim if a proof ends with it.
 <code>Ref</code> | <code>A by Ref</code> | To refer to an assumption.
 <code>Auto</code> | | Requires Microsoft's Z3
 <code>Use</code> | <code>A -> A by Use(identity)</code> | A name of a suitable lemma required
@@ -462,6 +463,8 @@ Reason name | Example | Note
 Example proofs are found in the <code>examples</code> directory.
 
 ## To do list
-- Epsilon equality axiom to implement
+- Packaging via cabal
+- Implementing equality predicate and the epsilon equality axiom
+- Supporting theorem prover E (https://wwwlehre.dhbw-stuttgart.de/~sschulz/E/E.html)
 - Further examples
 - Writing a brief history of Hilbert's logic
