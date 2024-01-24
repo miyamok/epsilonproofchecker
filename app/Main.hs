@@ -17,7 +17,7 @@ printHelpMessage = do --putStrLn "-d option to apply deduction transformation"
                       putStrLn "-p option to print out the proof"
                       --putStrLn "-1 option to limit the application of deduction transformation only for one assumption"
                       putStrLn "Usage:"
-                      putStrLn "./Main [options] filepath"
+                      putStrLn "epsilonproofchecker [options] filepath"
 
 -------------------------------------------------
 -- handling command line options and arguments
