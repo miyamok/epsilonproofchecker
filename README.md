@@ -14,7 +14,7 @@ The proof scripting language is simple, and there are useful features such as pr
 ```
 % git clone https://github.com/miyamok/epsilonproofchecker
 % cd epsilonproofchecker
-## ghc-9.2.8 and cabal used
+## assume ghc-9.2.8 and cabal are installed
 % cabal install
 % epsilonproofchecker examples/ex03_identity.proof
 -- Correct proof of ⊢ A -> A
